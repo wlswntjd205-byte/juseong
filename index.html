@@ -3280,6 +3280,14 @@ function wheelSVG() {
     <g class="w-in"><circle cx="200" cy="200" r="138"/><circle cx="200" cy="200" r="104"/>${ring('甲乙丙丁戊己庚辛壬癸', 121, 19, 'w-t2')}</g>
     <g class="w-core"><circle cx="200" cy="200" r="84"/>${ring('☰☱☲☳☴☵☶☷', 66, 22, 'w-t3')}<circle cx="200" cy="200" r="44"/></g></svg>`;
 }
+document.addEventListener('visibilitychange', () => { if (!AU.ctx) return; if (document.hidden) AU.ctx.suspend(); else AU.ctx.resume(); });
+window.__appBack = () => {
+  if (!$('#modal').hidden) { closeModal(); return true; }
+  if (!$('#sheet').hidden) { closeSheet(); return true; }
+  const open = document.querySelector('.ft.open .ftmore'); if (open) { open.click(); return true; }
+  if (scrollY > 400) { scrollTo({ top: 0, behavior: 'smooth' }); return true; }
+  return false;
+};
 function initIntro() {
   $('#introWheel').innerHTML = wheelSVG();
   $('#talis').innerHTML = BUJEOK.map((_, i) => bujeokHTML(i)).join('');
@@ -3838,16 +3846,21 @@ async function openShare(mode) {
   SHARE_URL = URL.createObjectURL(SHARE_BLOB);
   SHARE_NAME = `saju-${(LAST.f.name || 'my').replace(/\s+/g, '')}-${full ? 'full' : PSTATE.kind}.${full ? 'jpg' : 'png'}`;
   const file = new File([SHARE_BLOB], SHARE_NAME, { type: SHARE_BLOB.type });
-  const dl = await getDownloads();
-  const canShare = !dl && navigator.canShare && navigator.canShare({ files: [file] });
+  const AB = window.AndroidBridge;
+  const dl = AB ? null : await getDownloads();
+  const canShare = !AB && !dl && navigator.canShare && navigator.canShare({ files: [file] });
   $('#modalBody').innerHTML = `
     <div class="shp${full ? ' tall' : ''}"><img src="${SHARE_URL}" alt="사주 결과 이미지" class="shp-img"></div>
-    <p class="shp-hint">${dl ? '아이폰에서는 저장을 누르면 공유 시트가 열려 사진 앱에 저장할 수 있어요.' : '휴대폰에서는 이미지를 길게 눌러도 저장할 수 있어요.'}</p>
+    <p class="shp-hint">${AB ? '갤러리에 저장하거나 카톡·인스타로 바로 보낼 수 있어요.' : dl ? '아이폰에서는 저장을 누르면 공유 시트가 열려 사진 앱에 저장할 수 있어요.' : '휴대폰에서는 이미지를 길게 눌러도 저장할 수 있어요.'}</p>
     <div class="shp-btns">
-      ${dl ? '<button type="button" class="btn pri" id="dlCap">이미지 저장 · 공유</button>' : `<a class="btn pri" href="${SHARE_URL}" download="${SHARE_NAME}" id="dlBtn">이미지 저장</a>`}
+      ${AB ? '<button type="button" class="btn pri" id="abSave">갤러리에 저장</button><button type="button" class="btn sec" id="abShare">공유하기</button>' : dl ? '<button type="button" class="btn pri" id="dlCap">이미지 저장 · 공유</button>' : `<a class="btn pri" href="${SHARE_URL}" download="${SHARE_NAME}" id="dlBtn">이미지 저장</a>`}
       ${canShare ? '<button type="button" class="btn sec" id="nsBtn">공유하기</button>' : ''}
     </div>`;
-  if (dl) $('#dlCap').addEventListener('click', async () => {
+  if (AB) {
+    const toData = () => new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(SHARE_BLOB); });
+    $('#abSave').addEventListener('click', async () => { const ok = AB.saveImage(await toData(), SHARE_NAME); SFX.chime(); toast(ok ? '갤러리의 진심신당 앨범에 저장했습니다' : '저장하지 못했어요. 다시 시도해 주세요'); });
+    $('#abShare').addEventListener('click', async () => { AB.shareImage(await toData(), SHARE_NAME); });
+  } else if (dl) $('#dlCap').addEventListener('click', async () => {
     try { const res = await dl.save({ filename: SHARE_NAME, data: SHARE_BLOB }); SFX.chime(); toast(res.status === 'saved' ? '이미지를 보냈습니다' : '전달했습니다'); }
     catch (e) { if (e && e.code === 'declined') return; toast(e && e.code === 'rate_limited' ? '잠시 후 다시 눌러 주세요' : '여기서는 저장할 수 없어요. 이미지를 길게 눌러 저장해 주세요'); }
   });
