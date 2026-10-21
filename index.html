@@ -1,0 +1,65 @@
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>바이브코더 AI·IT 사전</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Jua&display=swap">
+<link rel="stylesheet" href="style.css">
+
+<div id="intro">
+  <p class="logo">VIBE CODER DICTIONARY</p>
+  <h1>바이브코더<br>AI·IT 사전</h1>
+  <p class="sub">코드를 몰라도 AI로 만들려면 꼭 알아야 할 용어, 픽셀 그림과 소리로 배워요.</p>
+  <div id="intro-stage">
+    <canvas id="intro-canvas" aria-hidden="true"></canvas>
+  </div>
+  <button type="button" id="start-btn">시작하기</button>
+  <p class="hint">소리가 나와요. 시작하면 배경음악이 흘러요.</p>
+</div>
+
+<canvas id="fx" aria-hidden="true"></canvas>
+
+<div id="app" hidden>
+  <div class="topbar">
+    <button type="button" class="mute" id="mute">소리 끄기</button>
+  </div>
+
+  <header class="hero">
+    <p class="kicker"><span class="star">★</span> VIBE CODER DICTIONARY</p>
+    <h1 class="title">바이브코더 AI·IT 사전</h1>
+    <p class="lead">주제를 고르면 픽셀 애니메이션이 움직여요. 용어를 누르면 반응해요.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" id="tabs" aria-label="주제 선택"></nav>
+
+  <main class="panel">
+    <div class="panel-top">
+      <span class="pill" id="topicNo"></span>
+      <h2 class="topic-name" id="topicName"></h2>
+    </div>
+    <div class="stage-frame" id="stage-frame" title="눌러 보세요">
+      <canvas id="stage" width="160" height="110" role="img" aria-label=""></canvas>
+    </div>
+    <p class="caption" id="caption"></p>
+
+    <h3 class="block-title">생활 속 예시</h3>
+    <div class="examples" id="examples"></div>
+
+    <h3 class="block-title">용어 사전</h3>
+    <div class="terms" id="terms"></div>
+
+    <div class="pager">
+      <button type="button" id="prev">이전 주제</button>
+      <button type="button" id="next">다음 주제</button>
+    </div>
+  </main>
+
+  <footer>입문용으로 단순하게 줄인 설명이에요. 도구의 최신 동작은 공식 문서에서 한 번 더 확인하세요.</footer>
+</div>
+
+<script src="icons.js"></script>
+<script src="data-ai.js"></script>
+<script src="data-web.js"></script>
+<script src="audio.js"></script>
+<script src="scenes.js"></script>
+<script src="intro.js"></script>
+<script src="motion.js"></script>
+<script src="anim-data.js"></script>
+<script src="app.js"></script>
