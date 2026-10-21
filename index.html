@@ -766,6 +766,81 @@ body.lite .card.tilting, body.lite .ft.tilting { transform: none !important; }
 .lc-path.cp-a { stroke: #ee8aa7; filter: none; } .lc-path.cp-b { stroke: #8fb4e8; filter: none; }
 .cp-best { fill: rgba(242,207,115,.14); stroke: rgba(242,207,115,.4); }
 .cp-panel .small { font-size: 12.5px; color: var(--muted); }
+/* ===== v8 부적 지갑 · 잠금 ===== */
+@keyframes spin { to { transform: rotate(360deg); } }
+.bj-ic { display: inline-grid; place-items: center; width: 13px; height: 18px; flex: none; border-radius: 2px; background: linear-gradient(180deg, #f6dd92, #d2a548); box-shadow: inset 0 0 0 1px rgba(140,30,20,.35), 0 1px 4px rgba(0,0,0,.35); font-style: normal; }
+.bj-ic::before { content: '符'; font-family: var(--f-disp); font-weight: 900; font-size: 9px; line-height: 1; color: #a3231b; }
+.bj-chip { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px 0 10px; border-radius: 99px; border: 1px solid rgba(226,189,107,.45); background: linear-gradient(180deg, rgba(226,189,107,.16), rgba(226,189,107,.05)); color: var(--accent); font: inherit; font-weight: 700; font-size: 14px; cursor: pointer; font-variant-numeric: tabular-nums; }
+.bj-chip.pop { animation: bjPop .6s cubic-bezier(.2,1.6,.4,1); }
+@keyframes bjPop { 40% { transform: scale(1.18); box-shadow: 0 0 22px rgba(226,189,107,.55); } }
+.lk { position: relative; border-radius: 10px; isolation: isolate; }
+.lk-c { filter: blur(7px) saturate(.6); opacity: .5; pointer-events: none; user-select: none; -webkit-user-select: none; min-height: 72px; transition: filter .85s ease, opacity .85s ease; }
+.lk.big .lk-c { min-height: 240px; max-height: 520px; overflow: hidden; -webkit-mask: linear-gradient(#000 70%, transparent); mask: linear-gradient(#000 70%, transparent); }
+.lk-o { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 10px; border-radius: inherit; background: radial-gradient(ellipse at center, rgba(10,12,18,.62), rgba(10,12,18,.12) 72%); }
+.lk.big .lk-o { justify-content: flex-start; padding-top: 70px; }
+.lk-ic { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; background: radial-gradient(circle, rgba(226,189,107,.2), rgba(226,189,107,0) 70%); }
+.lk-ic svg { width: 28px; height: 28px; fill: rgba(226,189,107,.12); stroke: var(--accent); stroke-width: 1.7; stroke-linecap: round; filter: drop-shadow(0 0 8px rgba(226,189,107,.55)); animation: lkBob 2.8s ease-in-out infinite; }
+.lk-o > b { font-family: var(--f-disp); font-size: 15px; color: var(--ink); text-shadow: 0 1px 8px #000; }
+.lk-b { appearance: none; display: inline-flex; align-items: center; gap: 7px; border: 1px solid rgba(255,230,160,.6); border-radius: 99px; padding: 9px 16px; background: linear-gradient(180deg, #ecca7c, #b98f3c); color: #1d1608; font: inherit; font-size: 13.5px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 20px rgba(226,189,107,.28); position: relative; overflow: hidden; }
+.lk-b::after { content: ''; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.55) 50%, transparent 70%); transform: translateX(-120%); animation: lkShine 3.2s ease-in-out infinite; }
+.lk-b:active { transform: scale(.96); }
+.lk.sm { display: block; }
+.dp .lk:not(.big) .lk-o > b { display: none; }
+.bj-ask .shp-btns .btn { white-space: nowrap; font-size: 15px; }
+.bj-att > div:first-child { min-width: 0; } .bj-dots i { width: 11px; height: 11px; }
+.lk.sm .lk-c { min-height: 44px; filter: blur(5px) saturate(.6); }
+.lk.sm .lk-o { flex-direction: row; gap: 4px; padding: 4px; background: none; justify-content: flex-start; }
+.lk.sm .lk-ic { width: 30px; height: 30px; } .lk.sm .lk-ic svg { width: 19px; height: 19px; }
+.lk.sm .lk-b { padding: 6px 12px; font-size: 12.5px; }
+.lk.opening .lk-c { filter: none; opacity: 1; }
+.lk.opening .lk-o { animation: lkBurn .9s cubic-bezier(.3,.6,.3,1) forwards; pointer-events: none; }
+@keyframes lkBurn { 0% { opacity: 1; } 35% { opacity: 1; transform: scale(1.08); filter: brightness(1.9); } 100% { opacity: 0; transform: scale(.7) translateY(-24px); filter: blur(8px) brightness(2.4); } }
+@keyframes lkBob { 50% { transform: translateY(-3px); } }
+@keyframes lkShine { 0%, 55% { transform: translateX(-120%); } 85%, 100% { transform: translateX(120%); } }
+.lk-mini { display: inline-block; width: 10px; height: 11px; margin-left: 4px; vertical-align: -1px; background: currentColor; opacity: .85; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 10V8a5 5 0 0 1 10 0v2h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2zm2 0h6V8a3 3 0 0 0-6 0z'/%3E%3C/svg%3E") center/contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 10V8a5 5 0 0 1 10 0v2h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2zm2 0h6V8a3 3 0 0 0-6 0z'/%3E%3C/svg%3E") center/contain no-repeat; }
+.bj-fly { position: fixed; left: 0; top: 0; z-index: 9999; width: 32px; height: 44px; border-radius: 3px; pointer-events: none; display: grid; place-items: center; background: linear-gradient(180deg, #f8e19a, #cf9f41); box-shadow: 0 0 24px rgba(255,205,110,.8), inset 0 0 0 2px rgba(150,35,25,.4); }
+.bj-fly span { font-family: var(--f-disp); font-weight: 900; color: #a3231b; font-size: 20px; }
+.bj-fly.burn { animation: bjBurn .6s forwards; }
+@keyframes bjBurn { to { opacity: 0; filter: brightness(3) blur(6px); transform: var(--t, none) scale(1.8); } }
+.bj-ask { display: grid; gap: 10px; text-align: center; padding: 6px 4px 2px; }
+.bj-ask h3 { margin: 0; font-family: var(--f-disp); font-size: 20px; color: var(--accent); }
+.bj-ask p { margin: 0; font-size: 14px; line-height: 1.6; }
+.bj-have { color: var(--muted); } .bj-have b { color: var(--ink); } .bj-have b.neg, .neg { color: #e88; } .pos { color: #8fd6a4; }
+.bj-tal { position: relative; width: 58px; height: 80px; margin: 4px auto 6px; border-radius: 4px; display: grid; place-items: center; background: linear-gradient(180deg, #f8e19a, #cf9f41); box-shadow: 0 0 34px rgba(255,205,110,.45), inset 0 0 0 3px rgba(150,35,25,.35); animation: bjFloat 3s ease-in-out infinite; }
+.bj-tal span { font-family: var(--f-disp); font-size: 34px; font-weight: 900; color: #a3231b; }
+.bj-tal i { position: absolute; inset: -14px; border-radius: 50%; border: 1px dashed rgba(226,189,107,.35); animation: spin 14s linear infinite; }
+@keyframes bjFloat { 50% { transform: translateY(-6px) rotate(2deg); } }
+.bj-shop { display: grid; gap: 12px; }
+.bj-hero { display: flex; align-items: center; gap: 16px; padding: 14px 16px; border-radius: 14px; background: radial-gradient(ellipse at 20% 50%, rgba(226,189,107,.18), rgba(226,189,107,.03) 70%), var(--bg); border: 1px solid rgba(226,189,107,.25); }
+.bj-hero span { color: var(--muted); font-size: 13px; display: block; }
+.bj-big { font-family: var(--f-disp); font-size: 34px; color: var(--accent); line-height: 1.1; } .bj-big small { font-size: 15px; margin-left: 2px; color: var(--muted); }
+.bj-stack { position: relative; width: 54px; height: 62px; flex: none; }
+.bj-stack i { position: absolute; left: 12px; top: 4px; width: 32px; height: 46px; border-radius: 3px; background: linear-gradient(180deg, #f8e19a, #cf9f41); box-shadow: inset 0 0 0 2px rgba(150,35,25,.35), 0 3px 10px rgba(0,0,0,.4); display: grid; place-items: center; }
+.bj-stack i:nth-child(1) { transform: rotate(-16deg) translateX(-8px); opacity: .7; } .bj-stack i:nth-child(2) { transform: rotate(12deg) translateX(8px); opacity: .85; }
+.bj-stack span { font-family: var(--f-disp); font-weight: 900; color: #a3231b; font-size: 18px; }
+.bj-packs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.bj-pack { position: relative; display: grid; justify-items: center; gap: 4px; padding: 16px 8px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--paper-2); color: var(--ink); font: inherit; cursor: pointer; animation: rise .5s cubic-bezier(.2,.8,.2,1) backwards; animation-delay: calc(var(--i) * .08s); transition: transform .2s, border-color .2s; }
+.bj-pack:active { transform: scale(.97); }
+.bj-pack.best { border-color: rgba(226,189,107,.7); background: linear-gradient(180deg, rgba(226,189,107,.14), var(--paper-2)); box-shadow: 0 0 0 1px rgba(226,189,107,.2), 0 8px 26px rgba(226,189,107,.12); }
+.bj-pack b { font-family: var(--f-disp); font-size: 17px; }
+.bj-note { font-size: 12px; color: var(--muted); }
+.bj-price { margin-top: 6px; padding: 6px 14px; border-radius: 99px; background: linear-gradient(180deg, #ecca7c, #b98f3c); color: #1d1608; font-weight: 800; font-size: 14.5px; }
+.bj-tag { position: absolute; top: -9px; right: 8px; font-style: normal; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 99px; background: #c0392b; color: #fff; }
+.bj-pk-art { display: flex; height: 40px; align-items: center; }
+.bj-pk-art i { width: 22px; height: 32px; margin: 0 -4px; border-radius: 2px; background: linear-gradient(180deg, #f8e19a, #cf9f41); box-shadow: inset 0 0 0 2px rgba(150,35,25,.3), 0 2px 6px rgba(0,0,0,.4); }
+.bj-pk-art i:nth-child(1) { transform: rotate(-12deg); } .bj-pk-art i:nth-child(2) { transform: translateY(-4px); } .bj-pk-art i:nth-child(3) { transform: rotate(12deg); }
+.bj-pack.wait { opacity: .6; pointer-events: none; } .bj-pack.wait .bj-price { color: transparent; background-image: linear-gradient(90deg, #b98f3c, #f3dc9a, #b98f3c); background-size: 200%; animation: bjWait 1s linear infinite; }
+@keyframes bjWait { to { background-position: -200% 0; } }
+.bj-warn { margin: 0; font-size: 13px; color: #f0c674; background: rgba(240,198,116,.08); border-radius: 10px; padding: 9px 12px; }
+.bj-att { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
+.bj-att b { display: block; font-size: 14px; } .bj-att span { font-size: 12px; color: var(--muted); }
+.bj-dots { display: flex; gap: 5px; flex: none; } .bj-dots i { width: 13px; height: 13px; border-radius: 50%; border: 1px solid rgba(226,189,107,.45); } .bj-dots i.on { background: radial-gradient(circle, #f3d98b, #b98f3c); box-shadow: 0 0 8px rgba(226,189,107,.5); }
+.bj-law, .bj-hist { font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
+.bj-law summary, .bj-hist summary { cursor: pointer; color: var(--ink); font-size: 13.5px; }
+.bj-law ul { margin: 8px 0; padding-left: 18px; display: grid; gap: 4px; line-height: 1.55; } .bj-law a { color: var(--accent); }
+.bj-hist ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; } .bj-hist li { display: grid; grid-template-columns: 76px 1fr auto; gap: 8px; font-size: 13px; } .bj-hist em { font-style: normal; color: var(--ink); }
+.bj-restore { justify-self: center; padding: 6px 16px; font-size: 13px; }
+@media (max-width: 360px) { .bj-chip { padding: 0 9px; } .bj-packs { gap: 8px; } }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .mast h1 .ttl { color: var(--ink); background: none; }
@@ -1388,6 +1463,7 @@ function cell(stem, isStem, dm, isDay, pos) {
 }
 
 function render(f, r, a, isSample) {
+  BJ.pid = isSample ? 'sample' : bjPid(f);
   const dm = r.dp.s;
   const who = f.name || (isSample ? '예시' : '이름 없음');
   const lun = r.lunar ? `음력 ${r.lunar.y}.${r.lunar.m}${r.lunar.leap ? '(윤)' : ''}.${r.lunar.d}` : '';
@@ -1499,6 +1575,7 @@ function render(f, r, a, isSample) {
     </article>`).join('');
 
   LAST = { f, r, a, F };
+  setTimeout(bjRefresh, 0);
   renderPeriodTabs(); renderPeriod(r, a, f.gender, PSTATE.kind || 'day', false);
   SCN.mine = { stem: dm, br: r.dp.b, season: seasonOf(r.mp.b), tod: todOfBranch(f.timeKnown && r.hp ? r.hp.b : r.dp.b) };
   SCN.cur = { ...SCN.mine }; applyScene(false);
@@ -1574,7 +1651,7 @@ function init() {
   fillCities();
   initPolish();
   initIntro();
-  initUI();
+  initUI(); bjInit();
   $('#notime').addEventListener('change', e => { $('#bt').disabled = e.target.checked; });
   $('#form').addEventListener('submit', e => {
     e.preventDefault();
@@ -4013,7 +4090,7 @@ function renderPeriod(r, a, gender, kind, animate = true) {
     <dl class="pv-dl">${T.lines.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
     <div class="pv-lucky"><span>행운의 색 <b>${D.lucky.color}</b></span><span>숫자 <b>${D.lucky.num}</b></span><span>방향 <b>${D.lucky.dir}</b></span>${D.lucky.time ? `<span>좋은 시간 <b>${D.lucky.time}</b></span>` : ''}</div>`;
   const pv = $('#pView');
-  pv.innerHTML = html;
+  pv.innerHTML = kind === 'ten' ? lk('ten', html, 'big') : html;
   if (animate) { pv.classList.remove('flip'); void pv.offsetWidth; pv.classList.add('flip'); }
   requestAnimationFrame(() => requestAnimationFrame(() => {
     pv.querySelectorAll('[data-w]').forEach(e => { e.style.width = e.dataset.w; });
@@ -4082,7 +4159,7 @@ const ASSET_BY_EL = ['성장주·교육·콘텐츠 기업', 'IT·반도체·에�
 
 function bar3(label, v, note) { return `<div class="m3"><div class="m3h"><span>${label}</span><b class="cnt" data-n="${v}">0</b></div><i><em data-w="${v}%"></em></i>${note ? `<p>${note}</p>` : ''}</div>`; }
 const chips = arr => `<div class="chips">${arr.map((x, i) => `<span style="--i:${i}">${x}</span>`).join('')}</div>`;
-const block = (t, body, cls = '') => `<section class="dp ${cls}"><h4>${t}</h4>${body}</section>`;
+const block = (t, body, cls = '', key) => `<section class="dp ${cls}"><h4>${t}</h4>${key ? lk(key, body) : body}</section>`;
 
 function deepLove(r, a, gender) {
   const dm = r.dp.s, de = stemEl(dm);
@@ -4093,9 +4170,9 @@ function deepLove(r, a, gender) {
   DEEPSUM.love = { el: best, persona: P.persona, look: P.look, jobs: P.jobs, hap: hapStem };
   h += block('나와 잘 맞는 사람', `
     <div class="pt-hero"><span class="pt-el ${elCls(best)}">${EL_H[best]}</span><div><b>${EL[best]}(${EL_H[best]})의 기운을 가진 사람</b><p>내게 부족한 기운을 채워 주는 상대입니다.</p></div></div>
-    <dl class="pt-dl"><div><dt>성격</dt><dd>${P.persona}</dd></div><div><dt>직업</dt><dd>${chips(P.jobs)}</dd></div><div><dt>외모</dt><dd>${P.look}</dd></div><div><dt>만나기 좋은 곳</dt><dd>${P.meet}</dd></div></dl>`, 'love');
+    <dl class="pt-dl"><div><dt>성격</dt><dd>${P.persona}</dd></div><div><dt>직업</dt><dd>${lk('love_job', chips(P.jobs), 'sm')}</dd></div><div><dt>외모</dt><dd>${P.look}</dd></div><div><dt>만나기 좋은 곳</dt><dd>${P.meet}</dd></div></dl>`, 'love');
   if (spouseEl !== best) h += block(`끌리는 배우자 별 · ${EL[spouseEl]}(${EL_H[spouseEl]}) 유형`, `<p>${gender === 'M' ? '재성' : '관성'}에 해당하는 ${EL[spouseEl]} 기운의 사람에게 자연스럽게 끌립니다. ${P2.persona}</p><p class="muted">외모: ${P2.look}</p>`, 'love');
-  h += block('천간합 인연', `<div class="pair"><span class="${elCls(stemEl(dm))}">${STEM_H[dm]}</span><em>합</em><span class="${elCls(stemEl(hapStem))}">${STEM_H[hapStem]}</span></div><p>일간이 <b>${STEM_K[hapStem]}${EL[stemEl(hapStem)]}(${STEM_H[hapStem]})</b>인 사람과는 처음 만나도 묘하게 통하는 천생연분의 합입니다. ${TEMPER[hapStem].kw.slice(0, 3).map(k => '#' + k).join(' ')}</p>`, 'love');
+  h += block('천간합 인연', `<div class="pair"><span class="${elCls(stemEl(dm))}">${STEM_H[dm]}</span><em>합</em><span class="${elCls(stemEl(hapStem))}">${STEM_H[hapStem]}</span></div><p>일간이 <b>${STEM_K[hapStem]}${EL[stemEl(hapStem)]}(${STEM_H[hapStem]})</b>인 사람과는 처음 만나도 묘하게 통하는 천생연분의 합입니다. ${TEMPER[hapStem].kw.slice(0, 3).map(k => '#' + k).join(' ')}</p>`, 'love', 'love_hap');
   h += block('끌리지만 부딪히기 쉬운 유형', `<p>일간이 <b>${STEM_K[clashStem]}${EL[stemEl(clashStem)]}(${STEM_H[clashStem]})</b>인 사람은 강하게 끌리지만 주도권 다툼이 생기기 쉽습니다. 서로 역할을 나누면 오히려 자극이 되는 관계가 됩니다.</p>`, 'love');
   return h;
 }
@@ -4121,7 +4198,7 @@ function deepWork(r, a) {
   DEEPSUM.work = { top, jobs: JOBS_BY_GROUP[top], promoScore, promo: promo.map(y => y.Y) };
   let h = '';
   h += block('어울리는 직업', `<p>가장 강한 기운은 <b>${top}</b>입니다. 이런 직업에서 실력이 잘 드러납니다.</p>${chips(JOBS_BY_GROUP[top])}<p class="muted">보완 오행 ${EL[a.yong]}(${EL_H[a.yong]})과 맞는 업종: ${INDUSTRY[a.yong]}</p>`, 'work');
-  h += block('승진운', `${bar3('승진·인정 지수', promoScore)}<p>${promoText}</p>${promo.length ? `<p class="hl">승진·자리 이동 기회가 큰 해: <b>${promo.map(y => `${y.Y}년`).join(', ')}</b></p>` : ''}${move.length ? `<p class="muted">이직·부서 이동 같은 변동수가 있는 해: ${move.map(y => `${y.Y}년`).join(', ')}</p>` : ''}`, 'work');
+  h += block('승진운', `${bar3('승진·인정 지수', promoScore)}<p>${promoText}</p>${promo.length ? `<p class="hl">승진·자리 이동 기회가 큰 해: <b>${promo.map(y => `${y.Y}년`).join(', ')}</b></p>` : ''}${move.length ? `<p class="muted">이직·부서 이동 같은 변동수가 있는 해: ${move.map(y => `${y.Y}년`).join(', ')}</p>` : ''}`, 'work', 'work_promo');
   h += block('함께 일하는 사람들', `<dl class="pt-dl"><div><dt>상사와의 관계</dt><dd>${boss}</dd></div><div><dt>동료와의 관계</dt><dd>${peer}</dd></div><div><dt>후배·부하와의 관계</dt><dd>${junior}</dd></div><div><dt>귀인</dt><dd>${helper}</dd></div></dl>`, 'work');
   h += block('일하는 스타일', `<p>${TEMPER[dm].work}</p>`, 'work');
   return h;
@@ -4169,7 +4246,7 @@ function deepMoney(r, a, gender) {
   h += block('돈 버는 유형', `<div class="pt-hero"><span class="pt-el money-ic">財</span><div><b>${type}</b><p>${typeText}</p></div></div>
     <div class="m3s">${bar3('버는 힘', earn)}${bar3('모으는 힘', save)}${bar3('쓰는 힘(씀씀이)', spend)}</div>
     <dl class="pt-dl"><div><dt>돈을 잘 버는 사람인가요?</dt><dd>${earnQ}</dd></div><div><dt>돈을 잘 쓰는 사람인가요?</dt><dd>${spendQ}</dd></div></dl>`, 'money');
-  h += block('돈이 많이 들어오는 시기', `<div class="mtop">${top.map((y, i) => `<div class="mt" style="--i:${i}"><b>${y.Y}</b><span>${y.Y - r.solar.y + 1}세</span><em class="${elCls(stemEl(y.p.s))}-t">${STEM_H[y.p.s]}${BR_H[y.p.b]}</em><i class="cnt" data-n="${y.m}">0</i></div>`).join('')}</div>${du ? `<p>재성이 들어오는 <b>${du.age}세 대운(${du.year}년~)</b>은 10년에 걸쳐 재물 기회가 커지는 시기입니다.</p>` : ''}`, 'money');
+  h += block('돈이 많이 들어오는 시기', `<div class="mtop">${top.map((y, i) => `<div class="mt" style="--i:${i}"><b>${y.Y}</b><span>${y.Y - r.solar.y + 1}세</span><em class="${elCls(stemEl(y.p.s))}-t">${STEM_H[y.p.s]}${BR_H[y.p.b]}</em><i class="cnt" data-n="${y.m}">0</i></div>`).join('')}</div>${du ? `<p>재성이 들어오는 <b>${du.age}세 대운(${du.year}년~)</b>은 10년에 걸쳐 재물 기회가 커지는 시기입니다.</p>` : ''}`, 'money', 'money_time');
   h += block('어울리는 투자', `${chips(inv)}<p>${risk}</p><p class="muted small">사주 해석은 재미와 참고용이며 실제 투자 판단의 근거가 될 수 없습니다.</p>`, 'money');
   h += block('돈을 잘 쓰는 법', `<ul class="tips">${useTips.map(x => `<li>${x}</li>`).join('')}</ul>`, 'money');
   return h;
@@ -4228,8 +4305,8 @@ function deepMarry(r, a, gender) {
     <div><dt>직업</dt><dd>${chips(P.jobs)}</dd></div>
     <div><dt>외모</dt><dd>${P.look}</dd></div></dl>`, 'marry');
   h += block('결혼하기 좋은 때', `<div class="mtop">${best.map((y, i) => `<div class="mt" style="--i:${i}"><b>${y.Y}</b><span>${y.age}세</span><em class="${elCls(stemEl(y.p.s))}-t">${STEM_H[y.p.s]}${BR_H[y.p.b]}</em><i>${i === 0 ? '추천' : '좋음'}</i></div>`).join('')}</div>
-    <p>배우자 별이 들어오거나 배우자 자리와 합이 드는 해입니다. 계절은 <b>${SEASON_OF_EL[a.yong]}</b>, 달로는 <b>${hapMonths.slice(0, 4).join(' · ') || SEASON_OF_EL[a.yong]}</b>이 좋습니다.</p>`, 'marry');
-  h += block('예식 추천', `<div class="wed"><div class="wed-c"><span class="wed-k">장소</span><b>${V.io}</b><em>${V.name}</em></div><div class="wed-c"><span class="wed-k">시간</span><b>${WT[0]}</b><em>${WT[1]}</em></div><div class="wed-c"><span class="wed-k">포인트 색</span><b>${EL_LUCK[a.yong].color.split('·')[0]}</b><em>${EL_LUCK[a.yong].color}</em></div></div><p>${V.why} 시간은 ${WT[2]}이 두 사람의 기운을 돕습니다.</p>`, 'marry');
+    <p>배우자 별이 들어오거나 배우자 자리와 합이 드는 해입니다. 계절은 <b>${SEASON_OF_EL[a.yong]}</b>, 달로는 <b>${hapMonths.slice(0, 4).join(' · ') || SEASON_OF_EL[a.yong]}</b>이 좋습니다.</p>`, 'marry', 'marry_time');
+  h += block('예식 추천', `<div class="wed"><div class="wed-c"><span class="wed-k">장소</span><b>${V.io}</b><em>${V.name}</em></div><div class="wed-c"><span class="wed-k">시간</span><b>${WT[0]}</b><em>${WT[1]}</em></div><div class="wed-c"><span class="wed-k">포인트 색</span><b>${EL_LUCK[a.yong].color.split('·')[0]}</b><em>${EL_LUCK[a.yong].color}</em></div></div><p>${V.why} 시간은 ${WT[2]}이 두 사람의 기운을 돕습니다.</p>`, 'marry', 'marry_wed');
   return h;
 }
 
@@ -4258,7 +4335,7 @@ function deepStudy(r, a) {
   h += block('공부 능력', `<div class="m3s">${bar3('집중력', focus)}${bar3('암기력', memory)}${bar3('응용력', apply)}${bar3('시험운', exam)}</div>`, 'study');
   h += block(`공부 스타일 · ${style[0]}`, `<p>${style[1]}</p><dl class="pt-dl"><div><dt>집중 잘 되는 시간</dt><dd><b>${STUDY_TIME[a.yong]}</b></dd></div><div><dt>공부 자리</dt><dd>${EL_LUCK[a.yong].dir}쪽을 바라보는 책상, ${EL_LUCK[a.yong].color} 계열 소품</dd></div><div><dt>슬럼프 탈출</dt><dd>${slump}</dd></div></dl>`, 'study');
   h += block('잘 맞는 전공·자격', `<p>보완 오행 ${EL[a.yong]}(${EL_H[a.yong]})과 통하는 분야: <b>${MAJOR[a.yong]}</b></p>${chips(CERTS[top])}`, 'study');
-  h += block('시험·합격운이 좋은 해', `<div class="mtop">${best.map((y, i) => `<div class="mt" style="--i:${i}"><b>${y.Y}</b><span>${y.Y - r.solar.y + 1}세</span><em class="${elCls(stemEl(y.p.s))}-t">${STEM_H[y.p.s]}${BR_H[y.p.b]}</em><i>${tenGod(dm, y.p.s)}</i></div>`).join('')}</div><p>인성·관성이 들어와 문서·합격·자격 운이 열리는 해입니다.</p>`, 'study');
+  h += block('시험·합격운이 좋은 해', `<div class="mtop">${best.map((y, i) => `<div class="mt" style="--i:${i}"><b>${y.Y}</b><span>${y.Y - r.solar.y + 1}세</span><em class="${elCls(stemEl(y.p.s))}-t">${STEM_H[y.p.s]}${BR_H[y.p.b]}</em><i>${tenGod(dm, y.p.s)}</i></div>`).join('')}</div><p>인성·관성이 들어와 문서·합격·자격 운이 열리는 해입니다.</p>`, 'study', 'study_exam');
   return h;
 }
 
@@ -4384,6 +4461,7 @@ let SHARE_BLOB = null, SHARE_URL = null, SHARE_NAME = '';
 async function getDownloads() { try { return window.claude && claude.use ? await claude.use('downloads') : null; } catch (e) { return null; } }
 async function openShare(mode) {
   if (!LAST) return;
+  if (!bjOpen('share')) { bjAsk('share', () => openShare(mode)); return; }
   const full = mode === 'full';
   SFX.shutter();
   const flash = $('#flash'); flash.classList.remove('on'); void flash.offsetWidth; flash.classList.add('on');
@@ -4552,7 +4630,7 @@ async function buildFullImage() {
   return out;
 }
 // ===== 출시용 다듬기: 설정 · 프로필 흐름 · 궁합 =====
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.1.0';
 const PRIVACY_URL = 'https://raw.githack.com/wlswntjd205-byte/juseong/jinsim-sindang/privacy.html';
 const CONTACT = 'wlswntjd205@gmail.com';
 function lsGet(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }
@@ -4577,11 +4655,12 @@ function settingsHTML() {
     <div class="st-row"><div><b>화면 효과</b><span>${AUTO_LITE ? '이 기기는 가볍게를 권장해요' : '배터리를 아끼려면 가볍게'}</span></div>${seg('lite', [['false', '화려하게'], ['true', '가볍게']], isLite())}</div>
     <div class="st-row"><div><b>시작 화면</b><span>부적이 날아오는 첫 화면</span></div>${seg('intro', [['full', '매번'], ['quick', '간단히'], ['off', '건너뛰기']], introMode())}</div>
     <div class="st-row"><div><b>소리</b><span>배경음악과 효과음</span></div>${seg('sound', [['on', '켜기'], ['off', '끄기']], AU.muted ? 'off' : 'on')}</div>
+    ${bjSettingsHTML()}
     <h3 class="st-h">앱 정보</h3>
     <dl class="st-info">
       <div><dt>버전</dt><dd>${APP_VERSION}</dd></div>
       <div><dt>문의</dt><dd><span class="sel">${CONTACT}</span> <button type="button" class="st-mini" data-copy="${CONTACT}">복사</button></dd></div>
-      <div><dt>개인정보</dt><dd>입력한 정보는 이 기기에만 저장되고 어디로도 보내지 않아요. <a href="${PRIVACY_URL}" target="_blank" rel="noopener">개인정보처리방침</a></dd></div>
+      <div><dt>개인정보</dt><dd>입력한 정보는 이 기기에만 저장되고 어디로도 보내지 않아요. <a href="${PRIVACY_URL}" target="_blank" rel="noopener">개인정보처리방침</a> · <a href="${TERMS_URL}" target="_blank" rel="noopener">이용약관</a></dd></div>
       <div><dt>안내</dt><dd>사주·운세 풀이는 전통 명리학을 바탕으로 한 오락·참고용이며 의학·법률·투자 판단을 대신하지 않아요.</dd></div>
       <div><dt>글꼴</dt><dd>Noto Serif KR, IBM Plex Sans KR (SIL Open Font License 1.1)</dd></div>
     </dl>
@@ -4723,7 +4802,8 @@ function runCompat() {
   const R = compatCalc({ r: LAST.r, a: LAST.a, f: LAST.f }, { r: r2, a: a2, f: P });
   const C = 2 * Math.PI * 46;
   const pill = (r, f, n) => `<div class="cp-p"><span class="cp-n">${n}</span><span class="cp-c"><i class="${elCls(stemEl(r.dp.s))}">${STEM_H[r.dp.s]}</i><i class="${elCls(BR_EL[r.dp.b])}">${BR_H[r.dp.b]}</i></span><span class="cp-t">${ANIMAL[r.yp.b]}띠 · ${f.gender === 'M' ? '남' : '여'}</span></div>`;
-  $('#cpOut').innerHTML = `
+  const cpKey = 'compat:' + bjHash(JSON.stringify([P.raw, P.cal, P.time, P.gender]));
+  $('#cpOut').innerHTML = lk(cpKey, `
     <div class="cp-top">${pill(LAST.r, LAST.f, R.n1)}
       <svg class="pv-ring cp-ring" viewBox="0 0 110 110" aria-label="궁합 ${R.total}점"><circle class="rb" cx="55" cy="55" r="46"/><circle class="rf" cx="55" cy="55" r="46" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${C.toFixed(1)}" data-off="${(C * (1 - R.total / 100)).toFixed(1)}"/><text x="55" y="58" class="pv-n cnt" data-n="${R.total}">0</text><text x="55" y="76" class="pv-g">궁합</text></svg>
       ${pill(r2, P, R.n2)}</div>
@@ -4731,7 +4811,7 @@ function runCompat() {
     <div class="pcs">${Object.entries(R.S).map(([k, v], i) => `<div class="pc pc-${['love', 'money', 'work', 'health'][[ '연애', '재물', '성격', '결혼·생활' ].indexOf(k)]}"><span>${k}</span><b class="cnt" data-n="${v}">0</b><i><em data-w="${v}%"></em></i></div>`).join('')}</div>
     ${compatDetail({ r: LAST.r, a: LAST.a, f: LAST.f }, { r: r2, a: a2, f: P }, R)}
     <p class="tip"><span>두 사람을 위한 조언</span><b>${R.tip}</b></p>
-    ${$('#cpSel').value === 'new' ? '<button type="button" class="btn sec" id="cpSave">상대 명식 저장하기</button>' : ''}`;
+    ${$('#cpSel').value === 'new' ? '<button type="button" class="btn sec" id="cpSave">상대 명식 저장하기</button>' : ''}`, 'big', '두 사람의 궁합 전체 풀이');
   const out = $('#cpOut'); out.hidden = false; out.classList.remove('flip'); void out.offsetWidth; out.classList.add('flip');
   SFX.chime(); sparkBurst(innerWidth / 2, out.getBoundingClientRect().top + 60, 24, true);
   requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -4820,6 +4900,240 @@ function compatDetail(A, B, R) {
   ];
   return `<div class="cp-tabs" role="tablist">${tabs.map(([k, n], i) => `<button type="button" class="ptab${i ? '' : ' on'}" data-k="${k}">${n}</button>`).join('')}</div>
     <div class="cp-panels">${tabs.map(([k, , h], i) => `<div class="cp-panel${i ? '' : ' on'}" data-k="${k}"${i ? ' hidden' : ''}>${h}</div>`).join('')}</div>`;
+}
+
+// ===== 부적 지갑 · 잠금 풀이 · 인앱 결제(Google Play) =====
+const BJ_COST = 3;          // 잠금 하나를 여는 데 드는 부적 수
+const BJ_WELCOME = 3;       // 첫 실행 선물
+const BJ_ATTEND = 7;        // 출석 도장 7개 → 부적 1장
+const BJ_WEB_DEMO = false;  // 미리보기 빌드에서만 true (웹에서 체험 충전)
+const TERMS_URL = 'https://raw.githack.com/wlswntjd205-byte/juseong/jinsim-sindang/terms.html';
+const BJ_PACKS = [
+  { id: 'bujeok_10', n: 10, price: '₩5,000', note: '풀이 3개 열기' },
+  { id: 'bujeok_30', n: 30, price: '₩10,000', note: '풀이 10개 열기', best: '33% 더 저렴' },
+];
+const BJ_NAMES = { ten: '10년 운세', love_job: '잘 맞는 사람의 직업', love_hap: '천간합 인연', marry_time: '결혼하기 좋은 때', marry_wed: '예식 추천', money_time: '돈이 많이 들어오는 시기', work_promo: '승진운', study_exam: '시험·합격운이 좋은 해', share: '결과 이미지 공유', compat: '궁합 전체 풀이' };
+const LOCK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.8" y="10.4" width="14.4" height="10.2" rx="2.4"/><path d="M8 10.4V7.9a4 4 0 0 1 8 0v2.5"/><circle cx="12" cy="15.3" r="1.25"/><path d="M12 16.4v1.6"/></svg>';
+const BJ = { pid: '', after: null, busy: false };
+
+function bjHash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); }
+function bjPid(f) { return bjHash(JSON.stringify([f.raw, f.cal, f.time, f.timeKnown, f.gender, f.cityIdx, f.ziMode])); }
+
+// 저장소: 앱이면 네이티브(SharedPreferences, 백업 포함), 웹이면 localStorage
+function bjStore() {
+  const A = window.AndroidBridge;
+  if (A && A.bjBalance) return {
+    app: true,
+    bal: () => +A.bjBalance() || 0,
+    spend: n => !!A.bjSpend(n),
+    grant: (n, why) => +A.bjGrant(n, why || '') || 0,
+    get: k => { try { return JSON.parse(A.kvGet(k) || 'null'); } catch (e) { return null; } },
+    set: (k, v) => { try { A.kvSet(k, JSON.stringify(v)); } catch (e) {} },
+  };
+  return {
+    app: false,
+    bal: () => lsGet('saju.bj.n', 0),
+    spend: n => { const b = lsGet('saju.bj.n', 0); if (b < n) return false; lsSet('saju.bj.n', b - n); return true; },
+    grant: n => { const b = lsGet('saju.bj.n', 0) + n; lsSet('saju.bj.n', b); return b; },
+    get: k => lsGet('saju.bj.' + k, null),
+    set: (k, v) => lsSet('saju.bj.' + k, v),
+  };
+}
+const bjW = () => (bjW.s || (bjW.s = bjStore()));
+const bjU = () => bjW().get('u') || {};
+const bjFull = key => key === 'share' ? 'share' : BJ.pid + ':' + key;
+function bjOpen(key) {
+  if (key !== 'share' && BJ.pid === 'sample') return true; // 예시 명식은 모두 미리보기
+  return !!bjU()[bjFull(key)];
+}
+function bjLog(d, what) { const h = bjW().get('h') || []; h.unshift({ t: Date.now(), d, w: what }); bjW().set('h', h.slice(0, 40)); }
+const bjName = key => BJ_NAMES[key.split(':')[0]] || '';
+
+// 잠금 래퍼: 내용은 흐리게, 위에 자물쇠 + 열기 버튼
+function lk(key, html, size = '', label) {
+  if (bjOpen(key)) return html;
+  const name = label || bjName(key);
+  return `<div class="lk ${size}" data-lk="${key}"><div class="lk-c" inert aria-hidden="true">${html}</div><div class="lk-o"><span class="lk-ic">${LOCK_SVG}</span>${size === 'sm' ? '' : `<b>${name}</b>`}<button type="button" class="lk-b" data-lk-open="${key}" aria-label="${name} 부적 ${BJ_COST}장으로 열기"><i class="bj-ic" aria-hidden="true"></i>${size === 'sm' ? `${BJ_COST}장으로 열기` : `부적 ${BJ_COST}장으로 열기`}</button></div></div>`;
+}
+
+function bjChip() { const n = bjW().bal(); const e = $('#bjN'); if (e) { if (+e.textContent !== n) { e.textContent = n; const c = $('#bjChip'); c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop'); } } return n; }
+// 잠금 표시 갱신(탭·공유 버튼의 작은 자물쇠)
+function bjRefresh() {
+  bjChip();
+  const mark = (el, on) => { if (!el) return; let m = el.querySelector('.lk-mini'); if (on && !m) el.insertAdjacentHTML('beforeend', '<i class="lk-mini" aria-hidden="true"></i>'); if (!on && m) m.remove(); };
+  mark(document.querySelector('.ptab[data-k=ten]'), !bjOpen('ten'));
+  document.querySelectorAll('#share, #share2, .share-all, .ftshare').forEach(b => mark(b, !bjOpen('share')));
+}
+
+// 잠금 열기 확인 창
+function bjAsk(key, then) {
+  BJ.after = then || null;
+  const have = bjW().bal(), name = bjName(key), ok = have >= BJ_COST;
+  openModal(`<div class="bj-ask">
+    <div class="bj-tal" aria-hidden="true"><span>符</span><i></i></div>
+    <h3>${name}</h3>
+    <p>${key === 'share' ? '결과 이미지를 저장·공유하는 기능을 엽니다.<br>한 번 열면 계속 쓸 수 있어요.' : key.startsWith('compat') ? '두 사람의 궁합 풀이 전체(성격·연애·생활·재물·시기)를 엽니다.<br>같은 상대는 다시 열 필요가 없어요.' : '부적을 태워 이 풀이를 엽니다.<br>한 번 연 풀이는 이 명식에서 계속 볼 수 있어요.'}</p>
+    <p class="bj-have">필요 <b>${BJ_COST}장</b> · 보유 <b class="${ok ? '' : 'neg'}">${have}장</b></p>
+    <div class="shp-btns">${ok ? `<button type="button" class="btn gold" id="bjUse" data-key="${key}">부적 ${BJ_COST}장 쓰기</button>` : `<button type="button" class="btn gold" id="bjToShop">부적 충전하기</button>`}<button type="button" class="btn sec" id="bjCancel">다음에</button></div>
+    ${ok ? '' : `<p class="muted small">부적이 ${BJ_COST - have}장 부족해요.</p>`}
+  </div>`);
+  $('#bjCancel').onclick = () => { BJ.after = null; closeModal(); };
+  if (ok) $('#bjUse').onclick = () => bjUnlock(key);
+  else $('#bjToShop').onclick = () => { closeModal(); setTimeout(() => bjShop(key), 260); };
+}
+
+function bjUnlock(key) {
+  if (BJ.busy) return; BJ.busy = true;
+  if (!bjW().spend(BJ_COST)) { BJ.busy = false; closeModal(); toast('부적이 부족해요'); bjShop(key); return; }
+  const U = bjU(); U[bjFull(key)] = Date.now(); bjW().set('u', U);
+  bjLog(-BJ_COST, bjName(key));
+  closeModal();
+  const then = BJ.after; BJ.after = null;
+  setTimeout(() => { bjReveal(key); BJ.busy = false; bjRefresh(); if (then) setTimeout(then, 700); bjMaybeReview(); }, 330);
+}
+
+// 부적이 날아가 타면서 흐림이 걷히는 연출
+function bjReveal(key) {
+  const els = [...document.querySelectorAll(`.lk[data-lk="${key}"]`)];
+  const chip = $('#bjChip').getBoundingClientRect();
+  els.forEach((el, i) => {
+    const o = el.querySelector('.lk-o').getBoundingClientRect();
+    const tx = o.left + o.width / 2, ty = o.top + Math.min(o.height / 2, 120);
+    const visible = o.bottom > 0 && o.top < innerHeight;
+    const done = () => {
+      el.classList.add('opening');
+      if (visible) { sparkBurst(tx, ty, 26, true); }
+      setTimeout(() => {
+        const c = el.querySelector('.lk-c');
+        if (!c) return;
+        c.removeAttribute('inert'); c.removeAttribute('aria-hidden');
+        const frag = document.createDocumentFragment();
+        while (c.firstChild) frag.appendChild(c.firstChild);
+        const parent = el.parentNode; parent.replaceChild(frag, el);
+        parent.querySelectorAll('[data-w]').forEach(e => { e.style.width = e.dataset.w; });
+        parent.querySelectorAll('.rf').forEach(e => { if (e.dataset.off) e.style.strokeDashoffset = e.dataset.off; });
+        parent.querySelectorAll('.cnt').forEach(e => { if (e.textContent === '0') countUp(e, +e.dataset.n, 900); });
+      }, 900);
+    };
+    if (!visible || REDUCE() || i > 0) { done(); return; }
+    const f = document.createElement('div'); f.className = 'bj-fly'; f.innerHTML = '<span>符</span>';
+    document.body.appendChild(f);
+    const sx = chip.left + chip.width / 2 - 16, sy = chip.top + chip.height / 2 - 22;
+    const an = f.animate([
+      { transform: `translate(${sx}px,${sy}px) rotate(-20deg) scale(.6)`, opacity: 0 },
+      { transform: `translate(${(sx + tx) / 2}px,${Math.min(sy, ty) - 60}px) rotate(160deg) scale(1.3)`, opacity: 1, offset: .55 },
+      { transform: `translate(${tx - 16}px,${ty - 22}px) rotate(360deg) scale(1)`, opacity: 1 },
+    ], { duration: 720, easing: 'cubic-bezier(.3,.7,.3,1)' });
+    an.onfinish = () => { f.classList.add('burn'); setTimeout(() => f.remove(), 600); done(); };
+  });
+  SFX.unlock();
+  toast(`${bjName(key)} 풀이가 열렸어요`);
+}
+
+// 부적 상점
+function bjShop(fromKey) {
+  const W = bjW(), have = W.bal(), canPay = W.app || BJ_WEB_DEMO;
+  const att = W.get('att') || { d: '', s: 0 };
+  openSheet(`<div class="bj-shop">
+    <div class="bj-hero"><div class="bj-stack" aria-hidden="true"><i></i><i></i><i><span>符</span></i></div><div><span>보유 부적</span><b class="bj-big">${have}<small>장</small></b></div></div>
+    <h3 class="st-h">부적 충전</h3>
+    <p class="muted">잠긴 풀이 하나를 여는 데 부적 ${BJ_COST}장이 필요해요.</p>
+    <div class="bj-packs">${BJ_PACKS.map((p, i) => `<button type="button" class="bj-pack${p.best ? ' best' : ''}" data-buy="${p.id}" style="--i:${i}">
+      ${p.best ? `<em class="bj-tag">${p.best}</em>` : ''}
+      <span class="bj-pk-art" aria-hidden="true">${'<i></i>'.repeat(p.n >= 30 ? 3 : 2)}</span>
+      <b>부적 ${p.n}장</b><span class="bj-note">${p.note}</span><span class="bj-price">${p.price}</span></button>`).join('')}</div>
+    ${canPay ? '' : '<p class="bj-warn">결제는 Google Play에서 받은 진심 신당 앱에서 할 수 있어요.</p>'}
+    <div class="bj-att"><div><b>출석 도장</b><span>${BJ_ATTEND}번 방문할 때마다 부적 1장을 드려요</span></div><div class="bj-dots">${Array.from({ length: BJ_ATTEND }, (_, i) => `<i class="${i < att.s ? 'on' : ''}"></i>`).join('')}</div></div>
+    <details class="bj-law"><summary>결제·환불 안내</summary><ul>
+      <li>결제는 Google Play 계정으로 진행되며 표시 가격에는 부가가치세가 포함돼요.</li>
+      <li>부적은 디지털 아이템으로, 사용하지 않은 부적은 구매 후 7일 이내에 청약철회(환불)를 요청할 수 있어요.</li>
+      <li>이미 사용한 부적과 무료로 받은 부적(첫 방문 선물·출석 보상)은 청약철회가 제한돼요.</li>
+      <li>환불은 Google Play 고객센터 또는 아래 이메일로 요청해 주세요. 환불된 결제분의 부적은 회수될 수 있어요.</li>
+      <li>미성년자가 법정대리인의 동의 없이 결제한 경우 본인 또는 법정대리인이 취소할 수 있어요.</li>
+      <li>부적과 열어 둔 풀이는 이 기기의 앱에 저장돼요. 앱을 삭제하면 사라질 수 있으니, 결제가 반영되지 않았다면 설정의 ‘구매 복원’을 눌러 주세요.</li>
+    </ul><p><a href="${TERMS_URL}" target="_blank" rel="noopener">이용약관</a> · 문의 <span class="sel">${CONTACT}</span></p></details>
+    ${W.app ? '<button type="button" class="st-mini bj-restore" data-bj="restore">구매 복원</button>' : ''}
+  </div>`);
+  BJ.from = fromKey || null;
+  $('#sheetBody').onclick = e => {
+    const b = e.target.closest('[data-buy]');
+    if (b) { bjBuy(b.dataset.buy, b); return; }
+    if (e.target.closest('[data-bj=restore]')) bjRestore();
+  };
+}
+function bjBuy(id, btn) {
+  const W = bjW(), P = BJ_PACKS.find(p => p.id === id);
+  if (!P) return;
+  if (W.app) {
+    btn && btn.classList.add('wait');
+    try { window.AndroidBridge.buy(id); } catch (e) { toast('결제를 시작하지 못했어요'); btn && btn.classList.remove('wait'); }
+    return;
+  }
+  if (BJ_WEB_DEMO) { window.__bjPurchased(JSON.stringify({ ok: true, n: P.n, total: W.grant(P.n, 'demo:' + id), demo: true })); return; }
+  toast('결제는 Google Play 앱에서 할 수 있어요');
+}
+function bjRestore() { try { window.AndroidBridge.restore(); toast('구매 내역을 확인하고 있어요'); } catch (e) { toast('앱에서만 복원할 수 있어요'); } }
+
+// 네이티브 → 웹 콜백
+window.__bjPurchased = json => {
+  let R; try { R = typeof json === 'string' ? JSON.parse(json) : json; } catch (e) { return; }
+  document.querySelectorAll('.bj-pack.wait').forEach(b => b.classList.remove('wait'));
+  if (!R.ok) { if (R.msg) toast(R.msg); return; }
+  bjLog(R.n, R.demo ? `체험 충전 ${R.n}장` : `부적 ${R.n}장 구매`);
+  bjRefresh();
+  SFX.chime(); sparkBurst(innerWidth / 2, innerHeight * 0.4, 30, true);
+  const big = document.querySelector('.bj-big'); if (big) big.innerHTML = `${R.total}<small>장</small>`;
+  toast(R.restored ? `결제한 부적 ${R.n}장을 복원했어요` : `부적 ${R.n}장이 들어왔어요 (보유 ${R.total}장)`);
+  if (BJ.from && R.total >= BJ_COST) { const k = BJ.from; BJ.from = null; setTimeout(() => { closeSheet(); setTimeout(() => bjAsk(k, BJ.after), 340); }, 900); }
+};
+window.__bjProducts = json => {
+  try { (typeof json === 'string' ? JSON.parse(json) : json).forEach(p => { const P = BJ_PACKS.find(x => x.id === p.id); if (P && p.price) P.price = p.price; }); } catch (e) {}
+};
+
+// 인앱 리뷰: 처음 풀이를 연 뒤 한 번, 이후 60일 간격 (Google Play가 표시 횟수를 다시 제한함)
+function bjMaybeReview() {
+  const A = window.AndroidBridge; if (!A || !A.requestReview) return;
+  const last = bjW().get('rv') || 0; if (Date.now() - last < 60 * 864e5) return;
+  bjW().set('rv', Date.now());
+  setTimeout(() => { try { A.requestReview(); } catch (e) {} }, 2600);
+}
+
+// 설정 화면의 부적 지갑
+function bjSettingsHTML() {
+  const W = bjW(), h = W.get('h') || [];
+  const fmt = t => { const d = new Date(t); return `${d.getMonth() + 1}.${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+  return `<h3 class="st-h">부적 지갑</h3>
+    <div class="st-row"><div><b>보유 부적 ${W.bal()}장</b><span>잠긴 풀이 하나에 ${BJ_COST}장</span></div><button type="button" class="st-mini" data-bj="shop">충전</button></div>
+    ${W.app ? '<div class="st-row"><div><b>구매 복원</b><span>결제했는데 부적이 들어오지 않았다면</span></div><button type="button" class="st-mini" data-bj="restore">복원</button></div>' : ''}
+    <details class="bj-hist"><summary>사용 내역 ${h.length ? `(${h.length})` : ''}</summary>${h.length ? `<ul>${h.slice(0, 20).map(x => `<li><span>${fmt(x.t)}</span><em>${x.w}</em><b class="${x.d > 0 ? 'pos' : 'neg'}">${x.d > 0 ? '+' : ''}${x.d}</b></li>`).join('')}</ul>` : '<p class="muted small">아직 내역이 없어요.</p>'}</details>`;
+}
+
+function bjInit() {
+  const W = bjW();
+  const mr = document.querySelector('.mast-r');
+  if (mr && !$('#bjChip')) mr.insertAdjacentHTML('afterbegin', `<button type="button" class="bj-chip" id="bjChip" aria-label="보유 부적, 충전하기"><i class="bj-ic" aria-hidden="true"></i><b id="bjN">${W.bal()}</b></button>`);
+  $('#bjChip').addEventListener('click', () => { SFX.open(); bjShop(); });
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-lk-open]');
+    if (b) { e.preventDefault(); e.stopPropagation(); bjAsk(b.dataset.lkOpen); return; }
+    const s = e.target.closest('#sheetBody [data-bj]');
+    if (s && s.dataset.bj === 'shop') { closeSheet(); setTimeout(() => bjShop(), 340); }
+    else if (s && s.dataset.bj === 'restore' && !s.closest('.bj-shop')) bjRestore();
+  }, true);
+  // 첫 방문 선물
+  const gifts = [];
+  if (!W.get('wel')) { W.set('wel', Date.now()); W.grant(BJ_WELCOME, 'welcome'); bjLog(BJ_WELCOME, '첫 방문 선물'); gifts.push(`첫 방문 선물로 부적 ${BJ_WELCOME}장을 드려요`); }
+  // 출석 도장 (하루 한 번)
+  const d = new Date(), today = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+  const att = W.get('att') || { d: '', s: 0 };
+  if (att.d !== today) {
+    att.d = today; att.s += 1;
+    if (att.s >= BJ_ATTEND) { att.s = 0; W.grant(1, 'attend'); bjLog(1, '출석 보상'); gifts.push(`출석 도장 ${BJ_ATTEND}개! 부적 1장을 드려요`); }
+    W.set('att', att);
+  }
+  if (gifts.length) setTimeout(() => { toast(gifts.join(' · ')); bjChip(); }, introMode() === 'off' ? 1200 : 3800);
+  try { window.AndroidBridge && window.AndroidBridge.queryProducts && window.AndroidBridge.queryProducts(); } catch (e) {}
+  bjRefresh();
 }
 </script>
 </body>
