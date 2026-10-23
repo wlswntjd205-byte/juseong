@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>나는 어느 쪽? 정치성향 테스트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  /* Blue = 진보, red = 보수, violet = 중도. */
+  :root {
+    --bg: #f4f5f7;
+    --fg: #15171c;
+    --muted: #5d6370;
+    --card: #ffffff;
+    --line: #dfe2e8;
+    --blue: #1f56d4;
+    --violet: #7a4fc2;
+    --red: #d23b35;
+    --bar: linear-gradient(90deg, var(--blue) 0%, var(--violet) 50%, var(--red) 100%);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1116;
+      --fg: #eceef3;
+      --muted: #9aa1ad;
+      --card: #181b22;
+      --line: #2a2e38;
+      --blue: #5b8cff;
+      --violet: #a58af0;
+      --red: #ff6b64;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1116;
+    --fg: #eceef3;
+    --muted: #9aa1ad;
+    --card: #181b22;
+    --line: #2a2e38;
+    --blue: #5b8cff;
+    --violet: #a58af0;
+    --red: #ff6b64;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: "Noto Sans KR", system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 32px max(20px, env(safe-area-inset-right, 0px)) 48px max(20px, env(safe-area-inset-left, 0px));
+  }
+  .screen { animation: rise .35s ease both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  .eyebrow { margin: 0 0 10px; font-size: 13px; font-weight: 700; letter-spacing: .08em; color: var(--muted); }
+  .display {
+    font-family: "Black Han Sans", "Noto Sans KR", sans-serif;
+    font-weight: 400;
+    font-size: clamp(34px, 9vw, 46px);
+    line-height: 1.12;
+    margin: 0 0 16px;
+    text-wrap: balance;
+  }
+  .lead { margin: 0 0 28px; color: var(--muted); }
+  .note { margin: 24px 0 0; font-size: 13px; color: var(--muted); }
+
+  .btn {
+    font: inherit; font-weight: 700; font-size: 16px;
+    padding: 14px 18px; border-radius: 12px;
+    border: 1px solid var(--line); background: var(--card); color: var(--fg);
+    cursor: pointer;
+  }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .btn.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .btn.big { width: 100%; padding: 18px; font-size: 17px; margin-top: 8px; }
+  .btn.ghost { background: transparent; border-color: transparent; color: var(--muted); margin-top: 16px; }
+  .btn:focus-visible, .opt:focus-visible { outline: 3px solid var(--violet); outline-offset: 2px; }
+
+  .scale { display: flex; justify-content: space-between; font-size: 14px; font-weight: 700; color: var(--muted); margin-top: 10px; }
+  .bar { height: 20px; border-radius: 999px; background: var(--bar); }
+  .gauge { position: relative; margin: 0 24px; padding-top: 42px; }
+  .marker {
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center;
+    transition: left .9s cubic-bezier(.2, .7, .2, 1);
+  }
+  .marker .label {
+    font-weight: 900; font-size: 15px; padding: 3px 9px; border-radius: 6px;
+    background: var(--fg); color: var(--bg); font-variant-numeric: tabular-nums;
+  }
+  .marker .arrow {
+    width: 0; height: 0;
+    border-left: 9px solid transparent; border-right: 9px solid transparent;
+    border-top: 12px solid var(--fg);
+  }
+  .preview { margin: 8px 0 0; }
+
+  /* Quiz */
+  .progress { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+  .track { flex: 1; height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .fill { height: 100%; width: 0; background: var(--bar); transition: width .3s ease; }
+  .count { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--muted); min-width: 52px; text-align: right; }
+  .qcard { padding: 4px 0 20px; }
+  .q-tag { margin: 0 0 6px; font-size: 14px; font-weight: 700; color: var(--violet); }
+  .q-comment { display: inline-block; margin: 0 0 14px; font-size: 14px; color: var(--muted); }
+  .q-text { margin: 0; font-size: clamp(21px, 5.5vw, 25px); font-weight: 700; line-height: 1.45; text-wrap: balance; }
+  .options { display: flex; flex-direction: column; gap: 8px; }
+  .opt {
+    font: inherit; font-size: 16px; font-weight: 500; text-align: left;
+    padding: 14px 16px; border-radius: 12px;
+    border: 1px solid var(--line); background: var(--card); color: var(--fg);
+    cursor: pointer; transition: border-color .15s ease;
+  }
+  .opt:hover { border-color: var(--muted); }
+  .opt[aria-pressed="true"] { border-color: var(--fg); font-weight: 700; }
+
+  /* Result */
+  .char-head { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+  .avatar {
+    width: 112px; height: 112px; flex: none;
+    border-radius: 28px; border: 2px solid var(--line);
+    background: var(--card);
+    padding: 6px;
+    display: grid; place-items: center;
+  }
+  .avatar svg { width: 100%; height: 100%; display: block; }
+  .r-tag {
+    font-family: "Black Han Sans", "Noto Sans KR", sans-serif;
+    font-weight: 400; font-size: clamp(30px, 8.5vw, 40px); line-height: 1.15; margin: 0;
+    text-wrap: balance;
+  }
+  .r-title { margin: 4px 0 0; font-size: 15px; font-weight: 700; color: var(--muted); }
+  .r-desc { margin: 0 0 14px; color: var(--fg); }
+  .chips { margin: 0 0 14px; }
+  .chips span {
+    display: inline-block; font-size: 13px; padding: 4px 10px; margin: 0 6px 6px 0;
+    border-radius: 999px; border: 1px solid var(--line); color: var(--muted);
+  }
+  .skill { margin: 0 0 28px; font-size: 15px; }
+  .skill strong { font-weight: 700; color: var(--violet); margin-right: 6px; }
+
+  .ladder-title { margin: 0 0 10px; font-size: 14px; font-weight: 700; color: var(--muted); }
+  .ladder {
+    list-style: none; margin: 0; padding: 0;
+    border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--card);
+  }
+  .ladder li {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-top: 1px solid var(--line); font-size: 15px;
+  }
+  .ladder li:first-child { border-top: 0; }
+  .ladder .dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  .ladder .lvl { margin-left: auto; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .ladder li.on { background: var(--fg); color: var(--bg); font-weight: 700; }
+  .ladder li.on .lvl { color: var(--bg); }
+  .ladder li.on .dot { box-shadow: 0 0 0 2px var(--bg); }
+
+  .hint { font-size: 14px; color: var(--muted); margin: 28px 0 12px; }
+  .card-img {
+    display: block; width: 100%; height: auto; max-width: 100%;
+    border-radius: 14px; border: 1px solid var(--line); background: var(--card);
+  }
+  .actions { display: flex; gap: 8px; margin-top: 16px; }
+  .actions .btn { flex: 1; }
+  .status { min-height: 24px; font-size: 14px; color: var(--muted); margin: 10px 0 0; }
+  .share-text {
+    width: 100%; margin-top: 8px; padding: 12px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--card); color: var(--fg);
+    font: inherit; font-size: 15px; resize: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .screen, .marker, .fill { animation: none; transition: none; }
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <section id="intro" class="screen">
+    <p class="eyebrow">재미로 보는 테스트</p>
+    <h1 class="display">나는 어느 쪽?<br>정치성향 테스트</h1>
+    <p class="lead">12문항, 2분이면 끝나요. 결과는 13개 캐릭터 중 하나예요. 질문마다 편하게 솔직하게 골라 주세요.</p>
+    <div class="preview" aria-hidden="true">
+      <div class="bar"></div>
+      <div class="scale"><span>진보 · 파랑</span><span>보수 · 빨강</span></div>
+    </div>
+    <div style="margin-top:28px">
+      <button id="start" class="btn primary big" type="button">테스트 시작</button>
+    </div>
+    <p class="note">질문은 특정 정당이나 인물을 띄우거나 깎아내리려는 게 아니에요. 결과도 실제 정치 성향을 판정하지 않아요.</p>
+  </section>
+
+  <section id="quiz" class="screen" hidden>
+    <div class="progress">
+      <div class="track"><div id="q-fill" class="fill"></div></div>
+      <span id="q-count" class="count"></span>
+    </div>
+    <article class="qcard">
+      <p id="q-tag" class="q-tag"></p>
+      <p id="q-comment" class="q-comment"></p>
+      <h2 id="q-text" class="q-text"></h2>
+    </article>
+    <div id="options" class="options"></div>
+    <button id="back" class="btn ghost" type="button">이전 문항</button>
+  </section>
+
+  <section id="result" class="screen" hidden>
+    <p class="eyebrow">나의 결과</p>
+    <div class="char-head">
+      <div id="avatar" class="avatar" aria-hidden="true"></div>
+      <div>
+        <h2 id="r-tag" class="r-tag"></h2>
+        <p id="r-title" class="r-title"></p>
+      </div>
+    </div>
+    <p id="r-desc" class="r-desc"></p>
+    <div id="chips" class="chips"></div>
+    <p id="skill" class="skill"></p>
+
+    <div class="gauge" role="img" aria-label="진보와 보수 사이 위치">
+      <div id="marker" class="marker">
+        <span id="marker-label" class="label">50</span>
+        <span class="arrow"></span>
+      </div>
+      <div class="bar"></div>
+      <div class="scale"><span>진보 · 파랑</span><span>보수 · 빨강</span></div>
+    </div>
+
+    <p class="ladder-title" style="margin-top:28px">구간별 캐릭터</p>
+    <ol id="ladder" class="ladder"></ol>
+
+    <p class="hint">결과 카드 이미지를 길게 눌러 저장한 뒤, 카톡이나 인스타 DM에 올려 보세요. 문구만 보내고 싶다면 아래 버튼을 쓰면 돼요.</p>
+    <img id="card" class="card-img" alt="정치성향 테스트 결과 카드">
+
+    <div class="actions">
+      <button id="copy" class="btn primary" type="button">결과 문구 복사</button>
+      <button id="retry" class="btn" type="button">다시 하기</button>
+    </div>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
+    <textarea id="share-text" class="share-text" rows="4" readonly hidden></textarea>
+    <p class="note">재미로 보는 테스트예요. 결과는 답변 패턴을 대략 보여줄 뿐이에요.</p>
+  </section>
+
+</main>
+
+<script>
+  // dir: +1 means agreeing moves the result toward 보수 (red), -1 toward 진보 (blue).
+  // 6 statements of each direction, so the test stays balanced.
+  const QUESTIONS = [
+    { tag: "#집값", comment: "'영끌' 소리만 들어도 심장이 먼저 뛰는 분", text: "집값이 지나치게 오르면 정부가 적극적으로 나서야 한다.", dir: -1 },
+    { tag: "#재벌", comment: "'갑질' 뉴스 뜨면 댓글부터 달고 보는 분", text: "대기업과 재벌의 힘은 더 강하게 견제해야 한다.", dir: -1 },
+    { tag: "#노동", comment: "'칼퇴' 없으면 인생이 안 풀린다는 분", text: "최저임금과 노동자 보호는 더 강화되어야 한다.", dir: -1 },
+    { tag: "#기업", comment: "'규제 풀어라' 외치는 스타트업 대표 감성", text: "기업 규제를 풀면 투자와 일자리가 늘어난다.", dir: 1 },
+    { tag: "#안보", comment: "'유비무환' 네 글자가 제일 좋은 분", text: "평화는 강한 국방과 든든한 동맹에서 나온다.", dir: 1 },
+    { tag: "#공정", comment: "'노력은 배신하지 않는다' 짤을 저장해 둔 분", text: "노력한 만큼 가져가는 능력주의가 가장 공정하다.", dir: 1 },
+    { tag: "#교육", comment: "'수능 한 방' 소리만 들어도 뒷목 잡는 분", text: "입시 경쟁을 줄이고 교육 기회를 더 평등하게 나눠야 한다.", dir: -1 },
+    { tag: "#가족", comment: "명절 단톡방 공지 말투가 익숙한 분", text: "전통적인 가족 가치와 공동체 규범은 지켜져야 한다.", dir: 1 },
+    { tag: "#기후", comment: "기후 뉴스 나오면 텀블러부터 꺼내는 분", text: "기후 위기는 지금 당장 강한 규제로 대응해야 한다.", dir: -1 },
+    { tag: "#에너지", comment: "전기요금 고지서 앞에서 한숨 쉬는 분", text: "원전 같은 기존 에너지원을 현실적으로 계속 써야 한다.", dir: 1 },
+    { tag: "#질서", comment: "'사회 질서 무너졌다' 뉴스에 예민한 분", text: "사회 질서와 법 집행은 엄격할수록 좋다.", dir: 1 },
+    { tag: "#다양성", comment: "'각자 취향 존중'이 요즘 국룰이라고 믿는 분", text: "다양한 가족 형태와 개인의 선택은 법으로 더 존중해야 한다.", dir: -1 }
+  ];
+
+  const OPTIONS = [
+    { label: "완전 동의", v: 2 },
+    { label: "동의", v: 1 },
+    { label: "보통", v: 0 },
+    { label: "반대", v: -1 },
+    { label: "완전 반대", v: -2 }
+  ];
+
+  // 13 characters, ordered from the far blue end (index 0) to the far red end (index 12).
+  // side: b = 진보, c = 중도, r = 보수. lv = level from the centre outward (1 weakest, 6 strongest).
+  const CHARACTERS = [
+    { name: "올인 드림러", side: "b", lv: 6, kw: ["전부 바꾸기", "확신 MAX", "토론 과열"], skill: "화력 올인 장문 댓글", desc: "모든 걸 한 번에 바꾸자는 쪽이에요. 확신이 강해서 대화가 금방 뜨거워져요." },
+    { name: "판 갈이 상상러", side: "b", lv: 5, kw: ["구조 개편", "장기전", "토론 장인"], skill: "구조도 그려 오기", desc: "사회 구조부터 다시 짜야 한다고 믿어요. 토론방에서 말이 제일 길어요." },
+    { name: "급진 개혁가", side: "b", lv: 4, kw: ["빠른 개혁", "과감한 법안", "직설"], skill: "법안을 통째로 뜯어고치기", desc: "제도를 한꺼번에 바꾸자는 쪽이에요. 속도는 빠르고 가끔 설득이 과열돼요." },
+    { name: "현장 행동가", side: "b", lv: 3, kw: ["서명", "집회", "직접 행동"], skill: "현수막 3일 만에 제작", desc: "바꾸려면 직접 움직여야 한다고 믿어요. 집회와 서명에 자주 나가요." },
+    { name: "정책 덕후", side: "b", lv: 2, kw: ["공약 암기", "근거 중심", "PDF 정독"], skill: "공약 PDF 정독", desc: "말끝마다 근거를 묻는 타입이에요. 공약과 법안을 줄줄 외워요." },
+    { name: "새싹 파랑이", side: "b", lv: 1, kw: ["관심 증가", "낙관", "입문"], skill: "'세상은 바뀔 수 있다' 한마디", desc: "뉴스를 보다 '이건 좀 바뀌어야 하지 않나?' 생각하기 시작한 입문자예요." },
+    { name: "보라 밸런서", side: "c", lv: 0, kw: ["양쪽 청취", "결론 보류", "중재"], skill: "양쪽 입장 요약 정리", desc: "양쪽 얘기를 다 듣고 결론은 나중에 내는 타입이에요. 단톡방의 완충재죠." },
+    { name: "새싹 빨강이", side: "r", lv: 1, kw: ["질서 선호", "신중", "입문"], skill: "'그래도 원칙은 지켜야지'", desc: "안정과 질서가 익숙해지기 시작한 입문자예요. 바꾸기 전에 기준부터 봐요." },
+    { name: "정책 분석가", side: "r", lv: 2, kw: ["재원 확인", "수치 중심", "꼼꼼"], skill: "예산안 엑셀 정리", desc: "세금과 예산, 산업 수치를 꼼꼼히 따져요. '재원은 어디서 나와요?'가 입버릇이에요." },
+    { name: "애국 열정러", side: "r", lv: 3, kw: ["나라 사랑", "행사 참여", "결속"], skill: "태극기 들고 출동", desc: "나라 일이라면 발 벗고 나서요. 행사와 모임을 챙기는 든든한 타입이에요." },
+    { name: "원칙 수호자", side: "r", lv: 4, kw: ["법치", "기준", "강한 목소리"], skill: "법 조항 인용 폭격", desc: "원칙과 법치에 진심이에요. 기준이 흔들리는 걸 보면 바로 목소리를 높여요." },
+    { name: "전통 사수 전사", side: "r", lv: 5, kw: ["가족 가치", "공동체", "질서"], skill: "명절 단톡방 공지 발송", desc: "가족과 공동체, 질서를 지키는 데 힘을 줘요. 명절 단톡방 총지휘는 기본이에요." },
+    { name: "올드스쿨 대장", side: "r", lv: 6, kw: ["전통 고수", "확신 MAX", "토론 과열"], skill: "'옛날엔 말이야' 시전", desc: "익숙한 방식을 끝까지 지키자는 쪽이에요. 확신이 강해서 토론이 뜨거워져요." }
+  ];
+
+  const SIDE_COLOR = { b: "var(--blue)", c: "var(--violet)", r: "var(--red)" };
+  const SIDE_HEX = { b: "#1f56d4", c: "#7a4fc2", r: "#d23b35" };
+  const SIDE_DARK = { b: "#143a94", c: "#4f2f8f", r: "#8e2521" };
+  const SIDE_LABEL = { b: "진보", c: "중도", r: "보수" };
+
+  const $ = (id) => document.getElementById(id);
+  let idx = 0;
+  const answers = new Array(QUESTIONS.length).fill(null);
+  let lastText = "";
+
+  function showScreen(id) {
+    ["intro", "quiz", "result"].forEach((s) => { $(s).hidden = s !== id; });
+    window.scrollTo(0, 0);
+  }
+
+  function renderQuestion() {
+    const q = QUESTIONS[idx];
+    $("q-count").textContent = (idx + 1) + " / " + QUESTIONS.length;
+    $("q-fill").style.width = ((idx + 1) / QUESTIONS.length * 100) + "%";
+    $("q-tag").textContent = q.tag;
+    $("q-comment").textContent = q.comment;
+    $("q-text").textContent = q.text;
+
+    const box = $("options");
+    box.innerHTML = "";
+    OPTIONS.forEach((o) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "opt";
+      b.textContent = o.label;
+      b.setAttribute("aria-pressed", String(answers[idx] === o.v));
+      b.addEventListener("click", () => choose(o.v));
+      box.appendChild(b);
+    });
+    $("back").disabled = idx === 0;
+  }
+
+  function choose(v) {
+    answers[idx] = v;
+    if (idx < QUESTIONS.length - 1) {
+      idx++;
+      renderQuestion();
+    } else {
+      finish();
+    }
+  }
+
+  function finish() {
+    let raw = 0;
+    QUESTIONS.forEach((q, i) => { raw += q.dir * answers[i]; });
+    const max = QUESTIONS.length * 2;
+    let pct = Math.round((raw + max) / (2 * max) * 100);
+    pct = Math.max(0, Math.min(100, pct));
+    renderResult(pct);
+    showScreen("result");
+  }
+
+  // Each character covers an equal slice of the 0-100 scale. The centre slice (index 6) is 보라 밸런서.
+  function characterFor(pct) {
+    const i = Math.min(CHARACTERS.length - 1, Math.floor(pct * CHARACTERS.length / 100));
+    return { i, ch: CHARACTERS[i] };
+  }
+
+  function sideTitle(ch) {
+    return ch.side === "c" ? "중도" : SIDE_LABEL[ch.side] + " Lv." + ch.lv;
+  }
+
+  // Builds the character illustration as SVG. Colour follows the side, the mouth and
+  // eyebrows follow the level, and sparkles appear at the strongest levels.
+  function avatarSVG(ch) {
+    const main = SIDE_HEX[ch.side];
+    const dark = SIDE_DARK[ch.side];
+    const ink = "#15171c";
+    const lv = ch.lv;
+
+    let mouth;
+    if (ch.side === "c") {
+      mouth = '<path d="M50 78 L70 78" stroke="' + ink + '" stroke-width="4" stroke-linecap="round" fill="none"/>';
+    } else if (lv <= 2) {
+      mouth = '<path d="M48 76 Q60 84 72 76" stroke="' + ink + '" stroke-width="4" stroke-linecap="round" fill="none"/>';
+    } else if (lv <= 4) {
+      mouth = '<path d="M46 74 Q60 92 74 74" stroke="' + ink + '" stroke-width="4" stroke-linecap="round" fill="none"/>';
+    } else {
+      mouth = '<path d="M44 72 Q60 100 76 72 Z" fill="' + ink + '" stroke="' + ink + '" stroke-width="3" stroke-linejoin="round"/>';
+    }
+
+    let brows = "";
+    if (ch.side !== "c" && lv >= 4) {
+      // Blue brows slant inward, red brows slant outward.
+      const l = ch.side === "b" ? "M37 40 L52 46" : "M37 46 L52 40";
+      const r = ch.side === "b" ? "M83 40 L68 46" : "M83 46 L68 40";
+      brows = '<path d="' + l + '" stroke="' + ink + '" stroke-width="4" stroke-linecap="round"/>' +
+              '<path d="' + r + '" stroke="' + ink + '" stroke-width="4" stroke-linecap="round"/>';
+    }
+
+    let sparkles = "";
+    if (lv >= 5) {
+      const star = (x, y, s) =>
+        '<path d="M' + x + ' ' + (y - s) + ' L' + (x + s * .3) + ' ' + (y - s * .3) + ' L' + (x + s) + ' ' + y +
+        ' L' + (x + s * .3) + ' ' + (y + s * .3) + ' L' + x + ' ' + (y + s) + ' L' + (x - s * .3) + ' ' + (y + s * .3) +
+        ' L' + (x - s) + ' ' + y + ' L' + (x - s * .3) + ' ' + (y - s * .3) + ' Z" fill="' + main + '"/>';
+      sparkles = star(14, 22, 7) + star(106, 30, 5) + star(108, 92, 6);
+    }
+
+    return '<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' + ch.name + ' 캐릭터">' +
+      sparkles +
+      '<rect x="34" y="96" width="52" height="20" rx="10" fill="' + dark + '"/>' +
+      '<circle cx="60" cy="58" r="38" fill="' + main + '"/>' +
+      '<ellipse cx="46" cy="54" rx="7" ry="8" fill="#ffffff"/>' +
+      '<ellipse cx="74" cy="54" rx="7" ry="8" fill="#ffffff"/>' +
+      '<circle cx="47" cy="55" r="3.5" fill="' + ink + '"/>' +
+      '<circle cx="75" cy="55" r="3.5" fill="' + ink + '"/>' +
+      brows + mouth +
+      '</svg>';
+  }
+
+  function renderLadder(activeIdx) {
+    const list = $("ladder");
+    list.innerHTML = "";
+    CHARACTERS.forEach((c, i) => {
+      const li = document.createElement("li");
+      if (i === activeIdx) {
+        li.className = "on";
+        li.setAttribute("aria-current", "true");
+      }
+      const dot = document.createElement("span");
+      dot.className = "dot";
+      dot.style.background = SIDE_COLOR[c.side];
+      const name = document.createElement("span");
+      name.textContent = c.name;
+      const lvl = document.createElement("span");
+      lvl.className = "lvl";
+      lvl.textContent = c.side === "c" ? "중도" : SIDE_LABEL[c.side] + " " + c.lv;
+      li.append(dot, name, lvl);
+      list.appendChild(li);
+    });
+  }
+
+  function renderResult(pct) {
+    const { i, ch } = characterFor(pct);
+
+    $("avatar").innerHTML = avatarSVG(ch);
+
+    $("r-tag").textContent = ch.name;
+    $("r-title").textContent = sideTitle(ch);
+    $("r-desc").textContent = ch.desc;
+
+    const chips = $("chips");
+    chips.innerHTML = "";
+    ch.kw.forEach((k) => {
+      const s = document.createElement("span");
+      s.textContent = "#" + k;
+      chips.appendChild(s);
+    });
+
+    const skill = $("skill");
+    skill.innerHTML = "";
+    const label = document.createElement("strong");
+    label.textContent = "필살기";
+    skill.append(label, ch.skill);
+
+    renderLadder(i);
+    $("status").textContent = "";
+    $("share-text").hidden = true;
+
+    const marker = $("marker");
+    $("marker-label").textContent = pct;
+    marker.style.left = "50%";
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      marker.style.left = pct + "%";
+    }));
+
+    lastText = "[정치성향 테스트] 나는 " + ch.name + " (" + sideTitle(ch) + ") · 보수 지수 " + pct + "/100\n" +
+      ch.desc + "\n재미로 한번 해보세요!";
+
+    const img = $("card");
+    img.removeAttribute("src");
+    drawCard(pct, ch).then((canvas) => {
+      img.src = canvas.toDataURL("image/png");
+    }).catch(() => {
+      $("status").textContent = "결과 카드 이미지를 만들지 못했어요. 문구 복사 버튼을 써 주세요.";
+    });
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function wrapText(ctx, text, x, y, maxW, lh) {
+    let line = "";
+    let yy = y;
+    for (const ch of text) {
+      const test = line + ch;
+      if (ctx.measureText(test).width > maxW && line) {
+        ctx.fillText(line, x, yy);
+        line = ch;
+        yy += lh;
+      } else {
+        line = test;
+      }
+    }
+    if (line) ctx.fillText(line, x, yy);
+    return yy;
+  }
+
+  async function drawCard(pct, ch) {
+    try {
+      await Promise.all([
+        document.fonts.load('400 72px "Black Han Sans"'),
+        document.fonts.load('400 28px "Noto Sans KR"'),
+        document.fonts.load('700 40px "Noto Sans KR"')
+      ]);
+    } catch (e) { /* fall back to system fonts */ }
+
+    const W = 720, H = 960;
+    const c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    const ctx = c.getContext("2d");
+    const ink = "#15171c", muted = "#5d6370", blue = "#1f56d4", red = "#d23b35", violet = "#7a4fc2";
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, W, H);
+
+    // Character illustration, drawn from the same SVG as the result page
+    const svgText = avatarSVG(ch);
+    const blobUrl = URL.createObjectURL(new Blob([svgText], { type: "image/svg+xml" }));
+    try {
+      const im = await new Promise((resolve, reject) => {
+        const x = new Image();
+        x.onload = () => resolve(x);
+        x.onerror = reject;
+        x.src = blobUrl;
+      });
+      ctx.drawImage(im, 500, 60, 180, 180);
+    } catch (e) {
+      /* skip the illustration if it cannot load */
+    } finally {
+      URL.revokeObjectURL(blobUrl);
+    }
+
+    ctx.fillStyle = muted;
+    ctx.font = '500 28px "Noto Sans KR", sans-serif';
+    ctx.fillText("정치성향 테스트 결과", 60, 100);
+
+    ctx.fillStyle = ink;
+    ctx.font = '400 72px "Black Han Sans", "Noto Sans KR", sans-serif';
+    ctx.fillText(ch.name, 60, 260);
+
+    ctx.fillStyle = SIDE_HEX[ch.side];
+    ctx.font = '700 32px "Noto Sans KR", sans-serif';
+    ctx.fillText(sideTitle(ch), 60, 316);
+
+    ctx.fillStyle = muted;
+    ctx.font = '400 28px "Noto Sans KR", sans-serif';
+    wrapText(ctx, ch.desc, 60, 378, 600, 42);
+
+    ctx.fillStyle = ink;
+    ctx.font = '700 26px "Noto Sans KR", sans-serif';
+    ctx.fillText("필살기  " + ch.skill, 60, 520);
+
+    ctx.fillStyle = muted;
+    ctx.font = '400 24px "Noto Sans KR", sans-serif';
+    ctx.fillText(ch.kw.map((k) => "#" + k).join("  "), 60, 566);
+
+    // Gauge
+    const bx = 60, bw = 600, by = 700, bh = 36;
+    const g = ctx.createLinearGradient(bx, 0, bx + bw, 0);
+    g.addColorStop(0, blue);
+    g.addColorStop(0.5, violet);
+    g.addColorStop(1, red);
+    ctx.fillStyle = g;
+    roundRect(ctx, bx, by, bw, bh, bh / 2);
+    ctx.fill();
+
+    const ax = bx + bw * pct / 100;
+    ctx.fillStyle = ink;
+    ctx.beginPath();
+    ctx.moveTo(ax - 16, by - 52);
+    ctx.lineTo(ax + 16, by - 52);
+    ctx.lineTo(ax, by - 14);
+    ctx.closePath();
+    ctx.fill();
+
+    const lw = 96, lh = 46;
+    let lx = ax - lw / 2;
+    lx = Math.max(bx - 24, Math.min(bx + bw + 24 - lw, lx));
+    roundRect(ctx, lx, by - 52 - lh - 6, lw, lh, 8);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.font = '900 26px "Noto Sans KR", sans-serif';
+    ctx.textAlign = "center";
+    ctx.fillText(String(pct), lx + lw / 2, by - 52 - 20);
+    ctx.textAlign = "left";
+
+    ctx.font = '700 26px "Noto Sans KR", sans-serif';
+    ctx.fillStyle = blue;
+    ctx.fillText("진보", bx, by + 84);
+    ctx.fillStyle = red;
+    ctx.textAlign = "right";
+    ctx.fillText("보수", bx + bw, by + 84);
+    ctx.textAlign = "left";
+
+    ctx.fillStyle = "#e3e6eb";
+    ctx.fillRect(60, 840, 600, 2);
+    ctx.fillStyle = "#8a909c";
+    ctx.font = '400 22px "Noto Sans KR", sans-serif';
+    ctx.fillText("재미로 보는 테스트 · 실제 성향 판정 아님", 60, 890);
+
+    return c;
+  }
+
+  async function copyResult() {
+    const status = $("status");
+    try {
+      await navigator.clipboard.writeText(lastText);
+      status.textContent = "결과 문구를 복사했어요. 카톡이나 인스타 DM에 붙여넣기 하세요.";
+    } catch (e) {
+      const ta = $("share-text");
+      ta.value = lastText;
+      ta.hidden = false;
+      ta.focus();
+      ta.select();
+      status.textContent = "자동 복사가 막혀 있어요. 아래 문구를 직접 복사해 주세요.";
+    }
+  }
+
+  $("start").addEventListener("click", () => {
+    idx = 0;
+    answers.fill(null);
+    showScreen("quiz");
+    renderQuestion();
+  });
+
+  $("back").addEventListener("click", () => {
+    if (idx > 0) {
+      idx--;
+      renderQuestion();
+    }
+  });
+
+  $("copy").addEventListener("click", copyResult);
+
+  $("retry").addEventListener("click", () => {
+    idx = 0;
+    answers.fill(null);
+    showScreen("quiz");
+    renderQuestion();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if ($("quiz").hidden) return;
+    const n = Number(e.key);
+    if (n >= 1 && n <= OPTIONS.length) choose(OPTIONS[n - 1].v);
+  });
+</script>
+</body>
+</html>
