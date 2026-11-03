@@ -356,6 +356,26 @@ html:not([lang="en"]) .en-only{display:none!important}
 .botbtn{position:fixed;right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:25;width:58px;height:58px;border-radius:50%;border:1px solid rgba(246,218,215,.35);background:radial-gradient(circle at 35% 30%,#3a2a2f,#151114 70%);box-shadow:0 10px 30px rgba(0,0,0,.55),0 0 0 4px rgba(220,170,172,.08);display:grid;place-items:center;cursor:pointer;transition:transform .25s cubic-bezier(.2,1.4,.4,1)}
 .botbtn svg{width:30px;height:30px}
 .botbtn .eye{animation:bblink 4.5s infinite}
+/* 챗봇 아바타 (블롭 캐릭터: default / working / sleeping, 커서 추적, 클릭 점프) */
+.bav{display:block;width:100%;height:100%;position:relative}
+.bav .bav-svg{width:100%;height:100%;display:block;overflow:visible}
+.botbtn .bav{width:44px;height:44px}
+.bp-head .bav{width:34px;height:34px;flex:none}
+.bav .bod{transform-box:fill-box;transform-origin:50% 90%;animation:bavbreath 3.2s ease-in-out infinite}
+.bav .ey{transform-box:fill-box;transform-origin:center;animation:bavblink 4.8s infinite}
+.bav .mouth{transform-box:fill-box;transform-origin:center}
+.bav .pup{transform:translate(var(--px,0px),var(--py,0px));transition:transform .18s ease-out}
+.bav.working .bod{animation:bavwob .42s ease-in-out infinite}
+.bav.working .mouth{animation:bavtalk .28s ease-in-out infinite alternate}
+.bav.sleeping .bod{animation:bavbreath 5.5s ease-in-out infinite}
+.bav.sleeping .ey{animation:none;transform:scaleY(.08)}
+.bav.sleeping .pup{transform:none}
+.bav.hop{animation:bavhop .55s cubic-bezier(.3,.7,.4,1)}
+@keyframes bavbreath{0%,100%{transform:scale(1,1)}50%{transform:scale(1.035,.97)}}
+@keyframes bavwob{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+@keyframes bavtalk{from{transform:scaleY(1)}to{transform:scaleY(.35)}}
+@keyframes bavblink{0%,94%,100%{transform:scaleY(1)}96.5%{transform:scaleY(.08)}}
+@keyframes bavhop{0%{transform:translateY(0) rotate(0)}30%{transform:translateY(-7px) rotate(-8deg)}55%{transform:translateY(0) rotate(4deg)}75%{transform:translateY(-2px)}100%{transform:none}}
 @keyframes bblink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
 @media (hover:hover){.botbtn:hover{transform:scale(1.07)}}
 .botbtn[aria-expanded="true"]{transform:scale(.92)}
@@ -390,7 +410,7 @@ html:not([lang="en"]) .en-only{display:none!important}
 .bp-form button{flex:none;width:42px;height:42px;border-radius:50%;border:0;background:var(--metal);color:var(--ink);display:grid;place-items:center;cursor:pointer}
 .bp-form button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 @media (max-width:520px){.botpanel{right:12px;left:12px;width:auto;bottom:calc(84px + env(safe-area-inset-bottom,0px));height:min(560px,calc(100dvh - 110px))}}
-@media (prefers-reduced-motion:reduce){.botbtn .eye,.bottip,.botpanel,.ccount.bump{animation:none}}
+@media (prefers-reduced-motion:reduce){.botbtn .eye,.bottip,.botpanel,.ccount.bump,.bav,.bav *{animation:none!important;transition:none!important}}
 
 .hscrim{z-index:30}
 .hsheet{width:min(640px,100%);max-height:100%;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;background:var(--surface);border:1px solid var(--line-2);border-radius:22px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
@@ -514,10 +534,10 @@ html:not([lang="en"]) .en-only{display:none!important}
   <span><span class="ko-only">문의</span><span class="en-only">Contact</span> <a href="mailto:wlswntjd205@gmail.com">wlswntjd205@gmail.com</a></span>
 </footer>
 
-<button class="botbtn" id="botBtn" type="button" aria-label="도감 도우미 챗봇 열기" aria-expanded="false" aria-controls="botPanel"><svg viewBox="0 0 32 32" fill="none" stroke="#f6dad7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4v4"/><circle cx="16" cy="3.5" r="1.4" fill="#f3b7bd" stroke="none"/><rect x="6" y="8.5" width="20" height="16" rx="6"/><g class="eye" style="transform-origin:16px 16px"><circle cx="12" cy="16" r="1.8" fill="#f6dad7" stroke="none"/><circle cx="20" cy="16" r="1.8" fill="#f6dad7" stroke="none"/></g><path d="M12.5 20.5c2 1.4 5 1.4 7 0"/><path d="M3.5 15v3M28.5 15v3"/></svg></button>
+<button class="botbtn" id="botBtn" type="button" aria-label="도감 도우미 챗봇 열기" aria-expanded="false" aria-controls="botPanel"><span class="bav default" aria-hidden="true"><svg class="bav-svg" viewBox="0 0 40 40"><defs><radialGradient id="bavg1" cx=".38" cy=".3" r=".85"><stop offset="0" stop-color="#f6dad7"/><stop offset=".55" stop-color="#dcaaac"/><stop offset="1" stop-color="#8f6670"/></radialGradient></defs><g class="bod"><path d="M20 4.5c8 0 14 5.6 14 13.6 0 5.4-1.6 8.4-.5 12.3C33.2 33.9 27.4 36 20 36S6.8 33.9 6.5 30.4C5.4 26.5 6 23.5 6 18.1 6 10.1 12 4.5 20 4.5z" fill="url(#bavg1)"/><g class="pup"><ellipse class="ey" cx="15" cy="18" rx="2.5" ry="3.3" fill="#2a1d20"/><ellipse class="ey" cx="25" cy="18" rx="2.5" ry="3.3" fill="#2a1d20"/></g><path class="mouth" d="M16.5 26c2.2 1.5 4.8 1.5 7 0" fill="none" stroke="#2a1d20" stroke-width="1.8" stroke-linecap="round"/></g></svg></span></button>
 <div class="bottip" id="botTip" hidden role="status"><span id="botTipText"></span><button class="x" type="button" aria-label="닫기">×</button></div>
 <div class="botpanel" id="botPanel" hidden role="dialog" aria-label="도감 도우미">
-  <div class="bp-head"><svg viewBox="0 0 32 32" width="30" height="30" fill="none" stroke="#f6dad7" stroke-width="1.8" stroke-linecap="round"><rect x="6" y="8.5" width="20" height="16" rx="6"/><circle cx="12" cy="16" r="1.8" fill="#f6dad7" stroke="none"/><circle cx="20" cy="16" r="1.8" fill="#f6dad7" stroke="none"/><path d="M16 4v4"/></svg><div><b><span class="ko-only">도감 도우미</span><span class="en-only">Atlas Assistant</span></b><small><span class="ko-only">무엇을 만드는지 말해 주면 맞는 애니메이션을 골라 드려요</span><span class="en-only">Tell me what you're building and I'll pick animations</span></small></div><span class="sp"></span><button class="iconbtn" id="botClose" type="button" aria-label="닫기"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="bp-head"><span class="bav default" aria-hidden="true"><svg class="bav-svg" viewBox="0 0 40 40"><defs><radialGradient id="bavg2" cx=".38" cy=".3" r=".85"><stop offset="0" stop-color="#f6dad7"/><stop offset=".55" stop-color="#dcaaac"/><stop offset="1" stop-color="#8f6670"/></radialGradient></defs><g class="bod"><path d="M20 4.5c8 0 14 5.6 14 13.6 0 5.4-1.6 8.4-.5 12.3C33.2 33.9 27.4 36 20 36S6.8 33.9 6.5 30.4C5.4 26.5 6 23.5 6 18.1 6 10.1 12 4.5 20 4.5z" fill="url(#bavg2)"/><g class="pup"><ellipse class="ey" cx="15" cy="18" rx="2.5" ry="3.3" fill="#2a1d20"/><ellipse class="ey" cx="25" cy="18" rx="2.5" ry="3.3" fill="#2a1d20"/></g><path class="mouth" d="M16.5 26c2.2 1.5 4.8 1.5 7 0" fill="none" stroke="#2a1d20" stroke-width="1.8" stroke-linecap="round"/></g></svg></span><div><b><span class="ko-only">도감 도우미</span><span class="en-only">Atlas Assistant</span></b><small><span class="ko-only">무엇을 만드는지 말해 주면 맞는 애니메이션을 골라 드려요</span><span class="en-only">Tell me what you're building and I'll pick animations</span></small></div><span class="sp"></span><button class="iconbtn" id="botClose" type="button" aria-label="닫기"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
   <div class="bp-msgs" id="botMsgs" aria-live="polite"></div>
   <div class="bp-quick" id="botQuick"></div>
   <form class="bp-form" id="botForm" autocomplete="off"><input id="botIn" type="text" enterkeyhint="send" aria-label="메시지"><button type="submit" aria-label="보내기"><svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></form>
@@ -9654,6 +9674,7 @@ gItems2.forEach(it=>{it.cat='game';it.isNew=1;it.touch=1;it.src=it.src||SRC_GM;i
 
 /* ── 아이콘 2차: 흰색 라인 아이콘 (범용 · 직접 제작) ── */
 const A2=(el,kf,d,o={})=>fin(el.animate(kf,{duration:d,easing:'ease-in-out',...o}));
+const POP2=(s,d)=>{const t=s.querySelector('svg')||s;return A2(t,[{transform:'scale(1)'},{transform:'scale(1.14)',offset:.4},{transform:'scale(1)'}],d);};
 const ICONS2=[
  ['help','물음표','Help','물음표가 통통 튀며 기울었다 돌아옵니다. 도움말, FAQ, 안내 버튼.','<circle cx="12" cy="12" r="9.5"/><g class="a" style="transform-origin:12px 13px"><path d="M9.3 9.2a2.8 2.8 0 0 1 5.4 1c0 1.9-2.7 2.3-2.7 4"/><path d="M12 17.4v.2"/></g>',
    (s,d)=>A2(s.querySelector('.a'),[{transform:'translateY(0) rotate(0)'},{transform:'translateY(-2.5px) rotate(-14deg)',offset:.35},{transform:'translateY(.5px) rotate(8deg)',offset:.7},{transform:'translateY(0) rotate(0)'}],d)],
@@ -9708,7 +9729,31 @@ const ICONS2=[
  ['playtri','재생 스토어','Play Store','삼각형 재생 버튼이 가로로 살짝 밀리며 반짝입니다. 앱 다운로드, 안드로이드 앱 스토어 연결용 범용 아이콘.','<path d="M6 4.5v15l13-7.5z"/><path class="l" d="M10 8.8v6.4l5-3.2z" style="opacity:.5"/>',
    (s,d)=>Promise.all([A2(s.querySelector('path'),[{transform:'translateX(0)'},{transform:'translateX(1.5px)',offset:.4},{transform:'translateX(0)'}],d)])],
  ['appdl','앱 다운로드','App Download','아래 화살표가 트레이로 떨어지고 튕기며 다운로드가 끝납니다. 앱스토어, 설치, 다운로드 버튼용 범용 아이콘.','<rect x="4" y="3.5" width="16" height="17" rx="4.5"/><path class="a" d="M12 7.5v7M8.8 11.8L12 15l3.2-3.2"/><path d="M8 18h8"/>',
-   async(s,d)=>{await A2(s.querySelector('.a'),[{transform:'translateY(-2px)'},{transform:'translateY(2px)',offset:.5},{transform:'translateY(0)'}],d,{easing:'ease-in-out'});}]
+   async(s,d)=>{await A2(s.querySelector('.a'),[{transform:'translateY(-2px)'},{transform:'translateY(2px)',offset:.5},{transform:'translateY(0)'}],d,{easing:'ease-in-out'});}],
+ ['ai-node','AI 노드','AI Nodes','세 개의 점이 연결선을 따라 신호를 주고받습니다. AI 모델, 네트워크, 연결 기능용 범용 아이콘.','<circle cx="12" cy="6" r="2.4"/><circle cx="6" cy="17" r="2.4"/><circle cx="18" cy="17" r="2.4"/><path d="M10.6 7.6L7.4 14.8M13.4 7.6l3.2 7.2M8.4 17h7.2"/>',POP2],
+ ['ai-spark','AI 말풍선 반짝','AI Chat Spark','말풍선 안의 작은 반짝이가 깜빡입니다. AI 대화 어시스턴트용 범용 아이콘.','<path d="M4.5 6a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-6l-4 3v-3h-1a2 2 0 0 1-2-2z"/><path d="M12 7.5v4M10 9.5h4"/>',POP2],
+ ['ai-wave','AI 물결','AI Wave','두 줄의 물결이 흘러가듯 움직입니다. AI 음성, 생성 과정 표시용 범용 아이콘.','<path d="M3 9c2-2 4-2 6 0s4 2 6 0 4-2 6 0M3 15c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/>',POP2],
+ ['x-close','교차 표시','Cross','두 선이 교차하며 닫기·취소를 뜻합니다. 짧은 글 플랫폼 범용 아이콘.','<path d="M5 5l14 14M19 5L5 19"/>',POP2],
+ ['two-people','두 사람','Two People','두 사람이 나란히 있습니다. 친구, 커뮤니티, 팔로우 기능용 범용 아이콘.','<circle cx="9" cy="8.5" r="3"/><path d="M3.5 19c.5-3 2.6-4.5 5.5-4.5s5 1.5 5.5 4.5"/><circle cx="16.5" cy="9.5" r="2.4"/><path d="M16 14.2c2.3.2 4 1.6 4.5 4.3"/>',POP2],
+ ['line-bubbles','말풍선 둘','Two Bubbles','말풍선 두 개가 번갈아 떠오릅니다. 메신저 채팅, 대화 연결용 범용 아이콘.','<path d="M9 5.5h7a3 3 0 0 1 3 3v3.5a3 3 0 0 1-3 3h-.5l-3 2.5v-2.5H9a3 3 0 0 1-3-3V8.5a3 3 0 0 1 3-3z"/><path d="M5.5 12.5v2.8L8 14"/>',POP2],
+ ['at-sign','골뱅이','At Sign','골뱅이 기호가 천천히 회전합니다. 답글, 멘션, 계정 태그용 범용 아이콘.','<circle cx="12" cy="12" r="3"/><path d="M15 12v1.5a2.5 2.5 0 0 0 5 0V12a8 8 0 1 0-3.2 6.4"/>',POP2],
+ ['blog-notes','메모 펜','Notes & Pen','메모장 위를 펜이 글을 쓰며 지나갑니다. 블로그, 글쓰기, 포스팅용 범용 아이콘.','<rect x="5" y="3.5" width="12" height="17" rx="2"/><path d="M8.5 8h5M8.5 11.5h5M8.5 15h3"/><path d="M17.5 12.5l3-3 2 2-3 3-2.6.6z"/>',POP2],
+ ['bank','은행 건물','Bank','기둥이 있는 은행 건물이 있습니다. 금융, 송금, 계좌 연결용 범용 아이콘.','<path d="M3.5 9.5L12 4l8.5 5.5"/><path d="M5 10v7M9.5 10v7M14.5 10v7M19 10v7"/><path d="M3.5 19.5h17"/>',POP2],
+ ['video-card','영상 재생 카드','Video Card','직사각형 카드 안에서 재생 버튼이 깜빡입니다. 영상 플랫폼, 동영상 목록용 범용 아이콘.','<rect x="3" y="5.5" width="18" height="13" rx="3.5"/><path d="M10.5 9.5v5l4.2-2.5z"/>',POP2],
+ ['bolt','번개','Bolt','번개가 번쩍이며 짧게 흔들립니다. 빠른 응답, 속도, 실시간 기능용 범용 아이콘.','<path d="M13.5 3L5.5 13.5H12L10.5 21l8-10.5h-6.5z"/>',POP2],
+ ['compass','나침반','Compass','나침반 바늘이 좌우로 가볍게 흔들립니다. 길찾기, 방향, 가이드 기능용 범용 아이콘.','<circle cx="12" cy="12" r="8.5"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',POP2],
+ ['q-bubble','질문 말풍선','Question Bubble','물음표가 들어 있는 말풍선이 떠오릅니다. 질문, 검색 답변, FAQ용 범용 아이콘.','<path d="M4.5 6a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-6l-4 3v-3h-1a2 2 0 0 1-2-2z"/><path d="M10 9.5a2 2 0 1 1 2.6 1.9c-.4.2-.6.5-.6.9v.3"/><path d="M12 15.6v.1"/>',POP2],
+ ['film','필름 스트립','Film Strip','필름 칸이 옆으로 흘러갑니다. 영화, 시리즈, 콘텐츠 목록용 범용 아이콘.','<rect x="4" y="4" width="16" height="16" rx="2.5"/><path d="M8 4v16M16 4v16M4 9h4M4 15h4M16 9h4M16 15h4"/>',POP2],
+ ['stream-tv','스트리밍 TV','Streaming TV','TV 화면에서 재생 버튼이 깜빡입니다. 스트리밍 서비스, 방송 시청용 범용 아이콘.','<rect x="3" y="5" width="18" height="12" rx="2.5"/><path d="M9 20h6M12 17v3"/><path d="M10.5 9.2v3.6l3-1.8z"/>',POP2],
+ ['castle','성','Castle','성 모양 실루엣이 있습니다. 판타지, 테마파크, 특별 콘텐츠용 범용 아이콘.','<path d="M4 20V11l2-1.5V6h2v2h2V6h4v2h2V6h2v3.5l2 1.5v9z"/><path d="M10 20v-4a2 2 0 0 1 4 0v4"/>',POP2],
+ ['bag-play','쇼핑백 재생','Shopping Bag Play','쇼핑백 안에서 재생 삼각형이 나타납니다. 쇼핑과 동영상이 함께 있는 서비스용 범용 아이콘.','<path d="M5 8.5h14l-1 11.5H6z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/><path d="M10.5 12.5v3.5l3-1.75z"/>',POP2],
+ ['lens','검색 렌즈','Search Lens','돋보기가 원을 훑고 지나갑니다. 검색, 찾기 기능용 범용 아이콘.','<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',POP2],
+ ['play-circle','원형 재생','Play Circle','원 안에서 재생 삼각형이 살짝 밀립니다. 앱 목록, 다운로드 페이지용 범용 아이콘.','<circle cx="12" cy="12" r="8.5"/><path d="M10 8.5v7l5.5-3.5z"/>',POP2],
+ ['app-grid','앱 격자','App Grid','둥근 사각형 네 개가 차례로 튀어 오릅니다. 앱 목록, 설치 페이지용 범용 아이콘.','<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>',POP2],
+ ['code-brackets','코드 괄호','Code Brackets','여는 괄호와 닫는 괄호 사이에서 커서가 깜빡입니다. 코드 저장소, 개발자 도구용 범용 아이콘.','<path d="M8.5 7.5L4 12l4.5 4.5M15.5 7.5L20 12l-4.5 4.5M13.2 5.5l-2.4 13"/>',POP2],
+ ['send-arrow','전송 화살','Send Arrow','화살이 오른쪽으로 날아가며 전송됩니다. 메시지 전송, 보내기 버튼용 범용 아이콘.','<path d="M4.5 12h14M13 6.5l5.5 5.5-5.5 5.5"/>',POP2],
+ ['coffee','커피잔','Coffee Cup','김이 피어오르는 커피잔이 있습니다. 카페, 음료, 휴식 콘텐츠용 범용 아이콘.','<path d="M5 8.5h11v5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z"/><path d="M16 10h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M8.5 3.5c-.8 1 .8 1.8 0 3M12 3.5c-.8 1 .8 1.8 0 3"/>',POP2],
+ ['burger','햄버거','Burger','햄버거 층이 차례로 쌓입니다. 음식 주문, 배달, 메뉴용 범용 아이콘.','<path d="M4.5 11a7.5 5.5 0 0 1 15 0z"/><path d="M4 13.5h16"/><path d="M5 16h14"/><path d="M4.5 18.5h15"/>',POP2]
 ];
 ICONS2.forEach(([k,ko,en,d,svg,anim])=>ITEMS.push({id:'ic-'+k,cat:'icon',isNew:1,src:'범용 라인 아이콘 (직접 제작)',ko,en,mini:'pop',target:'버튼 아이콘',hint:'아이콘에 마우스를 올리거나 탭해보세요',icon:svg.replace(/class="[^"]*"/g,'').replace(/style="[^"]*"/g,''),
  desc:d+' 특정 브랜드 로고가 아닌 범용 라인 아이콘이라 어떤 서비스·메뉴에든 그대로 쓸 수 있고, 흰색 선으로 어두운 배경 위에서 잘 보입니다.',
@@ -10504,7 +10549,15 @@ function reply(text){const low=text.toLowerCase().trim();const has=(...a)=>a.som
 const QUICK=[['로그인 화면','login screen'],['쇼핑몰 상품 카드','shop product card'],['AI 챗봇 화면','AI chatbot UI'],['대시보드 차트','dashboard charts'],['게임 타격감','game hit feel'],['강아지 캐릭터','dog character'],['인기 항목','popular'],['문의하기','contact']];
 function renderQuick(){const qb=$('#botQuick');qb.innerHTML='';QUICK.forEach(([k,e])=>{const b=mk('button','',L2(k,e),qb);b.type='button';b.onclick=()=>send(L2(k,e));});}
 function greet(){botMsgs.innerHTML='';addMsg('bot',L2(`안녕하세요! 도감 도우미예요 🙂\n${ITEMS.length}가지 애니메이션 중에서 지금 만드는 것에 맞는 걸 골라 드릴게요. 자연스럽게 말해 주세요. 예: "회원가입 폼에 넣을 효과 추천해줘"`,`Hi! I'm the atlas assistant 🙂\nI'll pick the right ones for what you're building from ${ITEMS.length} animations. Just ask naturally, e.g. "effects for a sign-up form".`));}
-function send(text){text=String(text||'').trim();if(!text)return;addMsg('me',text);botIn.value='';setTimeout(()=>reply(text),220);}
+const BAV={last:Date.now(),state:'default'};
+function bavSet(st){if(BAV.state===st)return;BAV.state=st;document.querySelectorAll('.bav').forEach(el=>{el.classList.remove('default','working','sleeping');el.classList.add(st);});}
+function bavTouch(){BAV.last=Date.now();if(BAV.state==='sleeping')bavSet('default');}
+function bavHop(el){el.classList.remove('hop');void el.offsetWidth;el.classList.add('hop');}
+document.addEventListener('click',e=>{const el=e.target.closest&&e.target.closest('.bav');if(el){bavHop(el);bavTouch();}},true);
+document.addEventListener('pointermove',e=>{if(BAV.state==='sleeping')return;document.querySelectorAll('.bav').forEach(el=>{const r=el.getBoundingClientRect();const dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);const d=Math.hypot(dx,dy)||1;const k=Math.min(1.6,d/120);el.style.setProperty('--px',(dx/d*k).toFixed(2)+'px');el.style.setProperty('--py',(dy/d*k).toFixed(2)+'px');});},{passive:true});
+setInterval(()=>{if(BAV.state!=='working'&&Date.now()-BAV.last>5*60*1000)bavSet('sleeping');},10000);
+setInterval(()=>{if(BAV.state==='default'&&!document.hidden&&!matchMedia('(prefers-reduced-motion: reduce)').matches)document.querySelectorAll('.bav').forEach(el=>bavHop(el));},6000);
+function send(text){bavSet('working');bavTouch();setTimeout(()=>bavSet('default'),1100);text=String(text||'').trim();if(!text)return;addMsg('me',text);botIn.value='';setTimeout(()=>reply(text),220);}
 function openBot(){BOT.open=true;hideTip();botPanel.hidden=false;botBtn.setAttribute('aria-expanded','true');if(!BOT.greeted){BOT.greeted=true;greet();renderQuick();}if(!isTouch)setTimeout(()=>botIn.focus({preventScroll:true}),60);}
 function closeBot(){if(!BOT.open)return;BOT.open=false;botPanel.hidden=true;botBtn.setAttribute('aria-expanded','false');scheduleTip();}
 function botLangChanged(){renderQuick();if(BOT.greeted&&botMsgs.children.length<=1)greet();if(!botTip.hidden)showTip(true);}
