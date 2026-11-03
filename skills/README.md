@@ -7,4 +7,4 @@
 ## 사용법
 - Claude(claude.ai): 설정 → 기능 → Skills에서 `animation-html` 폴더를 zip으로 올리기
 - Claude Code: `~/.claude/skills/animation-html/` 에 폴더 복사
-- 구성: `SKILL.md`(규칙) · `templates/atlas-starter.html`(시작 파일) · `reference/motion-atlas.html`(176종 완성본) · `scripts/check.js`(검증)
+- 구성: `SKILL.md`(규칙) · `templates/atlas-starter.html`(시작 파일) · `reference/motion-atlas.html`(198종 완성본) · `scripts/check.js`(검증)
