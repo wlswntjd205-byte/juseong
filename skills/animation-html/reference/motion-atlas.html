@@ -6425,7 +6425,7 @@ function autoScroll(box,ms,c){
   });
 }
 
-const CATS=[['all','전체'],['in','등장','Entrance'],['em','강조','Attention'],['ia','인터랙션','Interaction'],['cp','컴포넌트','Components'],['ld','로딩','Loading'],['ts','텍스트·스크롤','Text & Scroll'],['icon','아이콘','Animated Icons'],['ai','AI·이펙트','AI & Effects'],['fx','이펙트','Effects'],['ch','차트','Charts'],['game','3D 게임 이펙트','3D Game Effects'],['bg','커서·배경','Cursor & Background'],['mat','재질','Materials'],['sim','물리 시뮬레이션','Physics'],['hl','헤어라인','Hairline Figures']];
+const CATS=[['all','전체'],['in','등장','Entrance'],['em','강조','Attention'],['ia','인터랙션','Interaction'],['cp','컴포넌트','Components'],['ld','로딩','Loading'],['ts','텍스트·스크롤','Text & Scroll'],['icon','아이콘','Animated Icons'],['ai','AI·이펙트','AI & Effects'],['fx','이펙트','Effects'],['ch','차트','Charts'],['game','3D 게임 이펙트','3D Game Effects'],['motion','3D 캐릭터 동작','3D Character Motion'],['beast','3D 동물 동작','3D Animal Motion'],['bg','커서·배경','Cursor & Background'],['mat','재질','Materials'],['sim','물리 시뮬레이션','Physics'],['hl','헤어라인','Hairline Figures']];
 
 const MINI={
   fade:[[{opacity:.1},{opacity:1}],600,'ease-out'],
@@ -8836,7 +8836,7 @@ function g3Engine(st,c,o={}){const {g,W,H,cv}=canvas(st);const key=st.closest&&s
     E.texts=E.texts.filter(x=>{x.life+=dt;x.vy-=x.grav*dt;x.x+=x.vx*dt;x.y+=x.vy*dt;x.z+=x.vz*dt;return x.life<x.max;});
     const tr=E.trauma;E.trauma=Math.max(0,tr-E.decay*rdt);const amp=E.shk*tr*tr,f=performance.now()/1000*E.freq;E.kick*=Math.exp(-rdt*7);
     const cam=E.cam;cam.position.copy(E.camBase);cam.position.x+=Math.sin(rt*.25)*.35+amp*(Math.sin(f*1.1)+Math.sin(f*2.3+1))/2;cam.position.y+=amp*(Math.sin(f*1.7+2)+Math.sin(f*3.1))/2;
-    if(E.dolly){cam.position.lerp(E.dollyTo||E.look,E.dolly);}cam.lookAt(E.look);cam.rotation.z+=amp*.15*Math.sin(f*1.3);const fov=38+E.kick;if(Math.abs(cam.fov-fov)>.001){cam.fov=fov;cam.updateProjectionMatrix();}
+    if(E.orbit){const dx=cam.position.x-E.look.x,dz=cam.position.z-E.look.z,oc=Math.cos(E.orbit),os=Math.sin(E.orbit);cam.position.x=E.look.x+dx*oc+dz*os;cam.position.z=E.look.z-dx*os+dz*oc;}if(E.dolly){cam.position.lerp(E.dollyTo||E.look,E.dolly);}cam.lookAt(E.look);cam.rotation.z+=amp*.15*Math.sin(f*1.3);const fov=38+E.kick;if(Math.abs(cam.fov-fov)>.001){cam.fov=fov;cam.updateProjectionMatrix();}
     // 파티클 버퍼
     const PA=E.pa,PN=E.pn,LN=E.ln;let na=0,nn=0,nl=0;
     for(const q of E.ps){const u=q.life/q.max;let col=q._c;if(q._r){const n=q._r.length-1,x=Math.min(n-1e-6,u*n),i=Math.floor(x),fr=x-i;const a0=q._r[i],a1=q._r[i+1];col=[a0[0]+(a1[0]-a0[0])*fr,a0[1]+(a1[1]-a0[1])*fr,a0[2]+(a1[2]-a0[2])*fr];}
@@ -9564,6 +9564,490 @@ ICONS2.forEach(([k,ko,en,d,svg,anim])=>ITEMS.push({id:'ic-'+k,cat:'icon',isNew:1
    sv.addEventListener('pointerenter',go);sv.addEventListener('click',go);return()=>go();},
  code:p=>`<svg viewBox="0 0 24 24" class="icon" fill="none" stroke="currentColor" stroke-width="${p.stroke}"\n     stroke-linecap="round" stroke-linejoin="round">\n  ${svg.replace(/ style="[^"]*"/g,'')}\n</svg>\n.icon { color: ${({white:'#fff',rose:'#dcaaac',muted:'#9a8c90'})[p.col]}; }\n\n// 올리거나 누를 때 한 번 재생 (${p.dur}ms)\nicon.addEventListener('pointerenter', play);`,
  prompt:(p,t)=>`${t}에 '${ko}(${en})' 라인 아이콘을 애니메이션과 함께 넣어줘.\n- 24×24 SVG 선 아이콘, stroke-width ${p.stroke}, round cap/join, 색 ${({white:'흰색 #ffffff',rose:'로즈실버 그라디언트',muted:'회색 #9a8c90'})[p.col]}(currentColor)\n- 동작: ${d.split('.')[0]}\n- 마우스를 올리거나 탭하면 ${p.dur}ms 동안 한 번 재생, 재생 중 중복 실행 방지\n- 움직일 부분만 <g>로 묶고 transform-origin을 SVG 좌표로 지정, Web Animations API 사용\n- prefers-reduced-motion이면 정지 아이콘만.`}));
+
+/* ── 3D 캐릭터 · 동물 동작 (절차적 리그 + 2본 IK) ── */
+const SRC_MO='캐릭터 애니메이션 (직접 제작 · Three.js 절차적 리그 + IK)';
+const MO={G:.085,QG:.045,HY:.93};
+MO.ss=x=>x<=0?0:x>=1?1:x*x*(3-2*x);
+MO.cl=(x,a,b)=>Math.max(a,Math.min(b,x));
+MO.foot=(v,st,li,du,g=MO.G)=>{if(v<du)return [st/2-st*v/du,g];const s=(v-du)/(1-du);return [-st/2+st*MO.ss(s),g+li*Math.sin(Math.PI*s)];};
+MO.gaitQ=(u,type)=>{const c=type==='run'?{st:.5,du:.35,li:.14,ph:{FL:0,FR:.9,BR:.5,BL:.4}}:{st:.32,du:.65,li:.08,ph:{BL:0,FL:.75,BR:.5,FR:.25}};const o={};for(const k in c.ph){const r=MO.foot((((u+c.ph[k])%1)+1)%1,c.st,c.li,c.du,MO.QG);o[k]=[r[0],r[1],0];}return o;};
+MO.mixF=(P,o,w)=>{['FL','FR','BL','BR'].forEach(k=>{P[k]=P[k].map((v,i)=>v+(o[k][i]-v)*w);});};
+MO.merge=(a,b)=>{const o={};for(const k in a)o[k]=Array.isArray(a[k])?a[k].slice():a[k];for(const k in b)o[k]=Array.isArray(b[k])?b[k].slice():b[k];return o;};
+MO.lerp=(a,b,s)=>{const o={};for(const k in a){const x=a[k],y=b[k];if(Array.isArray(x))o[k]=x.map((v,i)=>v+(y[i]-v)*s);else o[k]=x+(y-x)*s;}return o;};
+MO.full=(d,base)=>{if(d._f)return d._f;let cur=base;d._f=d.keys.map(k=>{cur=MO.merge(cur,k[1]);return [k[0],cur,k[2]];});return d._f;};
+MO.kf=(F,u)=>{let i=0;while(i<F.length-1&&u>=F[i+1][0])i++;if(i>=F.length-1)return MO.merge(F[F.length-1][1],{});const [t0,a]=F[i],[t1,b,e]=F[i+1];let s=(u-t0)/Math.max(1e-6,t1-t0);s=e==='lin'?s:e==='in'?s*s:e==='out'?1-(1-s)*(1-s):MO.ss(s);return MO.lerp(a,b,s);};
+MO.wp=(o,T)=>o.getWorldPosition(new T.Vector3());
+/* 2본 IK: 목표(루트 좌표) → 위 관절 쿼터니언(R.qIK) + 아래 관절 각도 반환. s=-1 무릎형(아래 마디가 뒤로), s=+1 팔꿈치형 */
+function moLimb(R,u,tgt,a,b,pole,s){const v=R.v1.copy(tgt);R.root.localToWorld(v);u.parent.worldToLocal(v);v.sub(u.position);
+  u.parent.getWorldQuaternion(R.q2).invert();const p=R.v2.copy(pole).applyQuaternion(R.qRoot).applyQuaternion(R.q2);
+  const d=v.length()||1e-4,dc=MO.cl(d,Math.abs(a-b)+1e-3,a+b-1e-3);const e=R.v3.copy(v).divideScalar(d);
+  const al=Math.acos(MO.cl((a*a+dc*dc-b*b)/(2*a*dc),-1,1)),ga=Math.acos(MO.cl((a*a+b*b-dc*dc)/(2*a*b),-1,1));
+  const m=p.addScaledVector(e,-p.dot(e));if(m.lengthSq()<1e-8)m.set(1,0,0);m.normalize();
+  const d1=R.v4.copy(e).multiplyScalar(Math.cos(al)).addScaledVector(m,Math.sin(al));
+  const d2=R.v5.copy(e).multiplyScalar(dc).addScaledVector(d1,-a).normalize();
+  const pr=R.v6.copy(d2).addScaledVector(d1,-d2.dot(d1));if(pr.lengthSq()<1e-8)pr.copy(m).negate();pr.normalize().multiplyScalar(s);
+  const yp=R.v7.copy(d1).negate(),zp=R.v8.crossVectors(pr,yp);R.M.makeBasis(pr,yp,zp);R.qIK.setFromRotationMatrix(R.M);return s*(Math.PI-ga);}
+function moBase(T,R){R.T=T;['v0','v1','v2','v3','v4','v5','v6','v7','v8','v9'].forEach(k=>R[k]=new T.Vector3());['qRoot','q2','q3','q4','qIK','qFK','qI'].forEach(k=>R[k]=new T.Quaternion());R.M=new T.Matrix4();R.eu=new T.Euler();
+  const sh=new T.Mesh(new T.CircleGeometry(1,32),new T.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.38,depthWrite:false}));sh.rotation.x=-Math.PI/2;sh.renderOrder=1;R.shadow=sh;}
+const moCap=(T,r,len,mat)=>{const m=new T.Mesh(new T.CapsuleGeometry(r,Math.max(.01,len-r*1.3),6,14),mat);m.position.y=-len/2;return m;};
+const moRod=(T,a,b,r,mat)=>{const A=new T.Vector3(...a),B=new T.Vector3(...b);const m=new T.Mesh(new T.CylinderGeometry(r,r,A.distanceTo(B),10),mat);m.position.copy(A).add(B).multiplyScalar(.5);m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),B.clone().sub(A).normalize());return m;};
+const moMats=T=>({metal:new T.MeshPhysicalMaterial({color:0xeee8eb,metalness:.95,roughness:.18,clearcoat:1,envMapIntensity:1.4}),dark:new T.MeshStandardMaterial({color:0x2b2327,metalness:.6,roughness:.35}),
+  rose:new T.MeshPhysicalMaterial({color:0xf3b7bd,metalness:.7,roughness:.25,clearcoat:1,envMapIntensity:1.3}),glow:new T.MeshBasicMaterial({color:0xf6dad7,toneMapped:false})});
+
+/* ── 사람 리그 ── */
+function rigHuman(T){const R={kind:'h',sc:1};moBase(T,R);
+  const skin=new T.MeshPhysicalMaterial({color:0xf2c9cc,metalness:.85,roughness:.24,clearcoat:1,clearcoatRoughness:.15,envMapIntensity:1.35});
+  const dark=new T.MeshStandardMaterial({color:0x2b2327,metalness:.55,roughness:.38,envMapIntensity:.8});const eyeM=new T.MeshBasicMaterial({color:0x141012});
+  const G=()=>new T.Group(),sph=(r,m)=>new T.Mesh(new T.SphereGeometry(r,18,14),m);
+  const root=R.root=G(),pivot=R.pivot=G(),hips=R.hips=G();root.add(pivot);pivot.add(hips);
+  const pel=new T.Mesh(new T.CapsuleGeometry(.12,.14,6,14),dark);pel.rotation.x=Math.PI/2;pel.scale.set(.85,1,1);hips.add(pel);
+  const spine=R.spine=G();spine.position.y=.02;hips.add(spine);const tor=new T.Mesh(new T.CapsuleGeometry(.16,.26,8,16),skin);tor.position.y=.27;tor.scale.set(.78,1,1.22);spine.add(tor);
+  const chest=R.chest=G();chest.position.y=.5;spine.add(chest);const neck=R.neck=G();neck.position.y=.05;chest.add(neck);neck.add(Object.assign(moCap(T,.05,.12,dark),{}));neck.children[0].position.y=.05;
+  const head=R.head=G();head.position.y=.17;neck.add(head);const hm=sph(.15,skin);hm.scale.set(1,1.06,.95);head.add(hm);
+  R.eyes=[1,-1].map(z=>{const e=sph(.024,eyeM);e.position.set(.135,.025,z*.055);head.add(e);return e;});const vis=new T.Mesh(new T.BoxGeometry(.03,.025,.16),dark);vis.position.set(.13,-.045,0);head.add(vis);
+  const limb=(par,pos,a,ra,b,rb,jr,end)=>{const u=G();u.position.set(...pos);par.add(u);u.add(sph(jr*1.25,dark));u.add(moCap(T,ra,a,skin));const k=G();k.position.y=-a;u.add(k);k.add(sph(jr,dark));k.add(moCap(T,rb,b,skin));const h=G();h.position.y=-b;k.add(h);end(h);return {u,k,h};};
+  R.armL=limb(chest,[0,-.03,.22],.3,.055,.27,.05,.05,h=>h.add(sph(.055,skin)));R.armR=limb(chest,[0,-.03,-.22],.3,.055,.27,.05,.05,h=>h.add(sph(.055,skin)));
+  const ft=h=>{const f=new T.Mesh(new T.BoxGeometry(.22,.07,.11),dark);f.position.set(.05,-.045,0);h.add(f);};
+  R.legL=limb(hips,[0,-.02,.1],.43,.075,.42,.065,.065,ft);R.legR=limb(hips,[0,-.02,-.1],.43,.075,.42,.065,.065,ft);
+  R.mats=[skin,dark];const G0=MO.G;
+  R.def={hx:0,hy:MO.HY,hz:0,hr:0,sp:0,tw:0,sx:0,hd:0,hdy:0,pv:0,pcy:0,prx:0,ry:0,eye:1,fk:0,lk:[0,0],rk:[0,0],lf:[0,G0,0],rf:[0,G0,0],ft:0,la:[0,.15,.12],ra:[0,.15,.12],lw:0,rw:0,lh:[.2,.9,.25],rh:[.2,.9,-.25],lr:0,rr:0};
+  const PL=new T.Vector3(1,0,.12),PR=new T.Vector3(1,0,-.12),AL=new T.Vector3(-.7,-.3,.6),AR=new T.Vector3(-.7,-.3,-.6);
+  R.apply=P=>{root.rotation.set(0,P.ry,0);pivot.position.set(0,P.pcy,0);pivot.rotation.set(P.prx,0,P.pv);hips.position.set(P.hx,P.hy-P.pcy,P.hz);hips.rotation.set(0,0,P.hr);spine.rotation.set(P.sx,P.tw,P.sp);neck.rotation.set(0,P.hdy,P.hd);R.eyes.forEach(e=>e.scale.y=P.eye);
+    root.updateMatrixWorld(true);root.getWorldQuaternion(R.qRoot);
+    [[R.legL,P.lf,P.lk,1,PL],[R.legR,P.rf,P.rk,-1,PR]].forEach(([L,f,k,sg,pole])=>{R.v0.set(f[0],f[1],P.hz+sg*.1+f[2]);const phi=moLimb(R,L.u,R.v0,.43,.42,pole,-1);R.eu.set(0,0,k[0]);R.qFK.setFromEuler(R.eu);L.u.quaternion.copy(R.qIK).slerp(R.qFK,P.fk);L.k.rotation.set(0,0,phi+(k[1]-phi)*P.fk);
+      L.u.updateMatrixWorld(true);L.k.getWorldQuaternion(R.q3).invert().multiply(R.qRoot);R.eu.set(0,0,P.ft);R.q4.setFromEuler(R.eu);R.q3.multiply(R.q4);L.h.quaternion.copy(R.q3).slerp(R.qI,P.fk);});
+    [[R.armL,P.la,P.lw,P.lh,1,AL,P.lr],[R.armR,P.ra,P.rw,P.rh,-1,AR,P.rr]].forEach(([A,f,w,h,sg,pole,roll])=>{R.eu.set(-sg*f[2],0,f[0]);R.qFK.setFromEuler(R.eu);if(w>0){R.v0.set(h[0],h[1],h[2]);const phi=moLimb(R,A.u,R.v0,.3,.27,pole,1);A.u.quaternion.copy(R.qFK).slerp(R.qIK,w);A.k.rotation.set(0,0,f[1]+(phi-f[1])*w);}else{A.u.quaternion.copy(R.qFK);A.k.rotation.set(0,0,f[1]);}A.h.rotation.set(0,roll,0);});};
+  R.body=()=>MO.wp(hips,T);return R;}
+
+/* ── 네발 동물 리그 ── */
+function rigQuad(T,sp){const cat=sp==='cat';const R={kind:'q',sp,sc:cat?.84:1};moBase(T,R);
+  const fur=cat?new T.MeshPhysicalMaterial({color:0x8a7f84,metalness:.55,roughness:.28,clearcoat:1,clearcoatRoughness:.2,sheen:1,sheenColor:new T.Color(0xf3b7bd),sheenRoughness:.5,envMapIntensity:1.2})
+    :new T.MeshPhysicalMaterial({color:0xead7d4,metalness:.35,roughness:.42,clearcoat:.6,clearcoatRoughness:.3,envMapIntensity:1.2});
+  const dark=new T.MeshStandardMaterial({color:cat?0x16121a:0x3a2e32,metalness:.4,roughness:.4});const eyeM=new T.MeshBasicMaterial({color:cat?0xffd27a:0x141012,toneMapped:false});const roseM=new T.MeshPhysicalMaterial({color:0xf3b7bd,metalness:.7,roughness:.25,clearcoat:1});
+  const G=()=>new T.Group(),sph=(r,m)=>new T.Mesh(new T.SphereGeometry(r,18,14),m);
+  const root=R.root=G();root.scale.setScalar(R.sc);const torso=R.torso=G();root.add(torso);const fh=R.fh=G(),rh=R.rh=G();torso.add(fh,rh);
+  const half=(par,x)=>{const m=new T.Mesh(new T.CapsuleGeometry(.15,.2,8,16),fur);m.rotation.z=Math.PI/2;m.position.x=x;m.scale.set(1,1,.95);par.add(m);return m;};
+  R.bodyMs=[half(fh,.13),half(rh,-.13)];
+  const neck=R.neck=G();neck.position.set(.3,.07,0);fh.add(neck);const nm=new T.Mesh(new T.CapsuleGeometry(.075,.1,6,12),fur);nm.rotation.z=Math.PI/2;nm.position.x=.08;neck.add(nm);
+  const col=new T.Mesh(new T.TorusGeometry(.085,.018,8,24),roseM);col.rotation.y=Math.PI/2;col.position.x=.04;neck.add(col);R.collar=col;
+  const head=R.head=G();head.position.set(.17,0,0);neck.add(head);const sk=sph(cat?.12:.115,fur);sk.scale.set(1,.95,.98);head.add(sk);
+  const sn=new T.Mesh(new T.CapsuleGeometry(cat?.045:.055,cat?.03:.09,6,12),fur);sn.rotation.z=Math.PI/2;sn.position.set(cat?.1:.13,-.025,0);head.add(sn);
+  const nose=sph(.026,dark);nose.position.set(cat?.15:.215,-.01,0);head.add(nose);R.nose=nose;
+  const jaw=R.jaw=G();jaw.position.set(.04,-.06,0);head.add(jaw);const jm=new T.Mesh(new T.BoxGeometry(cat?.09:.15,.025,.07),fur);jm.position.set(cat?.05:.08,-.005,0);jaw.add(jm);const mouth=new T.Object3D();mouth.position.set(cat?.11:.17,-.01,0);jaw.add(mouth);R.mouth=mouth;
+  R.eyes=[1,-1].map(z=>{const e=sph(.022,eyeM);e.position.set(.085,.04,z*.055);head.add(e);return e;});
+  R.ears=[1,-1].map(z=>{const g=G();g.position.set(-.02,.085,z*.07);head.add(g);let m;if(cat){m=new T.Mesh(new T.ConeGeometry(.042,.1,4),fur);m.position.y=.04;}else{m=new T.Mesh(new T.BoxGeometry(.06,.12,.02),dark);m.position.set(0,-.04,z*.02);g.rotation.x=z*.35;}g.add(m);g.userData.z=z;return g;});
+  // 꼬리
+  const tl=cat?[.13,.13,.12,.11]:[.1,.09,.08];let par=rh,px=-.36,py=.05;R.tail=tl.map((l,i)=>{const g=G();g.position.set(px,py,0);par.add(g);const m=new T.Mesh(new T.CapsuleGeometry(.032-i*.004,l,4,10),i===tl.length-1&&!cat?fur:fur);m.rotation.z=Math.PI/2;m.position.x=-l/2;g.add(m);g.userData.m=m;par=g;px=-l;py=0;return g;});
+  // 다리
+  const leg=(par,pos)=>{const u=G();u.position.set(...pos);par.add(u);u.add(moCap(T,.048,.24,fur));const k=G();k.position.y=-.24;u.add(k);k.add(sph(.04,fur));k.add(moCap(T,.036,.23,fur));const h=G();h.position.y=-.23;k.add(h);const pw=sph(.045,fur);pw.scale.set(1.25,.7,1);h.add(pw);return {u,k,h};};
+  R.legs={FL:leg(fh,[.27,-.03,.085]),FR:leg(fh,[.27,-.03,-.085]),BL:leg(rh,[-.27,-.03,.085]),BR:leg(rh,[-.27,-.03,-.085])};
+  R.base={FL:[.27,.085],FR:[.27,-.085],BL:[-.27,.085],BR:[-.27,-.085]};R.mats=[fur,dark];const g0=MO.QG;
+  R.def={rx:0,ry:0,tx:0,tz:0,hy:.5,pitch:0,roll:0,arch:0,bth:0,nk:.85,hdy:0,hd:0,jaw:0,ear:0,tb:.7,tc:.25,tw:0,tp:1,eye:1,FL:[0,g0,0],FR:[0,g0,0],BL:[0,g0,0],BR:[0,g0,0]};
+  const PF=new T.Vector3(1,0,0),PB=new T.Vector3(-1,0,0);
+  R.apply=P=>{root.position.x=P.rx;root.rotation.set(0,P.ry,0);torso.position.set(P.tx,P.hy,P.tz);torso.rotation.set(P.roll,0,P.pitch);fh.rotation.z=-P.arch;rh.rotation.z=P.arch;R.bodyMs.forEach(m=>m.scale.set(1+P.bth,1,.95+P.bth*.8));
+    neck.rotation.set(0,P.hdy,P.nk);head.rotation.z=P.hd-P.nk;jaw.rotation.z=-P.jaw;R.eyes.forEach(e=>e.scale.y=P.eye);
+    R.ears.forEach(g=>{if(cat)g.rotation.set(-g.userData.z*.15*P.ear,0,P.ear*1.1);else g.rotation.set(g.userData.z*(.35+.2*P.ear),0,P.ear*.9);});
+    R.tail.forEach((g,i)=>{g.rotation.set(0,i===0?P.tw:P.tw*.3,i===0?-P.tb:-P.tc);g.userData.m.scale.set(1,P.tp,P.tp);});
+    root.updateMatrixWorld(true);root.getWorldQuaternion(R.qRoot);
+    for(const k in R.legs){const L=R.legs[k],b=R.base[k],f=P[k];R.v0.set(b[0]+f[0],f[1],b[1]+f[2]);const fr=k[0]==='F';const phi=moLimb(R,L.u,R.v0,.24,.23,fr?PF:PB,fr?-1:1);L.u.quaternion.copy(R.qIK);L.k.rotation.set(0,0,phi);}};
+  R.body=()=>MO.wp(torso,T);return R;}
+
+/* ── 공통 효과 ── */
+MO.dust=(E,x,y,z,n,s=1,col=0x8d7e82)=>E.burst(n,()=>({x:x+(Math.random()-.5)*.12,y:y+.03,z:z+(Math.random()-.5)*.12,vx:(Math.random()-.5)*1.4*s,vy:Math.random()*.7*s,vz:(Math.random()-.5)*1.4*s,drag:3,grav:-.15,max:.55+Math.random()*.45,size:.08,end:.26,col,a:.42,blend:'normal'}));
+MO.say=(E,o,s,col='#f6dad7',size=18,dy=.3)=>{const p=MO.wp(o,E.T);E.text(p.x,p.y+dy,p.z,s,{size,col,vy:.7,max:1.2,w:800});};
+MO.trail=(E,n,col)=>{const T=E.T;const P=new Float32Array(n*6),C=new Float32Array(n*6);const geo=new T.BufferGeometry();geo.setAttribute('position',new T.BufferAttribute(P,3));geo.setAttribute('color',new T.BufferAttribute(C,3));const idx=[];for(let i=0;i<n-1;i++){const a=i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2);}geo.setIndex(idx);
+  const me=new T.Mesh(geo,new T.MeshBasicMaterial({vertexColors:true,blending:T.AdditiveBlending,transparent:true,depthWrite:false,side:T.DoubleSide,toneMapped:false}));me.frustumCulled=false;me.renderOrder=6;E.scene.add(me);const hist=[],c=new T.Color(col);
+  return {push(a,b,str){hist.unshift([a.x,a.y,a.z,b.x,b.y,b.z,str]);if(hist.length>n)hist.pop();for(let i=0;i<n;i++){const h=hist[Math.min(i,hist.length-1)];const k=Math.pow(1-i/(n-1),1.6)*h[6]*.55;P.set(h.slice(0,6),i*6);C.set([c.r*k*.1,c.g*k*.1,c.b*k*.1,c.r*k,c.g*k,c.b*k],i*6);}geo.attributes.position.needsUpdate=true;geo.attributes.color.needsUpdate=true;}};};
+MO.streak=(E,y0,y1,z,v=12,col=0xeee8eb)=>{E.add({type:'spark',x:2.6+Math.random(),y:y0+Math.random()*(y1-y0),z:(Math.random()-.5)*z,vx:-v*(.8+Math.random()*.4),max:.45,drag:0,grav:0,col,len:.05,a:.5});};
+
+/* ── 실행기 ── */
+function moStep(d,E,R,S,p,dt){const k=+p.speed||1;S.dt=dt*k;S.t+=S.dt;const D=d.D,cyc=Math.floor(S.t/D),u=(S.t-cyc*D)/D;S.u=u;
+  if(cyc!==S.cyc){S.cyc=cyc;S.fired={};if(d.reset)d.reset(E,R,S,p);}
+  const P=d.keys?MO.kf(MO.full(d,R.def),u):MO.merge(R.def,d.base||{});if(d.pose)d.pose(P,u,S,R,E,p);R.apply(P);S.P=P;
+  if(d.ev)d.ev.forEach((x,i)=>{if(!S.fired[i]&&u>=x[0]){S.fired[i]=1;x[1](E,R,S,p);}});if(d.upd)d.upd(E,R,S,p,u);
+  E.grid.position.x=-(((S.scroll%.5)+.5)%.5);const b=R.body();const hgt=Math.max(0,b.y-(R.kind==='h'?.9:.45*R.sc));const s=MO.cl(1-hgt*.16,.35,1);
+  R.shadow.position.set(b.x,.006,b.z);const sx=(d.shw||(R.kind==='h'?.42:.5*R.sc))*s,sz=(d.shd||(R.kind==='h'?.3:.24*R.sc))*s;R.shadow.scale.set(sx,sz,1);R.shadow.material.opacity=.38*s;}
+function moBuild(d,kind,st,p,c){const S={t:0,scroll:0,cyc:-1,fired:{},dt:0};
+  const E=g3Engine(st,c,{noChars:1,init(E){const T=E.T;const R=kind==='h'?rigHuman(T):rigQuad(T,p.sp||d.sp||'dog');E.scene.add(R.root,R.shadow);E.rig=R;
+    const nar=E.W/E.H<1.2,cb=d.cam||(kind==='h'?[0,1.45,4.5]:[0,1.05,3.3]);E.camBase.set(cb[0],cb[1],cb[2]*(nar?1.4:1));const lk=d.look||(kind==='h'?[0,.92,0]:[0,.4,0]);E.look.set(lk[0],lk[1],lk[2]);E.orbit=d.orbit!=null?d.orbit:kind==='h'?-.5:-.42;
+    if(d.setup)d.setup(E,R,S,p);E.hook({upd(dt){if(!E.scene)return false;moStep(d,E,R,S,p,dt);}});}});
+  let dn=null;st.addEventListener('pointerdown',e=>{dn={x:e.clientX,o:E.orbit||0};});st.addEventListener('pointermove',e=>{if(dn&&E.scene)E.orbit=dn.o+(e.clientX-dn.x)*.012;});const up=()=>{dn=null;};['pointerup','pointercancel','pointerleave'].forEach(n=>st.addEventListener(n,up));
+  return ()=>wait(Math.max(2600,d.D*1000/(+p.speed||1)));}
+
+const HG=MO.G,QG=MO.QG;
+const MO_IC={h:'<circle cx="12" cy="4.5" r="2"/><path d="M12 7v6.5M12 13.5l-3.2 6.5M12 13.5l3.2 6.5M7.5 10l4.5-1.5 4.5 1.5"/>',
+ walk:'<circle cx="13" cy="4" r="2"/><path d="M12.6 6.8l-1.2 6.4 3.4 6.8M11.4 13.2l-3.6 5.8M8 11.5l4-3.2 4.2 2.4"/>',
+ run:'<circle cx="15" cy="4" r="2"/><path d="M14 7l-3 6 4 2.5-1.5 5M11 13l-4.5 2M7 9.5l5-2.5 3.5 3.5 3 .5"/>',
+ jump:'<circle cx="12" cy="3.5" r="2"/><path d="M12 6v6M7 5.5l5 2.5 5-2.5M12 12l-3 3 1 3M12 12l3 3-1 3M6 21h12"/>',
+ sword:'<circle cx="9" cy="5" r="2"/><path d="M9 7.5v6l-2.5 6.5M9 13.5l3 6.5M9 9.5l4-2M13 7.5l7-6M18 2.5l1.5 1.5"/>',
+ bow:'<circle cx="7" cy="5" r="2"/><path d="M7 7.5v6l-2 6.5M7 13.5l2.5 6.5M7 9.5h9M16 3c3 3 3 10 0 13M16 3v13M4 9.5h3"/>',
+ bike:'<circle cx="5.5" cy="17" r="3.5"/><circle cx="18.5" cy="17" r="3.5"/><path d="M5.5 17l4-7h6l3 7M9.5 10l3 7M15.5 10l-1-3h2"/><circle cx="11" cy="4.5" r="1.6"/>',
+ q:'<path d="M4 11c0-2 2-3 4-3h7l2-3 2 1v4l1 2-2 1v6M6 11v7M9 12v6M15 12v6M4 11l-1.5-3"/>',
+ dog:'<path d="M3.5 10.5c0-2 1.5-3 3.5-3h7.5l1.5-2.5h2.5l1.5 2-1 2.5h-1.5v6.5M6 11v7M9 12v6M14 12v6M17 12v6M3.5 10.5L2 7.5"/><circle cx="17.6" cy="6.6" r=".5"/>',
+ cat:'<path d="M4 12c0-2 1.5-3 3.5-3H15l1-4 1.5 2h1L20 5v5l-1.5 2v6M6.5 12v6M9.5 12.5v5.5M14 12.5v5.5M17 12v6M4 12c-2-1-2.5-4-1-6"/>'};
+
+/* ── 사람 동작 ── */
+const MO_STAND={hx:0,hy:MO.HY,sp:0,tw:0,hd:0,la:[0,.15,.12],ra:[0,.15,.12],lf:[0,HG,0],rf:[0,HG,0]};
+const moHit=(E,pos,big)=>{E.sprite({...pos,size:big?1.4:.8,col:GH.hi,life:.14,grow:.4});g3Sparks(E,pos,big?22:12,big?7:5,[GH.white,GH.rose,GH.gold],{dir:0,spread:2});E.light({...pos,col:GH.rose,i:big?9:5,life:.3});E.shake(big?.24:.1);if(big){E.freeze(55);E.kick=-1.6;}};
+const MO_H=[
+{id:'mo-walk',ko:'걷기',en:'Walk Cycle',D:1.1,icon:MO_IC.walk,params:[R('stride','보폭',.5,.3,.6,.02,'m')],
+ desc:'발이 바닥에 정확히 붙은 채 굴러가듯 걷는 기본 걷기 사이클입니다. 디딤 중간에 골반이 가장 높이 올라가고, 팔과 어깨는 다리와 반대로 흔들려 무게 중심이 자연스럽게 이어집니다.',
+ how:'다리마다 위상 0 / 0.5로 발 궤적을 만듭니다. 디딤(60%) 동안 발은 보폭만큼 뒤로 일정하게 미끄러지고(=바닥 속도), 스윙(40%)에선 smoothstep으로 앞으로 돌아오며 sin 높이만큼 들립니다. 바닥 그리드를 같은 속도로 흘려서 미끄러짐이 0이 됩니다.',
+ cx:p=>`const L = footPath(u, ${p.stride}, .12, .6), R = footPath((u + .5) % 1, ${p.stride}, .12, .6);\npose.hipsY = .9 + .025 * Math.cos(4 * Math.PI * (u - .3));   // 디딤 중간이 최고점\npose.armL = -.42 * Math.cos(2 * Math.PI * u); pose.armR = -pose.armL;   // 팔은 반대 다리와\nground.x -= ${p.stride} / (.6 * ${1.1}) * dt;                     // 트레드밀`,
+ pr:p=>`걷기 사이클(1.1초): 보폭 ${p.stride}m, 디딤 60%·스윙 40%, 스윙 높이 0.12m(sin), 골반 상하 ±0.025m(디딤 중간 최고), 팔 ±0.42rad 반대 위상, 어깨 비틀기 ±0.12rad, 바닥은 발 속도와 같게 스크롤`,
+ pose(P,u,S,R,E,p){const st=+p.stride,du=.6;const l=MO.foot(u,st,.12,du),r=MO.foot((u+.5)%1,st,.12,du);P.lf=[l[0],l[1],0];P.rf=[r[0],r[1],0];const c=Math.cos(2*Math.PI*u);P.hy=.9+.025*Math.cos(4*Math.PI*(u-.3));P.la=[-.42*c,.3+.12*(1-c),.12];P.ra=[.42*c,.3+.12*(1+c),.12];P.tw=-.12*c;P.sx=.025*Math.sin(2*Math.PI*u);P.sp=-.05;P.ft=0;S.scroll+=st/(du*1.1)*S.dt;}},
+{id:'mo-run',ko:'뛰기',en:'Run Cycle',D:.66,icon:MO_IC.run,
+ desc:'상체를 앞으로 기울이고 팔꿈치를 90° 가까이 접은 채 힘차게 달립니다. 두 발이 모두 떠 있는 체공 구간이 있고, 착지할 때마다 발밑에서 먼지가 튑니다.',
+ how:'디딤 비율을 38%로 줄여 체공 구간을 만들고 스윙 높이를 0.3m로 키웠습니다. 골반은 체공 중에 올라가고 디딤에서 눌리며, 상체 기울기 -0.25rad·팔꿈치 1.6rad·어깨 비틀기로 달리기 실루엣을 만듭니다. 발이 닿는 순간(위상 0, 0.5)에 먼지 파티클을 뿌립니다.',
+ cx:()=>`const L = footPath(u, .68, .3, .38), R = footPath((u + .5) % 1, .68, .3, .38);\npose.spine = -.25;                       // 앞으로 기울기\npose.armL = [-.85 * Math.cos(2 * Math.PI * u) + .1, 1.6];   // [어깨, 팔꿈치]\nif (crossed(u, 0) || crossed(u, .5)) dust(footWorldPos);`,
+ pr:()=>`달리기 사이클(0.66초): 보폭 0.68m, 디딤 38%(체공 구간 있음), 스윙 높이 0.3m, 상체 -0.25rad 기울임, 팔꿈치 1.6rad 고정·어깨 ±0.85rad, 골반 상하 ±0.05m, 착지마다 먼지 파티클, 바닥 스크롤 약 2.7m/s`,
+ pose(P,u,S){const st=.68,du=.38;const l=MO.foot(u,st,.3,du),r=MO.foot((u+.5)%1,st,.3,du);P.lf=[l[0],l[1],0];P.rf=[r[0],r[1],0];const c=Math.cos(2*Math.PI*u);P.hy=.85+.045*Math.cos(4*Math.PI*(u-.22));P.sp=-.25;P.hd=.18;P.la=[-.85*c+.1,1.6,.1];P.ra=[.85*c+.1,1.6,.1];P.tw=-.25*c;S.scroll+=st/(du*.66)*S.dt;},
+ ev:[[0,(E,R)=>{const f=MO.wp(R.legL.h,E.T);MO.dust(E,f.x,0,f.z,4,.8);}],[.5,(E,R)=>{const f=MO.wp(R.legR.h,E.T);MO.dust(E,f.x,0,f.z,4,.8);}]]},
+{id:'mo-jump',ko:'점프하기',en:'Jump',D:2.2,icon:MO_IC.jump,cam:[0,1.6,5.6],look:[0,1.2,0],
+ desc:'무릎을 굽혀 힘을 모은 뒤 팔을 크게 휘둘러 뛰어오르고, 공중에서 다리를 접었다가 펴며 내려와 무릎으로 충격을 흡수합니다. 도약과 착지 순간 바닥에 먼지 고리가 퍼집니다.',
+ how:'예비 동작(웅크림) → 도약 → 정점(다리 접기) → 하강(다리 펴기) → 착지 흡수 → 복귀 순서의 키포즈 7개를 보간합니다. 공중 구간은 ease-out/ease-in으로 나눠 포물선처럼 보이게 하고, 발 목표점을 골반 아래로 끌어올려 IK가 무릎을 자동으로 접게 합니다.',
+ cx:()=>`const KEYS = [\n  [0,   STAND],\n  [.16, { hipsY: .6,  spine: -.5, arms: [-1, .35] }],          // 웅크림\n  [.25, { hipsY: 1.02, arms: [2.6, .25] }, 'out'],           // 도약\n  [.44, { hipsY: 1.8, feetY: 1.2 }, 'out'],                  // 정점: 다리 접기\n  [.7,  { hipsY: .88, feetY: GROUND }, 'in'],                // 착지\n  [.78, { hipsY: .6,  spine: -.45 }, 'out'],                 // 흡수\n  [.95, STAND] ];`,
+ pr:()=>`점프(2.2초): 웅크림(골반 0.6m, 팔 뒤로) → 도약(팔 위로 휘두름) → 정점 골반 1.8m·다리 접기 → 하강하며 다리 펴기 → 착지 흡수(골반 0.6m) → 복귀. 공중은 ease-out/in, 도약·착지 때 먼지 고리 + 착지 흔들림`,
+ keys:[[0,{}],[.16,{hy:.6,sp:-.5,hd:.25,la:[-1,.35,.15],ra:[-1,.35,.15],lf:[.06,HG,0],rf:[.06,HG,0]}],[.25,{hy:1.02,sp:-.08,hd:.05,la:[2.6,.25,.3],ra:[2.6,.25,.3],lf:[-.04,HG+.05,0],rf:[-.04,HG+.05,0]},'out'],
+  [.44,{hy:1.8,sp:-.2,la:[2.3,.6,.55],ra:[2.3,.6,.55],lf:[.18,1.2,0],rf:[.12,1.15,0]},'out'],[.62,{hy:1.25,sp:-.05,la:[1.2,.3,.9],ra:[1.2,.3,.9],lf:[.08,.42,0],rf:[.02,.45,0]},'in'],
+  [.7,{hy:.88,sp:-.15,lf:[.05,HG,0],rf:[.03,HG,0],la:[.9,.35,.6],ra:[.9,.35,.6]},'in'],[.78,{hy:.6,sp:-.45,hd:.25,la:[.7,.6,.3],ra:[.7,.6,.3]},'out'],[.95,{...MO_STAND}],[1,{}]],
+ ev:[[.25,E=>{MO.dust(E,0,0,0,10,1.2);E.ring({x:0,z:0,col:GH.rose,r0:.1,r1:1,life:.45,a:.6});}],[.7,E=>{MO.dust(E,0,0,0,14,1.5);E.ring({x:0,z:0,col:GH.hi,r0:.1,r1:1.3,life:.5,a:.7});E.shake(.14);}]]},
+{id:'mo-sit',ko:'앉기',en:'Sit Down',D:4.2,icon:MO_IC.h,
+ desc:'뒤에 놓인 의자로 엉덩이를 빼며 상체를 숙였다가 털썩 앉고, 잠시 주변을 둘러본 뒤 다시 몸을 숙여 일어섭니다. 발은 끝까지 바닥에 붙어 있습니다.',
+ how:'골반 위치를 의자 위(-0.3, 0.53)까지 옮기는 동안 상체를 -0.5rad 숙여 무게 중심을 발 위에 둡니다. 발 목표는 고정해 두고 골반만 움직이면 IK가 무릎·발목 각도를 알아서 풉니다. 앉아 있는 동안엔 머리 회전과 숨쉬기만 더합니다.',
+ cx:()=>`// 발은 고정, 골반만 의자로 이동 → IK가 무릎을 접음\n[.2,  { hips: [-.12, .72], spine: -.5, arms: [.9, .25] }],   // 엉덩이 빼며 숙이기\n[.32, { hips: [-.3, .53],  spine: -.08 }],                  // 착석\n[.78, { hips: [-.16, .66], spine: -.55 }],                  // 다시 숙여 일어서기\nif (seated) neck.rotation.y = .5 * Math.sin(t * 1.4);       // 둘러보기`,
+ pr:()=>`의자에 앉았다 일어서기(4.2초): 의자 상판 높이 0.45m가 캐릭터 뒤 0.3m, 상체를 -0.5rad 숙이며 골반을 뒤로 빼서 착석, 앉아서 고개 좌우로 둘러보기, 다시 숙여 일어서기. 발은 IK로 바닥 고정`,
+ setup(E,R,S){const T=E.T,M=moMats(T);const g=new T.Group();g.position.set(-.3,0,0);const seat=new T.Mesh(new T.CylinderGeometry(.21,.21,.05,32),M.rose);seat.position.y=.425;g.add(seat);[0,1,2].forEach(i=>{const a=i/3*6.283;g.add(moRod(T,[Math.cos(a)*.14,.4,Math.sin(a)*.14],[Math.cos(a)*.18,0,Math.sin(a)*.18],.016,M.dark));});E.scene.add(g);},
+ keys:[[0,{}],[.1,{}],[.2,{hx:-.12,hy:.72,sp:-.5,hd:.3,la:[.9,.25,.2],ra:[.9,.25,.2],lf:[.16,HG,0],rf:[.16,HG,0]}],[.32,{hx:-.3,hy:.53,sp:-.06,hd:.05,la:[.55,.85,.12],ra:[.55,.85,.12]}],[.68,{sp:-.02}],
+  [.78,{hx:-.16,hy:.66,sp:-.55,hd:.3,la:[.9,.25,.2],ra:[.9,.25,.2]}],[.9,{...MO_STAND,hx:0}],[1,{}]],
+ pose(P,u,S){if(u>.34&&u<.68){const s=(u-.34)/.34;P.hdy=.55*Math.sin(s*Math.PI*2);P.sp+=.02*Math.sin(S.t*2.4);}},
+ ev:[[.32,E=>MO.dust(E,-.3,.05,0,6,.5)]]},
+{id:'mo-standup',ko:'일어서기',en:'Get Up from Floor',D:4.6,icon:MO_IC.h,
+ desc:'바닥에 털썩 주저앉아 손으로 뒤를 짚고 쉬다가, 다리를 끌어당기고 몸을 앞으로 숙여 발 위로 무게를 옮긴 뒤 천천히 일어섭니다.',
+ how:'앉은 자세에선 손을 IK로 바닥(-0.74, 0.09)에 짚게 하고, 일어설 땐 IK 가중치를 0으로 풀며 팔을 앞으로 내밉니다. 발을 골반 쪽으로 당긴 다음 상체를 -0.75rad 숙여 무게 중심을 발 위에 올리는 순서가 핵심입니다.',
+ cx:()=>`[.32, { hips: [-.42, .17], spine: .28, feet: [.34, G], handIK: 1, hand: [-.74, .09] }],  // 주저앉기\n[.6,  { feet: [-.04, G] }],                                   // 다리 당기기\n[.7,  { hips: [-.14, .42], spine: -.75, handIK: 0 }],         // 발 위로 무게 이동\n[.82, { hips: [-.04, .74], spine: -.3 }],                     // 일어서기`,
+ pr:()=>`바닥에서 일어서기(4.6초): 주저앉기(골반 0.17m, 다리 앞으로 뻗고 손은 IK로 뒤 바닥 짚기) → 다리 당기기 → 상체 -0.75rad 숙여 발 위로 무게 이동(손 IK 해제) → 천천히 일어서기`,
+ keys:[[0,{}],[.08,{}],[.2,{hx:-.08,hy:.56,sp:-.55,hd:.2,la:[.8,.3,.2],ra:[.8,.3,.2],lf:[.08,HG,0],rf:[.08,HG,0]}],[.32,{hx:-.42,hy:.17,sp:.28,hd:-.1,lf:[.32,HG,0],rf:[.36,HG,0],lw:1,rw:1,lh:[-.74,.09,.26],rh:[-.74,.09,-.26]},'out'],
+  [.5,{hd:.05}],[.6,{hx:-.36,lf:[-.06,HG,0],rf:[-.02,HG,0],sp:.1}],[.7,{hx:-.14,hy:.42,sp:-.75,hd:.3,lw:0,rw:0,la:[1.3,.3,.15],ra:[1.3,.3,.15]}],
+  [.82,{hx:-.04,hy:.74,sp:-.3,hd:.15,la:[.6,.2,.15],ra:[.6,.2,.15],lf:[0,HG,0],rf:[0,HG,0]}],[.92,{...MO_STAND}],[1,{}]],
+ pose(P,u){if(u>.34&&u<.5)P.hdy=.3*Math.sin((u-.34)/.16*Math.PI*2);},
+ ev:[[.31,E=>MO.dust(E,-.42,0,0,10,.9)]]},
+{id:'mo-glide',ko:'활강',en:'Hang Glide',D:3,icon:'<path d="M2 9l10-5 10 5-10 2z"/><path d="M9 10.5l-1 4h8l-1-4M8 14.5l4 2 4-2M12 16.5v3"/>',cam:[0,2.1,4.9],look:[0,1.75,0],orbit:-.62,shw:.9,shd:.6,
+ desc:'행글라이더 손잡이를 잡고 엎드린 자세로 바람을 가르며 활강합니다. 날개가 좌우로 기울며 선회하고, 날개 끝에서 빛 꼬리가 흐르며 바람 줄기가 빠르게 스칩니다.',
+ how:'몸 전체를 피벗 그룹에 넣고 -1.4rad 기울여 엎드린 자세를 만든 뒤, 다리는 FK로 뒤로 뻗고 손은 IK로 날개에 달린 손잡이 위치를 매 프레임 따라가게 했습니다. 날개 그룹의 롤(뱅크)을 sin으로 흔들고 몸도 같은 방향으로 80% 따라 기울입니다. 바닥 스크롤 5.5m/s와 선분 파티클 바람으로 속도감을 냅니다.',
+ cx:()=>`glider.rotation.x = bank = .22 * Math.sin(2 * Math.PI * u);\nbody.pivot.rotation.set(bank * .8, 0, -1.4);      // 엎드림 + 뱅크\nsolveIK(armL, glider.barL.getWorldPosition(v));   // 손은 손잡이에 고정\nlegs.fk = [.12 + .1 * Math.sin(4 * Math.PI * u), -.25];   // 다리 살짝 차기\nground.x -= 5.5 * dt; spawnWindStreak();`,
+ pr:()=>`행글라이더 활강(3초 루프): 델타 날개(앞 1.1m, 폭 2.9m) 아래 매달려 엎드린 자세(피벗 -1.4rad), 손은 IK로 A자 손잡이 고정, 날개 뱅크 ±0.22rad·몸 80% 추종, 다리 FK로 뒤로 뻗고 살짝 차기, 바닥 5.5m/s 스크롤, 바람 선분 파티클 + 날개 끝 빛 꼬리`,
+ setup(E,R,S){const T=E.T,M=moMats(T);const gl=new T.Group();R.root.add(gl);S.gl=gl;const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute([1.1,0,0,-.55,0,1.45,-.2,.07,0, 1.1,0,0,-.2,.07,0,-.55,0,-1.45],3));geo.computeVertexNormals();
+  const wm=new T.MeshPhysicalMaterial({color:0xf3b7bd,metalness:.4,roughness:.35,clearcoat:1,side:T.DoubleSide,transparent:true,opacity:.92,envMapIntensity:1.2});gl.add(new T.Mesh(geo,wm));
+  gl.add(moRod(T,[1.1,0,0],[-.55,0,1.45],.018,M.metal),moRod(T,[1.1,0,0],[-.55,0,-1.45],.018,M.metal),moRod(T,[1.1,.0,0],[-.3,.06,0],.018,M.metal),moRod(T,[.1,0,0],[.25,-.38,.32],.012,M.dark),moRod(T,[.1,0,0],[.25,-.38,-.32],.012,M.dark),moRod(T,[.25,-.38,.32],[.25,-.38,-.32],.014,M.metal));
+  S.bl=new T.Object3D();S.bl.position.set(.25,-.38,.26);S.br=new T.Object3D();S.br.position.set(.25,-.38,-.26);S.tl=new T.Object3D();S.tl.position.set(-.55,0,1.45);S.tr=new T.Object3D();S.tr.position.set(-.55,0,-1.45);gl.add(S.bl,S.br,S.tl,S.tr);},
+ pose(P,u,S,R){const w=2*Math.PI*u,bank=.22*Math.sin(w),bob=.07*Math.sin(2*w);S.gl.position.set(.08,2.32+bob,0);S.gl.rotation.set(bank,0,-.05+.04*Math.sin(w+1));R.root.updateMatrixWorld(true);
+  const a=MO.wp(S.bl,R.T),b=MO.wp(S.br,R.T);P.pcy=1.62+bob;P.hy=1.62+bob;P.pv=-1.4;P.prx=bank*.8;P.fk=1;const k=.1*Math.sin(2*w);P.lk=[.12+k,-.25-k];P.rk=[.12-k,-.25+k];P.hd=.95;P.lw=P.rw=1;P.lh=[a.x,a.y,a.z];P.rh=[b.x,b.y,b.z];S.scroll+=5.5*S.dt;},
+ upd(E,R,S){if(Math.random()<.6)MO.streak(E,.2,3.2,3,13);[S.tl,S.tr].forEach(o=>{const q=MO.wp(o,E.T);E.add({x:q.x,y:q.y,z:q.z,vx:-4,max:.4,size:.06,col:GH.rose,a:.7,drag:1});});}},
+{id:'mo-land',ko:'착지',en:'Hero Landing',D:3,cam:[0,1.5,5],look:[0,1,0],icon:'<circle cx="12" cy="5" r="2"/><path d="M12 7.5l-1 5 4 3v4M11 12.5l-4 3 .5 4M11.5 9.5l4.5 3.5M3 21h18M5 18l-2 3M19 18l2 3"/>',
+ desc:'하늘에서 수직으로 떨어져 한쪽 무릎과 주먹으로 땅을 짚는 "슈퍼히어로 착지"를 합니다. 충돌 순간 화면이 흔들리고 충격파와 먼지가 퍼진 뒤, 고개를 들고 천천히 일어섭니다.',
+ how:'낙하 구간을 ease-in(가속)으로, 착지 압축을 ease-out(급감속)으로 보간해 무게감을 만듭니다. 착지 포즈에선 앞발은 바닥, 뒷발은 무릎이 땅에 닿도록 목표점을 뒤쪽 낮게 두고, 오른손은 IK로 바닥을 짚습니다. 충돌 프레임에 카메라 흔들림·FOV 킥·충격 고리·PointLight·먼지를 한꺼번에 터뜨립니다.',
+ cx:()=>`[.3,  { hipsY: 1.05, arms: [2.8, .3] }, 'in'],                 // 가속 낙하\n[.35, { hipsY: .5, spine: -.6, footL: [.34, G], footR: [-.4, .11],\n        handR_IK: 1, handR: [.36, .06, -.24] }, 'out'],         // 슈퍼히어로 착지\nonImpact(() => { shake(.55); fovKick(-3); shockRing(2.6); dust(40); });`,
+ pr:()=>`슈퍼히어로 착지(3초): 화면 밖 4.6m에서 ease-in 낙하(속도선 파티클) → 0.15초 만에 압축(ease-out): 앞발 바닥, 뒷무릎 바닥, 오른주먹 IK로 바닥 짚기, 왼팔 뒤로 뻗기 → 충돌 순간 흔들림 0.55·FOV -3·충격 고리 2.6m·먼지 40개·섬광 → 고개 들고 천천히 일어서기`,
+ keys:[[0,{hy:4.6,sp:.12,hd:.2,la:[2.6,.4,.5],ra:[2.4,.5,.6],lf:[.12,3.8,0],rf:[-.08,3.82,0]}],[.3,{hy:1.05,lf:[.12,.24,0],rf:[-.06,.26,0],la:[2.8,.3,.7],ra:[2.8,.3,.7]},'in'],
+  [.35,{hy:.5,hx:-.04,sp:-.6,hd:.3,lf:[.34,HG,.03],rf:[-.4,.11,-.03],rw:1,rh:[.36,.06,-.24],la:[-.6,.25,1.0]},'out'],[.62,{hd:.42}],
+  [.78,{hy:.8,hx:0,sp:-.2,hd:.1,rw:0,ra:[.3,.3,.3],la:[.1,.3,.3],lf:[.1,HG,0],rf:[-.1,HG,0]}],[.9,{...MO_STAND}],[1,{}]],
+ upd(E,R,S){if(S.P.hy>1.3&&Math.random()<.7){const b=R.body();E.add({type:'spark',x:b.x+(Math.random()-.5)*.8,y:b.y+Math.random()*.8,z:(Math.random()-.5)*.8,vy:9,max:.25,col:GH.silver,len:.05,a:.6,drag:0,grav:0});}},
+ ev:[[.345,E=>{E.shake(.55);E.kick=-3;E.freeze(40);E.ring({x:0,z:0,col:GH.hi,r0:.1,r1:2.6,life:.6,a:.9});E.ring({x:0,z:0,col:GH.rose,r0:.05,r1:1.4,life:.4,a:.8});E.light({x:0,y:.5,z:0,col:GH.rose,i:12,life:.45});E.sprite({x:.2,y:.2,z:0,size:2,col:GH.hi,life:.15});MO.dust(E,0,0,0,40,2.4);E.text(.2,1.6,0,'쾅!',{size:26,col:'#ffd27a',vy:1,max:1,glow:1});}]]},
+{id:'mo-punch',ko:'공격 (펀치 콤보)',en:'Punch Combo',D:2.4,icon:'<circle cx="7" cy="5" r="2"/><path d="M7 7.5v6l-2 6.5M7 13.5l2.5 6.5M7 9.5h6M15 7h4v5h-4zM17 4v3"/>',
+ desc:'가드를 올린 파이팅 자세에서 잽-잽-스트레이트-훅 4연타를 샌드백에 꽂습니다. 맞을 때마다 스파크와 섬광이 튀고, 샌드백은 진자처럼 흔들립니다. 스트레이트엔 히트스톱이 들어가 가장 묵직합니다.',
+ how:'왼발 앞 파이팅 자세를 기본으로 두고, 펀치마다 어깨(척추 Y축) 비틀기와 팔 뻗기를 0.08초 ease-out으로 붙였다 돌아옵니다. 잽은 왼어깨를 +0.5rad, 스트레이트는 오른어깨를 -0.45rad 앞으로 돌리고 뒷발 뒤꿈치를 들어 체중을 실습니다. 명중 시점에 손 월드 좌표에서 이펙트를 내고, 샌드백은 감쇠 진자(각가속 = -12θ - 1.5ω)로 흔듭니다.',
+ cx:()=>`const GUARD = { armL: [.65, 2.1], armR: [.4, 2.3], twist: .28 };\n[.07, { armL: [1.56, .05], twist: .5 }, 'out'],      // 잽\n[.5,  { armR: [1.56, .05], twist: -.45, heelR: .03 }, 'out'],   // 스트레이트\n[.8,  { armL: [1.45, 1.3], twist: -.25 }, 'out'],    // 훅\nbag.w += (-12 * bag.a - 1.5 * bag.w) * dt; bag.a += bag.w * dt;`,
+ pr:()=>`펀치 4연타(2.4초): 파이팅 자세(왼발 앞, 가드) → 잽·잽(왼어깨 +0.5rad 비틀며 팔 뻗기) → 스트레이트(오른어깨 -0.45rad, 뒷발 뒤꿈치 들기, 히트스톱 55ms) → 훅(팔꿈치 90° 수평 회전). 명중마다 손 위치에서 스파크·섬광·PointLight, 샌드백은 감쇠 진자로 흔들림`,
+ setup(E,R,S){const T=E.T,M=moMats(T);const g=new T.Group();g.position.set(.8,2.15,0);E.scene.add(g);const bm=new T.MeshPhysicalMaterial({color:0x3a2630,roughness:.35,clearcoat:.8,metalness:.1});const bag=new T.Mesh(new T.CapsuleGeometry(.15,.62,8,16),bm);bag.position.y=-.7;g.add(bag);
+  const band=new T.Mesh(new T.CylinderGeometry(.155,.155,.05,24),M.rose);band.position.y=-.5;g.add(band);g.add(moRod(T,[0,0,0],[0,1,0],.01,M.metal),moRod(T,[0,0,0],[0,-.3,0],.008,M.metal));S.bag=g;S.ba=0;S.bv=0;},
+ keys:(()=>{const PS={la:[.65,2.1,.15],ra:[.4,2.3,.15],tw:.28,sp:0,hx:0};const J={la:[1.56,.05,.06],tw:.5,sp:-.1};return [[0,{hy:.86,lf:[.2,HG,.02],rf:[-.22,HG,-.02],hd:.05,...PS}],[.07,J,'out'],[.16,PS],[.27,J,'out'],[.36,PS],
+  [.5,{ra:[1.56,.05,.06],tw:-.45,sp:-.18,hx:.07,rf:[-.16,HG+.03,-.02]},'out'],[.62,{...PS,rf:[-.22,HG,-.02]}],[.74,{la:[1.1,1.4,.9],tw:.7,sp:-.05}],[.8,{la:[1.45,1.3,.4],tw:-.25,sp:-.12},'out'],[.92,PS],[1,{}]];})(),
+ upd(E,R,S){S.bv+=(-12*S.ba-1.5*S.bv)*S.dt;S.ba+=S.bv*S.dt;S.bag.rotation.z=S.ba;},
+ ev:(()=>{const h=(side,big,txt)=>(E,R,S)=>{const p=MO.wp(R[side].h,E.T);p.x+=.05;moHit(E,p,big);S.bv+=big?2.4:1.3;E.text(p.x,p.y+.35,p.z,txt,{size:big?22:16,col:big?'#ffd27a':'#fff',vy:1.2,max:.8});};return [[.07,h('armL',0,'퍽')],[.27,h('armL',0,'퍽')],[.5,h('armR',1,'빡!')],[.8,h('armL',0,'퍽')]];})()},
+{id:'mo-sword',ko:'칼 휘두르기',en:'Sword Slash',D:2.6,icon:MO_IC.sword,
+ desc:'칼을 머리 위로 들어 올렸다가 내려베고, 손목을 돌려 칼날을 눕힌 뒤 허리를 크게 비틀어 가로베기로 이어갑니다. 칼끝이 지나간 자리에 로즈 빛 궤적이 남습니다.',
+ how:'칼은 오른손 그룹의 자식으로 붙이고 1.4rad 꺾어 팔과 수직이 되게 했습니다. 내려베기는 어깨 3.0 → -0.25rad를 짧게 ease-in으로, 가로베기는 손목 롤 -π/2로 칼날을 눕힌 뒤 척추 비틀기 +1.0 → -1.1rad로 만듭니다. 칼끝·칼날 중간의 월드 좌표를 매 프레임 기록해 리본(삼각형 스트립) 궤적을 그리고, 칼끝 속도가 빠를수록 밝게 합니다.',
+ cx:()=>`hand.add(sword); sword.rotation.z = 1.4;            // 칼날 ⟂ 팔\n[.14, { armR: [3.0, .35], spine: .14, twist: .25 }],     // 치켜들기\n[.21, { armR: [-.25, .12], spine: -.42 }, 'in'],         // 내려베기\n[.6,  { armR: [1.35, .25], wristRoll: -Math.PI / 2, twist: 1.0 }],\n[.68, { twist: -1.1 }, 'in'],                             // 가로베기\ntrail.push(midWorld, tipWorld, clamp((tipSpeed - 2.5) / 6, 0, 1));`,
+ pr:()=>`검술 2연격(2.6초): 칼을 오른손 자식으로 1.4rad 꺾어 장착 → 머리 위로 치켜들기 → 내려베기(0.18초 ease-in, 앞발 내딛기) → 손목 롤 -90°로 칼날 눕히기 → 허리 비틀기 +1.0→-1.1rad 가로베기. 칼끝·칼날 중간 월드 좌표로 리본 궤적(14마디, 가산 합성, 속도 비례 밝기), 베는 순간 섬광·흔들림`,
+ setup(E,R,S){const T=E.T,M=moMats(T);const sw=new T.Group();sw.rotation.z=1.4;R.armR.h.add(sw);const bl=new T.MeshPhysicalMaterial({color:0xf6eef0,metalness:1,roughness:.1,emissive:0x5a2430,emissiveIntensity:.6,envMapIntensity:1.6});
+  const blade=new T.Mesh(new T.BoxGeometry(.055,.8,.012),bl);blade.position.y=-.52;sw.add(blade);const tip=new T.Mesh(new T.ConeGeometry(.028,.08,4),bl);tip.rotation.z=Math.PI;tip.position.y=-.96;tip.scale.z=.25;sw.add(tip);
+  const gd=new T.Mesh(new T.BoxGeometry(.18,.03,.04),M.rose);gd.position.y=-.1;sw.add(gd);sw.add(Object.assign(new T.Mesh(new T.CylinderGeometry(.02,.02,.2,10),M.dark)));const pm=new T.Mesh(new T.SphereGeometry(.03,10,8),M.rose);pm.position.y=.11;sw.add(pm);
+  S.tip=new T.Object3D();S.tip.position.y=-.98;S.mid=new T.Object3D();S.mid.position.y=-.35;sw.add(S.tip,S.mid);S.tr=MO.trail(E,14,GH.rose);S.lt=null;},
+ keys:(()=>{const SR={ra:[.5,.75,.15],la:[.35,.6,.18],tw:0,sp:0,hx:0,rr:0,hy:.88,lf:[.18,HG,0],rf:[-.18,HG,0],hd:.05};return [[0,SR],[.14,{ra:[3.0,.35,.25],sp:.14,tw:.25,hd:.15,la:[.6,1.0,.3]}],[.21,{ra:[-.25,.12,.15],sp:-.42,tw:-.25,hy:.78,hx:.08,lf:[.36,HG,0],hd:-.05,la:[-.3,.4,.4]},'in'],
+  [.36,{ra:[-.1,.3,.15]}],[.5,SR],[.6,{ra:[1.35,.25,.35],rr:-1.57,tw:1.0,sp:-.05,la:[.2,.4,.5]}],[.68,{ra:[1.5,.1,.25],tw:-1.1,sp:-.2,hy:.8,lf:[.3,HG,0],hx:.05},'in'],[.8,{ra:[1.1,.4,.2],tw:-.85}],[1,SR]];})(),
+ upd(E,R,S){const T=E.T,a=MO.wp(S.mid,T),b=MO.wp(S.tip,T);const sp=S.lt&&S.dt>0?b.distanceTo(S.lt)/S.dt:0;S.lt=b;S.tr.push(a,b,MO.cl((sp-2.5)/6,0,1));},
+ ev:[[.21,(E,R,S)=>{const p=MO.wp(S.tip,E.T);E.sprite({...p,size:1,col:GH.hi,life:.14,grow:.5});E.shake(.14);E.kick=-1.2;g3Sparks(E,p,10,5,[GH.white,GH.rose]);}],[.68,(E,R,S)=>{const p=MO.wp(S.tip,E.T);E.sprite({...p,size:1,col:GH.hi,life:.14,grow:.5});E.shake(.12);E.kick=-1;}]]},
+{id:'mo-spear',ko:'창 휘두르기',en:'Spear Combo',D:2.8,icon:'<circle cx="7" cy="5" r="2"/><path d="M7 7.5v6l-2 6.5M7 13.5l2.5 6.5M7 10l5-1M3 12L21 5M21 5l-3 .2M21 5l-1.2 2.6"/>',
+ desc:'창을 겨눈 자세에서 두 번 깊게 찌른 다음, 머리 위로 들어 바람개비처럼 두 바퀴 돌리고, 낮게 깔아 크게 쓸어 벱니다. 창끝이 지나간 궤적이 빛으로 남습니다.',
+ how:'창은 손 그룹 안의 오프셋 그룹에 넣어, 찌를 땐 손이 창 뒤쪽을 잡고 돌릴 땐 오프셋을 0.3m 옮겨 창 중심을 잡게 했습니다. 찌르기는 어깨를 수평(1.56rad)·팔꿈치를 편 채 척추 비틀기 -0.55rad + 앞발 내딛기, 회전은 손 기준 X축 4π, 쓸어베기는 골반을 낮추고 비틀기 +0.9 → -0.9rad입니다.',
+ cx:()=>`hand.add(spearOffset); spearOffset.add(spear);\n[.09, { armR: [1.56, .04], twist: -.55, footL: [.38, G] }, 'out'],   // 찌르기\n[.48, { armR: [2.85, .2], gripOffset: .3 }],                       // 들어 올려 중심 잡기\n[.72, { spin: 4 * Math.PI }],                                      // 머리 위 회전\n[.88, { twist: -.9, hipsY: .72 }, 'in'];                           // 쓸어베기`,
+ pr:()=>`창술 콤보(2.8초): 겨눔 자세 → 찌르기 2회(어깨 수평·팔꿈치 펴기·허리 -0.55rad·앞발 내딛기, 창끝 충격 고리) → 머리 위로 들어 그립을 창 중앙으로 옮겨 2바퀴 회전 → 낮게 깔아 쓸어베기(허리 +0.9→-0.9rad). 창끝 리본 궤적`,
+ setup(E,R,S){const T=E.T,M=moMats(T);const off=new T.Group();R.armR.h.add(off);const sp=new T.Group();off.add(sp);S.off=off;S.sp=sp;sp.add(moRod(T,[0,.55,0],[0,-1.15,0],.022,M.metal));const tip=new T.Mesh(new T.ConeGeometry(.045,.2,6),new T.MeshPhysicalMaterial({color:0xf6eef0,metalness:1,roughness:.1,emissive:0x5a2430,emissiveIntensity:.7}));tip.rotation.z=Math.PI;tip.position.y=-1.25;sp.add(tip);
+  const rg=new T.Mesh(new T.TorusGeometry(.03,.01,6,14),M.rose);rg.rotation.x=Math.PI/2;rg.position.y=-1.14;sp.add(rg);S.tip=new T.Object3D();S.tip.position.y=-1.33;S.mid=new T.Object3D();S.mid.position.y=-.8;sp.add(S.tip,S.mid);S.tr=MO.trail(E,14,GH.hi);S.lt=null;},
+ keys:(()=>{const ST={hy:.84,lf:[.22,HG,0],rf:[-.26,HG,0],ra:[.6,1.0,.12],la:[.9,1.1,.2],tw:-.2,sp:0,hx:0,so:0};const TH={ra:[1.56,.04,.05],sp:-.28,tw:-.55,hx:.1,lf:[.38,HG,0]};return [[0,{...ST,spin:0}],[.09,TH,'out'],[.19,ST],[.28,TH,'out'],[.38,ST],
+  [.48,{ra:[2.85,.2,.35],tw:0,sp:.05,so:.3,la:[.4,.5,.5],hy:.9}],[.72,{spin:12.566}],[.8,{ra:[1.0,.15,.55],tw:.9,sp:-.3,hy:.72,lf:[.3,HG,0],la:[.3,.4,.6]}],[.88,{tw:-.9},'in'],[1,ST]];})(),
+ pose(P,u,S){S.off.position.y=P.so;S.off.rotation.x=P.spin;},
+ upd(E,R,S){const T=E.T,a=MO.wp(S.mid,T),b=MO.wp(S.tip,T);const sp=S.lt&&S.dt>0?b.distanceTo(S.lt)/S.dt:0;S.lt=b;S.tr.push(a,b,MO.cl((sp-2.5)/7,0,1));},
+ ev:(()=>{const th=(E,R,S)=>{const p=MO.wp(S.tip,E.T);E.ring({...p,ground:false,col:GH.hi,r0:.05,r1:.5,life:.25});g3Sparks(E,p,8,5,[GH.white,GH.rose]);E.shake(.08);};return [[.09,th],[.28,th],[.86,(E,R,S)=>{const p=MO.wp(S.tip,E.T);MO.dust(E,p.x,0,p.z,8,1.2);}]];})()},
+{id:'mo-bow',ko:'화살 쏘기',en:'Bow Shot',D:3.2,icon:MO_IC.bow,
+ desc:'활을 들어 올려 화살을 걸고, 시위를 턱 끝까지 당겨 잠시 조준한 뒤 놓습니다. 시위가 부르르 떨며 제자리로 돌아오고, 화살은 빛 꼬리를 그리며 포물선으로 날아갑니다.',
+ how:'두 손 모두 IK로 움직입니다. 왼손은 활을 앞으로 뻗고, 오른손은 시위 걸기(0.46) → 턱 밑(0.01)까지 당깁니다. 활은 매 프레임 왼손 월드 위치에 놓고, 시위는 활 끝 두 점과 오른손 위치를 잇는 3점 선입니다. 놓는 순간 화살을 월드로 분리해 속도 11m/s·중력으로 날리고, 시위 중앙에 감쇠 사인 진동을 더합니다.',
+ cx:()=>`bow.position.copy(handL.getWorldPosition(v));\nstring.setPoints(bowTop, drawing ? handR.getWorldPosition(v) : restNock + vib * Math.sin(t * 60) * .03, bowBottom);\n[.14, { handR: [.46, 1.42, .09] }, 'out'],   // 화살 걸기\n[.42, { handR: [.01, 1.5, .04] }],           // 턱까지 당기기\nonRelease(() => fly(arrow, dir.multiplyScalar(11)));   // + gravity, 빛 꼬리`,
+ pr:()=>`활쏘기(3.2초): 양손 IK — 왼손은 활을 앞으로 뻗고, 오른손은 시위에 화살 걸기 → 턱 밑까지 0.9초 당기기 → 0.5초 조준 → 놓기(손이 뒤로 튐). 시위 = 활 끝 2점 + 오른손 3점 선, 놓은 뒤 감쇠 진동. 화살은 월드로 분리해 11m/s + 중력, 화살 방향을 속도 방향으로 갱신, 빛 꼬리 파티클`,
+ setup(E,R,S){const T=E.T,M=moMats(T);const bow=new T.Group();E.scene.add(bow);S.bow=bow;const arc=new T.Mesh(new T.TorusGeometry(.45,.016,6,32,1.6),M.rose);arc.rotation.z=-.8;arc.position.x=-.45;bow.add(arc);
+  const grip=new T.Mesh(new T.CylinderGeometry(.024,.024,.12,8),M.dark);bow.add(grip);S.tt=new T.Object3D();S.tt.position.set(-.45+.45*Math.cos(.8),.45*Math.sin(.8),0);S.tb=new T.Object3D();S.tb.position.set(-.45+.45*Math.cos(.8),-.45*Math.sin(.8),0);bow.add(S.tt,S.tb);
+  const sg=new T.BufferGeometry().setFromPoints([new T.Vector3(),new T.Vector3(),new T.Vector3()]);S.str=new T.Line(sg,new T.LineBasicMaterial({color:0xf6dad7}));S.str.frustumCulled=false;E.scene.add(S.str);
+  const mkA=()=>{const a=new T.Group();const sh=new T.Mesh(new T.CylinderGeometry(.008,.008,.72,6),M.metal);sh.rotation.x=Math.PI/2;sh.position.z=.36;a.add(sh);const hd=new T.Mesh(new T.ConeGeometry(.022,.07,6),new T.MeshBasicMaterial({color:0xf6dad7,toneMapped:false}));hd.rotation.x=Math.PI/2;hd.position.z=.75;a.add(hd);
+   [0,1,2].forEach(i=>{const f=new T.Mesh(new T.PlaneGeometry(.06,.025),new T.MeshBasicMaterial({color:0xf3b7bd,side:T.DoubleSide}));f.position.z=.04;f.rotation.z=i*2.09;f.rotation.y=Math.PI/2;a.add(f);});return a;};
+  S.mkA=mkA;S.arr=mkA();E.scene.add(S.arr);S.vib=0;},
+ keys:[[0,{lw:1,rw:1,lh:[.22,.82,.16],rh:[.06,.86,-.16],tw:.15,lf:[.12,HG,.05],rf:[-.15,HG,-.05]}],[.14,{lh:[.62,1.42,.13],rh:[.46,1.42,.09],hd:.02},'out'],[.42,{rh:[.01,1.5,.04],tw:.25}],[.6,{rh:[0,1.5,.04]}],[.625,{rh:[-.16,1.53,-.06]},'out'],[.8,{}],[1,{lh:[.22,.82,.16],rh:[.06,.86,-.16],tw:.15,hd:0}]],
+ upd(E,R,S,p,u){const T=E.T;const lp=MO.wp(R.armL.h,T);S.bow.position.copy(lp);S.bow.rotation.set(0,0,0);S.bow.updateMatrixWorld(true);const a=MO.wp(S.tt,T),b=MO.wp(S.tb,T);const rp=MO.wp(R.armR.h,T);const draw=u>.13&&u<.6;
+  S.vib*=Math.exp(-S.dt*6);let m;if(draw)m=rp;else{m=a.clone().add(b).multiplyScalar(.5);m.x+=Math.sin(S.t*70)*.035*S.vib;}const pa=S.str.geometry.attributes.position;pa.setXYZ(0,a.x,a.y,a.z);pa.setXYZ(1,m.x,m.y,m.z);pa.setXYZ(2,b.x,b.y,b.z);pa.needsUpdate=true;
+  S.arr.visible=u>.1&&u<.6;if(S.arr.visible){S.arr.position.copy(u>.13?rp:m);S.arr.lookAt(lp.x+.3,lp.y,lp.z);}},
+ ev:[[.6,(E,R,S)=>{const T=E.T;const a=S.mkA();a.position.copy(S.arr.position);a.quaternion.copy(S.arr.quaternion);E.scene.add(a);const v=new T.Vector3(0,0,1).applyQuaternion(a.quaternion).multiplyScalar(11);S.vib=1;E.shake(.06);E.kick=-.8;
+  E.hook({upd(dt){v.y-=2.2*dt;a.position.addScaledVector(v,dt);a.lookAt(a.position.x+v.x,a.position.y+v.y,a.position.z+v.z);const tp=new T.Vector3(0,0,.75).applyQuaternion(a.quaternion).add(a.position);E.add({x:tp.x,y:tp.y,z:tp.z,max:.35,size:.07,col:GH.rose,a:.8});if(a.position.x>9||a.position.y<0){E.scene.remove(a);return false;}}});}]]},
+{id:'mo-bike',ko:'자전거 타기',en:'Ride a Bike',D:2,icon:MO_IC.bike,cam:[0,1.35,4.9],look:[0,.8,0],shw:1.1,shd:.32,
+ desc:'상체를 숙여 핸들을 잡고 페달을 밟아 달립니다. 두 발은 회전하는 페달을 정확히 따라가고, 바퀴 살이 돌아가며 바닥과 바람이 빠르게 뒤로 흐릅니다.',
+ how:'크랭크 각도 θ를 이동 거리에서 계산하고(기어비 1.9), 왼쪽 페달 = 크랭크 중심 + 0.17(cosθ, sinθ), 오른쪽은 θ+π입니다. 두 발목 목표를 페달 위 0.06m에 두면 IK가 무릎을 알아서 굽혔다 폅니다. 손은 IK로 핸들 끝을 잡고, 바퀴 회전 = -거리/반지름이라 바닥 스크롤과 미끄러짐 없이 맞물립니다.',
+ cx:()=>`dist += 3.2 * dt; wheel.rotation.z = -dist / .33;\nconst th = -dist / .33 / 1.9;                       // 기어비\nfootL = crank + [.17 * Math.cos(th), .17 * Math.sin(th) + .06];\nfootR = crank - [.17 * Math.cos(th), .17 * Math.sin(th) - .06];\nsolveIK(legL, footL); solveIK(legR, footR); solveIK(armL, barL); solveIK(armR, barR);`,
+ pr:()=>`자전거 타기(무한 루프): 자전거(바퀴 반지름 0.33m, 살 8개, 크랭크 0.17m) 위에 앉아 상체 -0.55rad 숙이기, 손은 IK로 핸들, 발목은 IK로 페달 위 0.06m를 따라감(크랭크 각 = -거리/0.33/1.9), 바퀴 회전 = -거리/반지름으로 바닥 스크롤(3.2m/s)과 동기화, 바람 선분 파티클`,
+ setup(E,R,S){const T=E.T,M=moMats(T);const b=new T.Group();R.root.add(b);S.wh=[-.55,.55].map(x=>{const w=new T.Group();w.position.set(x,.33,0);b.add(w);w.add(new T.Mesh(new T.TorusGeometry(.31,.024,8,40),M.dark));w.add(new T.Mesh(new T.TorusGeometry(.285,.008,6,40),M.metal));for(let i=0;i<8;i++){const a=i/8*6.283;w.add(moRod(T,[0,0,0],[Math.cos(a)*.28,Math.sin(a)*.28,0],.004,M.metal));}w.add(new T.Mesh(new T.CylinderGeometry(.03,.03,.06,10).rotateX(Math.PI/2),M.rose));return w;});
+  const fr=[[[-.55,.33,0],[-.05,.3,0]],[[-.05,.3,0],[-.2,.9,0]],[[-.55,.33,0],[-.2,.88,0]],[[-.2,.88,0],[.38,.94,0]],[[-.05,.3,0],[.4,.86,0]],[[.38,.97,0],[.55,.33,0]],[[.38,.97,0],[.42,1.06,0]],[[.42,1.06,-.25],[.42,1.06,.25]]];fr.forEach(([a,c])=>b.add(moRod(T,a,c,.022,M.rose)));
+  const seat=new T.Mesh(new T.BoxGeometry(.24,.05,.12),M.dark);seat.position.set(-.21,.92,0);b.add(seat);const cr=new T.Group();cr.position.set(-.05,.3,0);b.add(cr);S.cr=cr;cr.add(new T.Mesh(new T.CylinderGeometry(.06,.06,.03,16).rotateX(Math.PI/2),M.metal));
+  [1,-1].forEach(sg=>{const arm=moRod(T,[0,0,sg*.06],[sg*.17,0,sg*.12],.012,M.metal);cr.add(arm);const pd=new T.Mesh(new T.BoxGeometry(.09,.02,.06),M.dark);pd.position.set(sg*.17,0,sg*.12);cr.add(pd);});},
+ pose(P,u,S){S.scroll+=3.2*S.dt;const th=-S.scroll/.33/1.9;S.cr.rotation.z=th;S.wh.forEach(w=>w.rotation.z=-S.scroll/.33);P.hx=-.22;P.hy=1.0+.008*Math.sin(2*th);P.sp=-.55;P.hd=.45;P.tw=.05*Math.sin(th);
+  P.lf=[-.05+.17*Math.cos(th),.3+.17*Math.sin(th)+.06,.02];P.rf=[-.05-.17*Math.cos(th),.3-.17*Math.sin(th)+.06,-.02];P.lw=P.rw=1;P.lh=[.42,1.07,.22];P.rh=[.42,1.07,-.22];},
+ upd(E){if(Math.random()<.35)MO.streak(E,.1,1.8,2.4,10);if(Math.random()<.2)MO.dust(E,-.6,0,0,1,.5);}},
+{id:'mo-eat',ko:'밥먹기',en:'Eating',D:3,icon:'<circle cx="9" cy="5" r="2"/><path d="M9 7.5v6l-2 6.5M9 13.5l2.5 6.5M9 10l4 1 2-3M15 13a3 3 0 0 0 6 0z"/>',
+ desc:'왼손에 그릇을 들고 오른손 숟가락으로 떠서 입으로 가져가 오물오물 씹습니다. 뜰 때는 고개를 숙여 그릇을 보고, 먹을 때는 고개를 들며 "냠" 말풍선이 떠오릅니다.',
+ how:'양손 모두 IK입니다. 왼손은 가슴 앞 그릇 위치에 고정하고, 오른손은 그릇(0.3, 1.08) ↔ 입(0.18, 1.56) 사이를 키포즈로 오갑니다. 그릇은 매 프레임 왼손 월드 위치를 따라가고, 숟가락은 오른손 그룹의 자식입니다. 입에 닿는 구간엔 머리를 빠르게 끄덕여 씹는 동작을 만듭니다.',
+ cx:()=>`[0,   { handR: [.3, 1.08, -.02], head: -.3 }],        // 뜨기 (그릇 보기)\n[.32, { handR: [.18, 1.56, 0], head: 0 }],           // 입으로\n[.62, { handR: [.3, 1.08, -.02], head: -.3 }],\nif (u > .36 && u < .58) head.rotation.z += .05 * Math.sin(t * 22);   // 오물오물\nbowl.position.copy(handL.getWorldPosition(v)).y += .05;`,
+ pr:()=>`밥먹기(3초): 왼손 IK로 가슴 앞에 그릇 들기, 오른손 IK 숟가락으로 그릇(0.3, 1.08m) 뜨기 → 입(0.18, 1.56m)으로 → 씹기(머리 빠른 끄덕임) → 다시 뜨기. 뜰 땐 고개 -0.3rad 숙임, 입에 닿을 때 "냠" 말풍선`,
+ setup(E,R,S){const T=E.T,M=moMats(T);const bw=new T.Group();E.scene.add(bw);S.bw=bw;const cup=new T.Mesh(new T.CylinderGeometry(.13,.08,.08,28,1,true),new T.MeshPhysicalMaterial({color:0xf3b7bd,metalness:.6,roughness:.3,clearcoat:1,side:T.DoubleSide}));cup.position.y=.04;bw.add(cup);
+  const bt=new T.Mesh(new T.CircleGeometry(.08,24),M.rose);bt.rotation.x=-Math.PI/2;bw.add(bt);const food=new T.Mesh(new T.SphereGeometry(.12,20,10,0,6.283,0,1.1),new T.MeshStandardMaterial({color:0xf6efe9,roughness:.8}));food.position.y=.0;bw.add(food);
+  const spn=new T.Group();spn.rotation.z=1.25;R.armR.h.add(spn);spn.add(moRod(T,[0,.02,0],[0,-.2,0],.008,M.metal));const sb=new T.Mesh(new T.SphereGeometry(.03,12,8),M.metal);sb.scale.set(1,1.3,.5);sb.position.y=-.22;spn.add(sb);},
+ keys:[[0,{lw:1,rw:1,lh:[.3,1.02,.1],rh:[.3,1.08,-.02],hd:-.3}],[.14,{rh:[.34,1.1,.03]}],[.32,{rh:[.18,1.56,0],hd:0}],[.58,{}],[.74,{rh:[.3,1.08,-.02],hd:-.3}],[1,{}]],
+ pose(P,u,S){if(u>.34&&u<.58)P.hd+=.05*Math.sin(S.t*22);},
+ upd(E,R,S){const p=MO.wp(R.armL.h,E.T);S.bw.position.set(p.x,p.y+.04,p.z);},
+ ev:[[.33,(E,R)=>{MO.say(E,R.head,'냠',' #ffd27a'.trim(),18,.3);}]]},
+{id:'mo-wave',ko:'손 흔들기',en:'Wave Hello',D:2,icon:'<circle cx="10" cy="5" r="2"/><path d="M10 7.5v6l-2 6.5M10 13.5l2.5 6.5M10 9.5l5-4M16 2l2 2M18 6.5l2 .5"/>',orbit:-.2,
+ desc:'카메라 쪽으로 몸을 돌려 한 손을 높이 들고 반갑게 흔듭니다. 몸이 살짝 좌우로 흔들리고 고개를 갸웃합니다.',
+ how:'몸 전체를 -0.85rad 돌려 카메라를 보게 하고, 오른팔은 어깨 외전(abduction) 2.45rad로 높이 든 뒤 외전 각과 팔꿈치를 같은 sin으로 ±0.3rad 흔듭니다. 외전은 어깨 X축, 팔 휘두름은 Z축으로 분리돼 있어 두 값을 독립적으로 움직일 수 있습니다.',
+ cx:()=>`root.rotation.y = -.85;                       // 카메라 보기\nconst s = Math.sin(6 * Math.PI * u);\narmR.shoulder.rotation.set(2.45 + .3 * s, 0, .25);   // X = 외전, Z = 앞뒤\narmR.elbow.rotation.z = .55 + .25 * s;`,
+ pr:()=>`손 흔들기(2초): 카메라 쪽으로 몸 -0.85rad 회전, 오른팔 외전 2.45rad로 높이 들고 외전 ±0.3rad·팔꿈치 ±0.25rad를 같은 sin(초당 1.5회)으로 흔들기, 몸 좌우 흔들림·고개 갸웃, 시작 시 "안녕!" 말풍선`,
+ pose(P,u,S){const w=2*Math.PI*u,s=Math.sin(w*3);P.ry=-.85;P.ra=[.25,.55+.25*s,2.45+.3*s];P.la=[.05,.2,.15];P.hd=.08;P.sx=.05*Math.sin(w);P.hdy=-.1;P.hy=.93-.012*Math.abs(Math.sin(w));P.tw=-.08;},
+ ev:[[.05,(E,R)=>MO.say(E,R.head,'안녕!','#f6dad7',18,.35)]]},
+{id:'mo-dance',ko:'춤추기',en:'Dance',D:2.4,icon:'<circle cx="12" cy="4.5" r="2"/><path d="M12 7v6l-3 7M12 13l3 7M12 9l-5-5M12 9l4 3 1 3M18 3v4a1.5 1.5 0 1 1-1-1.4"/>',orbit:-.3,
+ desc:'박자(100BPM)에 맞춰 무릎을 튕기고 골반을 좌우로 흔들며 양팔을 번갈아 찌르듯 올립니다. 박자마다 발밑에 빛 고리가 퍼지고 음표가 떠오릅니다.',
+ how:'위상 u를 4박으로 나눠 b = 4u로 두고, 바운스 = |cos πb|, 골반 좌우 = sin πb, 팔 가중치 w = 0.5 + 0.5cos πb로 왼팔/오른팔 포즈를 보간합니다. 짝수 박엔 왼팔, 홀수 박엔 오른팔이 올라가고, 박이 바뀌는 순간 링·조명·음표 이벤트를 냅니다.',
+ cx:()=>`const b = u * 4, ph = Math.PI * b;            // 4박\npose.hipsY = .87 + .05 * Math.abs(Math.cos(ph));\npose.hipsZ = .07 * Math.sin(ph); pose.twist = .3 * Math.sin(ph);\nconst w = .5 + .5 * Math.cos(ph);              // 팔 교대\npose.armL = mix(DOWN, UP, w); pose.armR = mix(DOWN, UP, 1 - w);`,
+ pr:()=>`춤(100BPM, 4박 2.4초): 무릎 바운스 |cos πb|·골반 좌우 ±0.07m·어깨 비틀기 ±0.3rad·옆구리 기울기, 양팔을 박자마다 번갈아 위로 찌르기(UP [2.7, .35, .45] ↔ DOWN [.3, 1.7, .55]), 발 뒤꿈치 교대로 들기, 박마다 발밑 빛 고리 + 조명 + 음표`,
+ pose(P,u){const b=u*4,ph=Math.PI*b;P.ry=-.6;P.hy=.87+.05*Math.abs(Math.cos(ph));P.hz=.07*Math.sin(ph);P.sx=-.12*Math.sin(ph);P.tw=.3*Math.sin(ph);P.hd=.12*Math.sin(2*ph);const w=.5+.5*Math.cos(ph),up=[2.7,.35,.45],dn=[.3,1.7,.55];P.la=up.map((v,i)=>dn[i]+(v-dn[i])*w);P.ra=up.map((v,i)=>dn[i]+(v-dn[i])*(1-w));
+  P.lf=[.02,HG+.05*Math.max(0,Math.sin(ph)),.04];P.rf=[.02,HG+.05*Math.max(0,-Math.sin(ph)),-.04];},
+ ev:[0,.25,.5,.75].map((t,i)=>[t,(E,R)=>{const c=[GH.rose,GH.gold,GH.blue,GH.mint][i];E.ring({x:0,z:0,col:c,r0:.2,r1:1.3,life:.5,a:.7});E.light({x:0,y:.3,z:.4,col:c,i:5,life:.35});const h=MO.wp(R.head,E.T);E.text(h.x+(i%2?-.35:.35),h.y+.2,h.z,'♪',{size:18,col:'#'+c.toString(16).padStart(6,'0'),vy:.8,vx:i%2?-.3:.3,max:1.1});}])},
+{id:'mo-roll',ko:'구르기',en:'Forward Roll',D:2.4,icon:'<circle cx="12" cy="12" r="7"/><path d="M12 5a7 7 0 0 1 7 7M8 9l3 3-3 3"/>',
+ desc:'몸을 웅크리고 앞으로 한 바퀴 굴러 그대로 일어납니다. 몸이 공처럼 말린 채 회전하고, 굴러간 거리만큼 바닥이 정확히 흘러가 미끄러짐이 없습니다.',
+ how:'골반 위 피벗 그룹의 중심을 몸 중심(높이 0.38m)에 두고 회전 각 θ를 0 → -2π로 보간합니다. 바닥 스크롤 = -θ × 0.38(반지름)이라 구르는 거리와 정확히 일치합니다. 웅크린 동안엔 다리를 IK에서 FK(허벅지 2.25·무릎 -2.35rad)로 블렌드하고, 발목도 바닥 정렬 대신 다리 방향을 따르게 슬러프합니다.',
+ cx:()=>`const TUCK = { fk: 1, thigh: 2.25, knee: -2.35, spine: -1.15, pivotY: .38 };\n[.22, { ...TUCK, roll: 0 }],\n[.55, { roll: -2 * Math.PI }],             // 한 바퀴\nground.x = -(cycle * 2 * Math.PI + -pose.roll) * .38;   // 구른 거리 = 각도 × 반지름\nleg.thigh.quaternion.copy(qIK).slerp(qFK, pose.fk);`,
+ pr:()=>`앞구르기(2.4초): 웅크리기 → 피벗(몸 중심 높이 0.38m)을 0→-2π 회전(다리는 IK→FK 블렌드로 무릎을 가슴에 붙이고 팔로 감싸기) → 웅크린 채 착지 → 일어서기. 바닥 스크롤 = 회전각 × 0.38m로 미끄러짐 없이, 등이 닿을 때 먼지`,
+ keys:(()=>{const TU={fk:1,lk:[2.25,-2.35],rk:[2.15,-2.3],sp:-1.15,hd:-.6,la:[1.1,1.5,.25],ra:[1.1,1.5,.25],hx:-.06,hy:.32};return [[0,{pcy:.38}],[.12,{hy:.6,sp:-.6,hd:-.25,la:[1.2,.5,.2],ra:[1.2,.5,.2],lf:[.1,HG,0],rf:[.1,HG,0]}],[.22,{...TU,pv:0}],[.55,{pv:-6.2832}],
+  [.64,{fk:0,hy:.58,hx:0,sp:-.6,hd:-.15,la:[1.2,.5,.2],ra:[1.2,.5,.2],lf:[.06,HG,0],rf:[.06,HG,0]}],[.78,{...MO_STAND}],[1,{}]];})(),
+ pose(P,u,S){S.scroll=S.cyc*2*Math.PI*.38+(-P.pv)*.38;},
+ ev:[[.3,E=>MO.dust(E,.3,0,0,8,.8)],[.5,E=>MO.dust(E,0,0,0,8,.8)]]},
+{id:'mo-knock',ko:'넘어졌다 일어나기',en:'Knockdown & Recover',D:3.8,icon:'<circle cx="5" cy="14" r="2"/><path d="M7 14.5h7l4 3M14 14.5l4-3M3 20h18M17 5l1 2 2 .3-1.5 1.4.4 2-1.9-1-1.9 1 .4-2L14 7.3l2-.3z"/>',
+ desc:'정면으로 한 방 맞고 뒤로 휘청이다 벌러덩 넘어집니다. 머리 위로 별이 빙글빙글 돌고, 정신을 차리면 손으로 바닥을 짚고 앉았다가 몸을 숙여 다시 일어섭니다.',
+ how:'넘어질 땐 발목 근처(높이 0.1m)를 중심으로 몸 전체 피벗을 0 → 1.5rad ease-in(가속)으로 돌리고, 그동안 다리는 FK로 살짝 굽혀 둡니다. 일어설 땐 "앉기 → 다리 당기기 → 발 위로 무게 이동"의 일어서기 키포즈를 재사용하고, 별 3개는 2D 텍스트 입자를 머리 월드 좌표 주위로 원운동시킵니다.',
+ cx:()=>`[.05, { spine: .4, head: .45 }, 'out'],          // 피격 반동\n[.27, { pivot: 1.5, fk: 1 }, 'in'],               // 벌러덩 (가속)\nstars.forEach((s, i) => { const a = t * 6 + i * 2.09; s.pos = head + [cos(a) * .25, .25, sin(a) * .25]; });\n[.62, { pivot: 0, hips: [-.72, .2], handIK: 1 }],  // 앉기\n[.82, { hips: [-.36, .44], spine: -.75 }]          // 발 위로`,
+ pr:()=>`넉다운 & 회복(3.8초): 정면 피격(섬광·스파크·히트스톱, 상체 +0.4rad 젖힘) → 발목 높이 0.1m를 중심으로 몸 전체 1.5rad ease-in 회전하며 벌러덩 → 충돌 흔들림·먼지·"쿵" → 머리 위 별 3개 원운동 → 손 짚고 앉기 → 다리 당겨 발 위로 무게 이동 → 일어서기`,
+ keys:(()=>{const GU={la:[.5,1.7,.12],ra:[.4,1.8,.12]};return [[0,{...GU,pcy:.1}],[.05,{sp:.4,hd:.45,la:[.2,.5,.7],ra:[.1,.6,.8],hx:-.05,hy:.92},'out'],[.13,{pv:.32,fk:1,lk:[.25,-.35],rk:[-.05,-.1],sp:.35},'in'],
+  [.27,{pv:1.5,sp:.05,hd:.15,lk:[.12,-.15],rk:[.3,-.45],la:[-.5,.2,1.25],ra:[-.4,.25,1.35],hx:0,hy:.93},'in'],[.52,{hd:.2}],
+  [.62,{pv:0,hx:-.72,hy:.2,sp:.25,hd:0,lk:[1.45,-.1],rk:[1.4,-.15],lw:1,rw:1,lh:[-1.04,.09,.27],rh:[-1.04,.09,-.27]}],[.72,{fk:0,lf:[-.2,HG,0],rf:[-.16,HG,0],hx:-.62,sp:.1}],
+  [.82,{hx:-.36,hy:.44,sp:-.75,hd:.3,lw:0,rw:0,la:[1.3,.3,.15],ra:[1.3,.3,.15],lf:[-.26,HG,0],rf:[-.22,HG,0]}],[.93,{...MO_STAND,...GU}],[1,{}]];})(),
+ reset(E,R,S){S.stars=null;},
+ upd(E,R,S,p,u){if(S.stars){const h=MO.wp(R.head,E.T);S.stars.forEach((s,i)=>{const a=S.t*6+i*2.094;s.x=h.x+Math.cos(a)*.26;s.y=h.y+.22;s.z=h.z+Math.sin(a)*.26;});if(u>.6)S.stars=null;}},
+ ev:[[.05,E=>{const p={x:.2,y:1.3,z:0};moHit(E,p,1);E.flash('#fff',.25,120);E.text(.3,1.7,0,'퍽!',{size:22,col:'#ffd27a',vy:1,max:.9});}],[.27,E=>{E.shake(.35);for(let i=0;i<5;i++)MO.dust(E,-.3*i,0,0,5,1);E.text(-.8,.7,0,'쿵',{size:22,col:'#f6dad7',vy:.8,max:1});}],
+  [.29,(E,R,S)=>{S.stars=[0,1,2].map(()=>{const s={x:0,y:0,z:0,s:'★',vx:0,vy:0,vz:0,grav:0,life:0,max:2.3,size:14,col:'#ffd27a',w:700};E.texts.push(s);return s;});}]]}
+];
+
+/* ── 네발 동물 동작 ── */
+const QSTAND={pitch:0,hy:.5,tx:0,tz:0,roll:0,arch:0,nk:.85,hd:0,hdy:0,jaw:0,ear:0,tb:.7,tc:.25,tw:0,FL:[0,QG,0],FR:[0,QG,0],BL:[0,QG,0],BR:[0,QG,0]};
+const MO_Q=[
+{id:'qd-walk',ko:'걷기',en:'Quadruped Walk',D:1,icon:MO_IC.dog,
+ desc:'네 발이 왼뒤 → 왼앞 → 오른뒤 → 오른앞 순서로 차례차례 디디는 자연스러운 네발 걷기입니다. 걸음에 맞춰 머리가 끄덕이고 꼬리가 좌우로 흔들립니다.',
+ how:'네발 동물의 "측대 순서(lateral sequence)" 걸음은 다리 위상이 뒤왼 0 · 앞왼 0.25 · 뒤오 0.5 · 앞오 0.75로 4분의 1씩 어긋납니다. 디딤 65%라 늘 2~3발이 바닥에 있습니다. 다리마다 2본 IK를 쓰되 앞다리는 무릎이 앞, 뒷다리는 발목(hock)이 뒤를 향하게 폴 벡터를 반대로 줍니다.',
+ cx:()=>`const PHASE = { BL: 0, FL: .75, BR: .5, FR: .25 };     // 측대 순서\nfor (const k in legs) pose[k] = footPath((u + PHASE[k]) % 1, .32, .08, .65);\nsolveIK(legs.FL, target, { pole: +X, bend: 'knee' });   // 앞다리: 무릎 앞\nsolveIK(legs.BL, target, { pole: -X, bend: 'hock' });   // 뒷다리: 발목 뒤`,
+ pr:()=>`네발 걷기(1초): 다리 위상 뒤왼 0·앞왼 0.25·뒤오 0.5·앞오 0.75(측대 순서), 보폭 0.32m·디딤 65%·스윙 높이 0.08m, 앞다리 IK 폴 +X(무릎 앞)·뒷다리 폴 -X(발목 뒤), 몸통 상하 ±0.012m, 목 끄덕임, 꼬리 좌우 ±0.35rad, 바닥 스크롤`,
+ pose(P,u,S,R){Object.assign(P,MO.gaitQ(u,'walk'));const w=2*Math.PI*u;P.hy=.49+.012*Math.cos(2*w);P.pitch=.02*Math.sin(2*w);P.nk=.85+.05*Math.sin(2*w+1);P.tw=.35*Math.sin(w);P.roll=.03*Math.sin(w);S.scroll+=.32/(.65*1)*S.dt*R.sc;}},
+{id:'qd-run',ko:'뛰기 (질주)',en:'Gallop',D:.48,icon:MO_IC.q,
+ desc:'등뼈를 접었다 펴며 앞발·뒷발이 짝지어 크게 내딛는 질주(gallop)입니다. 귀는 뒤로 젖혀지고, 네 발이 모두 뜨는 순간이 있으며 착지마다 먼지가 튑니다.',
+ how:'회전 질주 위상(앞왼 0 · 앞오 0.1 · 뒤오 0.5 · 뒤왼 0.6)에 디딤 35%로 체공 구간을 만듭니다. 몸통을 앞·뒤 반쪽 그룹으로 나눠 가운데 관절을 sin으로 굽혔다 펴(arch ±0.12rad) 등뼈 굴신을 표현하고, 몸통 피치·높이도 같은 주기로 흔듭니다.',
+ cx:()=>`const PHASE = { FL: 0, FR: .9, BR: .5, BL: .4 };   // 회전 질주\nfor (const k in legs) pose[k] = footPath((u + PHASE[k]) % 1, .5, .14, .35);\nfrontHalf.rotation.z = -arch; rearHalf.rotation.z = arch;   // 등뼈 굴신\narch = .12 * Math.sin(2 * Math.PI * u);`,
+ pr:()=>`네발 질주(0.48초): 회전 질주 위상(앞왼 0·앞오 0.1·뒤오 0.5·뒤왼 0.6), 보폭 0.5m·디딤 35%(네 발 체공), 몸통을 앞/뒤 반쪽으로 나눠 등뼈 굴신 ±0.12rad, 피치 ±0.1rad, 귀 뒤로 젖힘, 꼬리 수평, 착지마다 먼지, 바닥 약 3m/s`,
+ pose(P,u,S,R){Object.assign(P,MO.gaitQ(u,'run'));const w=2*Math.PI*u;P.hy=.45+.035*Math.sin(w+.6);P.pitch=.1*Math.sin(w-.3);P.arch=.12*Math.sin(w);P.nk=.55+.08*Math.sin(w);P.hd=-.1;P.ear=.8;P.tb=.2;P.tc=0;P.tw=.1*Math.sin(w);S.scroll+=.5/(.35*.48)*S.dt*R.sc;},
+ ev:[[0,(E,R)=>{const f=MO.wp(R.legs.FL.h,E.T);MO.dust(E,f.x,0,f.z,3,.7);}],[.5,(E,R)=>{const f=MO.wp(R.legs.BR.h,E.T);MO.dust(E,f.x,0,f.z,4,.9);}]]},
+{id:'qd-eat',ko:'밥먹기',en:'Eating from Bowl',D:3,icon:'<path d="M3 13h8a4 4 0 0 1-8 0zM12 9l3-2 3 1 2 3-2 1-3-1M18 12v6M15 11v7"/>',
+ desc:'밥그릇에 고개를 파묻고 턱을 빠르게 움직여 와구와구 먹다가, 고개를 들어 오물오물 씹고 다시 그릇으로 돌아갑니다. 먹는 동안 사료 알갱이가 튀고 꼬리가 신나게 흔들립니다.',
+ how:'목(neck)과 머리(head)를 따로 회전시켜 목을 -0.85rad 내리고 머리를 -0.55rad 숙여 코끝을 그릇에 넣습니다. 그릇 위치는 첫 프레임에 실제 코끝 월드 좌표를 측정해 그 아래에 놓습니다. 턱(jaw) 그룹 회전을 초당 14회 sin으로 여닫아 씹기를 만듭니다.',
+ cx:()=>`[0,  { neck: -.85, head: -.55, pitch: -.12 }],   // 그릇에 고개 파묻기\n[.6, { neck: .75, head: 0 }],                    // 고개 들고 씹기\njaw.rotation.z = -(.18 + .18 * Math.sin(2 * Math.PI * u * 14));\nbowl.position.x = nose.getWorldPosition(v).x;    // 첫 프레임 측정`,
+ pr:()=>`네발 동물 밥먹기(3초): 목 -0.85rad·머리 -0.55rad로 그릇에 고개 파묻기(그릇 위치는 실제 코끝 월드 좌표로 맞춤), 턱 여닫기 초당 14회, 사료 알갱이 튀기 → 고개 들고 오물오물 + "냠냠" → 다시 그릇으로. 꼬리 계속 흔들기`,
+ setup(E,R,S){const T=E.T,M=moMats(T);const bw=new T.Group();E.scene.add(bw);S.bw=bw;const cup=new T.Mesh(new T.CylinderGeometry(.14,.11,.07,28,1,true),new T.MeshPhysicalMaterial({color:0xf3b7bd,metalness:.6,roughness:.3,clearcoat:1,side:T.DoubleSide}));cup.position.y=.035;bw.add(cup);
+  const bt=new T.Mesh(new T.CircleGeometry(.11,24),M.rose);bt.rotation.x=-Math.PI/2;bt.position.y=.004;bw.add(bt);const km=new T.MeshStandardMaterial({color:0x7a5a44,roughness:.7});S.km=km;for(let i=0;i<14;i++){const k=new T.Mesh(new T.SphereGeometry(.018,8,6),km);const a=Math.random()*6.283,r=Math.random()*.09;k.position.set(Math.cos(a)*r,.03+Math.random()*.02,Math.sin(a)*r);bw.add(k);}S.set=0;},
+ keys:[[0,{nk:-.85,hd:-.55,pitch:-.12,hy:.47,FL:[.04,QG,.02],FR:[.06,QG,-.02],tb:.9}],[.5,{}],[.6,{nk:.75,hd:0,pitch:0,hy:.5,FL:[0,QG,0],FR:[0,QG,0]}],[.85,{}],[1,{nk:-.85,hd:-.55,pitch:-.12,hy:.47,FL:[.04,QG,.02],FR:[.06,QG,-.02]}]],
+ pose(P,u,S){if(u<.52)P.jaw=.18+.18*Math.sin(2*Math.PI*u*14);else if(u>.6&&u<.86)P.jaw=.08+.08*Math.sin(2*Math.PI*u*12);P.tw=.5*Math.sin(S.t*9);},
+ upd(E,R,S,p,u){if(!S.set){const n=MO.wp(R.nose,E.T);S.bw.position.set(n.x-.03,0,n.z);S.set=1;}if(u<.5&&Math.random()<.08){const b=S.bw.position;E.add({x:b.x,y:.08,z:b.z,vx:(Math.random()-.5)*1.2,vy:1.4+Math.random(),vz:(Math.random()-.5)*1.2,grav:9,bounce:.3,max:.8,size:.04,col:0x7a5a44,blend:'normal',a:1});}},
+ ev:[[.62,(E,R)=>MO.say(E,R.head,'냠냠','#ffd27a',16,.25)]]},
+{id:'qd-poop',ko:'똥싸기',en:'Poop',D:4,icon:'<path d="M3 12l3-3h7l3-2 2 1-1 3v6M6 12v6M14 12v6M3 12l-.5-4M3 20c0-1 1-2 2-2s2 1 2 2z"/>',
+ desc:'엉덩이를 낮추고 꼬리를 번쩍 든 채 부들부들 떨며 힘을 주면 동글동글한 똥이 퐁퐁 떨어집니다. 볼일이 끝나면 뒷발로 흙을 슥슥 차서 덮습니다.',
+ how:'몸통 피치를 +0.38rad로 들어 앞은 높이고 엉덩이는 낮춘 뒤, 뒷발 목표를 몸 아래로 0.13m 당겨 웅크린 자세를 만듭니다. 힘주는 동안 몸통 x에 초당 70회 미세 진동을 더하고, 꼬리 뿌리 월드 좌표 아래에서 구체를 떨어뜨려 간단한 중력·바운스로 쌓습니다. 마지막엔 뒷발을 교대로 뒤로 차며 흙먼지를 뒤쪽으로 뿌립니다.',
+ cx:()=>`const SQUAT = { pitch: .38, hipsY: .4, BL: [.13, G], BR: [.13, G], tail: 1.35 };\nif (straining) torso.position.x += .004 * Math.sin(t * 70);   // 부들부들\nonEvent(() => drops.push({ pos: tailBase.getWorldPosition(v), vy: 0 }));\ndrops.forEach(d => { d.vy -= 9.8 * dt; d.y = Math.max(.035, d.y + d.vy * dt); });\nkick: BL.x = -.08 - .12 * Math.max(0, Math.sin(k * 2 * Math.PI));`,
+ pr:()=>`네발 동물 똥싸기(4초, 귀엽게): 몸통 피치 +0.38rad로 엉덩이 낮추고 뒷발을 몸 아래로 당겨 웅크리기, 꼬리 번쩍, 부들부들 떨기(초당 70회 미세 진동) + "끙…" → 꼬리 아래에서 작은 구체 3개 퐁퐁(중력·바운스) + "뿌직!" → 일어나서 뒷발로 흙 차기(먼지를 뒤로) + "슥슥" → 똥 점점 사라짐`,
+ setup(E,R,S){S.dm=new E.T.MeshStandardMaterial({color:0x6b4a33,roughness:.55,metalness:.05});S.drops=[];},
+ reset(E,R,S){(S.drops||[]).forEach(d=>E.scene.remove(d.m));S.drops=[];},
+ keys:(()=>{const SQ={pitch:.38,hy:.4,tx:-.02,BL:[.13,QG,0],BR:[.13,QG,0],FL:[-.02,QG,0],FR:[-.02,QG,0],tb:1.35,tc:-.15,nk:1.0,hd:.1,ear:.3};return [[0,{}],[.1,{}],[.2,SQ],[.48,{}],[.56,{...QSTAND,tx:.05}],[.58,{}],[1,{...QSTAND}]];})(),
+ pose(P,u,S){if(u>.2&&u<.48)P.tx+=.004*Math.sin(S.t*70);if(u>.6&&u<.9){const k=(u-.6)/.3*5;const a=Math.max(0,Math.sin(k*2*Math.PI)),b=Math.max(0,Math.sin(k*2*Math.PI+Math.PI));P.BL=[-.06-.13*a,QG+.07*a,0];P.BR=[-.06-.13*b,QG+.07*b,0];P.pitch=-.06;P.nk=.65;P.tb=1;}},
+ upd(E,R,S,p,u){const sc=u>.92?Math.max(0,1-(u-.92)/.07):1;S.drops.forEach(d=>{d.vy-=9.8*S.dt;d.m.position.y=Math.max(.034,d.m.position.y+d.vy*S.dt);if(d.m.position.y<=.034&&d.vy<0){d.vy=-d.vy*.25;if(Math.abs(d.vy)<.3)d.vy=0;}d.m.scale.setScalar(sc*d.s);});
+  if(u>.6&&u<.9&&Math.random()<.35){[R.legs.BL,R.legs.BR].forEach(L=>{const f=MO.wp(L.h,E.T);E.add({x:f.x,y:.04,z:f.z,vx:-1.6-Math.random(),vy:.8+Math.random(),vz:(Math.random()-.5),grav:6,max:.6,size:.05,end:.12,col:0x8d7e82,blend:'normal',a:.6});});}},
+ ev:(()=>{const drop=(E,R,S)=>{const T=E.T;const b=MO.wp(R.tail[0],T);const m=new T.Mesh(new T.SphereGeometry(.035,12,10),S.dm);m.position.set(b.x-.03,b.y-.08,b.z+(Math.random()-.5)*.03);E.scene.add(m);S.drops.push({m,vy:0,s:.8+Math.random()*.4});};
+  return [[.22,(E,R)=>MO.say(E,R.head,'끙…','#f6dad7',15,.25)],[.3,drop],[.36,drop],[.42,(E,R,S)=>{drop(E,R,S);MO.say(E,R.head,'뿌직!','#ffd27a',16,.3);}],[.62,(E,R)=>MO.say(E,R.head,'슥슥','#f6dad7',15,.25)]];})()},
+{id:'qd-pee',ko:'오줌싸기',en:'Pee on a Post',D:3.6,icon:'<path d="M3 12l3-3h7l3-2 2 1-1 3v6M6 12v6M14 12l3-3M3 12l-.5-4M20 7v13M18 20h4"/>',
+ desc:'기둥 옆에 서서 한쪽 뒷다리를 번쩍 들고 쉬~ 합니다. 노란 물줄기가 포물선으로 기둥에 맞아 흘러내리고, 바닥에 웅덩이가 점점 커집니다.',
+ how:'든 뒷다리의 발 목표를 바깥(+z 0.2m)·위(0.34m)로 옮기면 3D IK가 다리를 옆으로 벌려 줍니다. 몸통은 반대쪽으로 롤 -0.16rad 기울여 균형을 잡고 고개를 뒤로 돌립니다. 물줄기는 초속 1.6m 파티클에 중력을 주고, 기둥 표면(z>0.4)에 닿으면 속도를 바꿔 흘러내리게 한 뒤 바닥에 닿을 때마다 웅덩이를 키웁니다.',
+ cx:()=>`const LIFT = { BL: [-.04, .34, .2], roll: -.16, headYaw: .45 };   // 3D IK로 옆으로 들기\nemit({ pos: hip, vel: [0, .8, 1.6], gravity: 9.8, color: 0xffd84a,\n  upd: q => { if (q.z > .4 && !q.hit) { q.hit = 1; q.vz = 0; q.vy = -.3; }   // 기둥 타고 흐름\n              if (q.y < .02) { q.dead = 1; puddle.grow(); } } });`,
+ pr:()=>`네발 동물 오줌싸기(3.6초, 귀엽게): 기둥 옆에서 바깥쪽 뒷다리를 3D IK로 옆·위로 들기(+z 0.2m, 높이 0.34m), 몸통 반대쪽 롤 -0.16rad, 고개 뒤로 돌리기, "쉬~" → 노란 파티클 물줄기(초속 1.6m + 중력)가 기둥에 맞으면 흘러내리고 바닥 웅덩이가 점점 커짐 → 다리 내리기`,
+ setup(E,R,S){const T=E.T,M=moMats(T);const g=new T.Group();g.position.set(-.24*R.sc,0,.47);E.scene.add(g);const pm=new T.MeshPhysicalMaterial({color:0xf3b7bd,metalness:.6,roughness:.3,clearcoat:1});const c=new T.Mesh(new T.CylinderGeometry(.07,.08,.4,20),pm);c.position.y=.2;g.add(c);const cap=new T.Mesh(new T.SphereGeometry(.075,16,10,0,6.283,0,1.6),pm);cap.position.y=.4;g.add(cap);[1,-1].forEach(s=>{const n=new T.Mesh(new T.CylinderGeometry(.025,.025,.05,10),M.metal);n.rotation.x=Math.PI/2;n.position.set(0,.28,s*.08);g.add(n);});
+  const pd=new T.Mesh(new T.CircleGeometry(1,32),new T.MeshPhysicalMaterial({color:0xffd84a,transparent:true,opacity:.55,roughness:.05,clearcoat:1}));pd.rotation.x=-Math.PI/2;pd.position.set(-.24*R.sc,.007,.36);pd.scale.setScalar(.001);E.scene.add(pd);S.pd=pd;S.pud=0;},
+ reset(E,R,S){S.pud=0;},
+ keys:(()=>{const L={BL:[-.04,.34,.2],roll:-.16,tx:.03,tb:1.0,hdy:.45,nk:.7};return [[0,{}],[.12,{}],[.2,L],[.68,{}],[.78,{BL:[0,QG,0],roll:0,tx:0,tb:.7,hdy:0,nk:.85}],[1,{}]];})(),
+ upd(E,R,S,p,u){if(u>.24&&u<.66){const h=MO.wp(R.legs.BL.u,E.T);for(let i=0;i<2;i++)E.add({x:h.x+.03,y:h.y-.1,z:h.z-.03,vx:(Math.random()-.5)*.1,vy:.75+Math.random()*.1,vz:1.55+Math.random()*.15,grav:9.8,max:.9,size:.035,col:0xffd84a,blend:'normal',a:.9,
+   upd:q=>{if(q.z>.40&&!q.h){q.h=1;q.vz=0;q.vx=0;q.vy=-.3;q.grav=3;}if(q.y<.02){S.pud=Math.min(1,S.pud+.006);return false;}}});}
+  const f=u>.9?1-(u-.9)/.1:1;S.pd.scale.setScalar(Math.max(.001,S.pud*.2*f));},
+ ev:[[.26,(E,R)=>MO.say(E,R.head,'쉬~','#ffd84a',16,.25)]]},
+{id:'qd-flee',ko:'도망가기',en:'Startle & Flee',D:3.6,icon:'<path d="M21 12l-3-3h-7l-3-2-2 1 1 3v6M18 12v6M10 12v6M21 12l.5-4M2 8h3M1 12h3M2 16h3"/>',
+ desc:'킁킁 냄새를 맡다가 무언가에 화들짝 놀라 펄쩍 뛰어오르고, 몸을 홱 돌려 전속력으로 도망칩니다. 화면 밖으로 사라졌다가 다시 뿅 하고 나타납니다.',
+ how:'단계별 상태 기계로 만듭니다: 냄새 맡기 → 놀람(제자리 점프 + "!" + 땀방울) → 180° 회전(걷기 보행을 섞어 발 구르기) → 질주. 질주 중엔 루트를 실제로 이동시키고, 보행 위상을 "이동 거리 × 디딤/보폭"으로 진행시켜 발이 미끄러지지 않습니다. 사라진 뒤엔 스케일 easeBack으로 다시 등장합니다.',
+ cx:()=>`if (u < .12) sniff(); else if (u < .2) startle();     // 펄쩍 + "!"\nelse if (u < .32) { root.rotation.y = Math.PI * ss((u - .2) / .12); mixGait(walk, .6); }\nelse if (u < .88) { root.position.x -= 3.2 * dt; gaitPhase += 3.2 * dt * .35 / .5; mixGait(run, 1); }\nelse root.scale.setScalar(easeBack((u - .88) / .12));   // 뿅 재등장`,
+ pr:()=>`놀라서 도망가기(3.6초): 킁킁 냄새 맡기 → 화들짝(제자리 점프 0.22m, 귀 쫑긋, "!" + 땀방울) → 180° 회전(걷기 보행 섞기) → 반대 방향 질주(루트 실제 이동 3.2m/s, 보행 위상 = 이동 거리 × 디딤/보폭으로 미끄러짐 없음, 먼지) → 화면 밖으로 → easeBack 스케일로 뿅 재등장`,
+ reset(E,R,S){S.rx=0;S.gp=0;S.gw=0;},
+ pose(P,u,S,R){P.ry=0;R.root.scale.setScalar(R.sc);if(u<.12){P.nk=.3;P.hd=-.45;P.tw=.3*Math.sin(S.t*6);P.jaw=.05*Math.sin(S.t*30);}
+  else if(u<.2){const s=(u-.12)/.08,h=.22*Math.sin(Math.PI*s);P.hy=.5+h;['FL','FR','BL','BR'].forEach(k=>P[k]=[0,QG+h*.8,0]);P.ear=-.6;P.tb=-.5;P.nk=1.05;P.eye=1.3;}
+  else if(u<.32){const s=(u-.2)/.12;P.ry=Math.PI*MO.ss(s);S.gw+=S.dt*2.4;MO.mixF(P,MO.gaitQ(S.gw,'walk'),.7);P.ear=.8;P.tb=-.6;P.nk=.7;}
+  else if(u<.88){P.ry=Math.PI;const v=3.2*MO.cl((u-.32)/.06,0,1);S.rx-=v*S.dt*R.sc;S.gp+=v*S.dt*.35/.5;MO.mixF(P,MO.gaitQ(S.gp,'run'),MO.cl(v/2,0,1));const w=2*Math.PI*S.gp;P.hy=.45+.035*Math.sin(w+.6);P.arch=.12*Math.sin(w);P.pitch=.1*Math.sin(w-.3);P.ear=.9;P.tb=.15;P.nk=.55;}
+  else{S.rx=0;P.ry=0;R.root.scale.setScalar(R.sc*Math.max(.001,easeBack(MO.cl((u-.88)/.1,0,1))));}P.rx=S.rx;},
+ upd(E,R,S,p,u){if(u>.34&&u<.85&&Math.random()<.3){const b=R.body();MO.dust(E,b.x+.3,0,b.z,1,.6);}},
+ ev:[[.12,(E,R)=>{const h=MO.wp(R.head,E.T);E.text(h.x,h.y+.35,h.z,'!',{size:30,col:'#ffd27a',vy:.4,max:.9,glow:1});E.burst(5,()=>({x:h.x-.05,y:h.y+.15,z:h.z,vx:(Math.random()-.5)*1.5,vy:1+Math.random(),vz:(Math.random()-.5),grav:6,max:.6,size:.05,col:GH.blue,blend:'normal'}));}],[.89,E=>{E.sprite({x:0,y:.4,z:0,size:1.2,col:GH.hi,life:.25,grow:.6});}]]},
+{id:'qd-lie',ko:'눕기',en:'Lie Down',D:4.4,icon:'<path d="M2 17h14l2-3h3l1 3h-2M4 17v-3h9M2 20h20"/>',
+ desc:'엉덩이부터 앉은 다음 앞발을 앞으로 뻗으며 배를 깔고 엎드리고, 앞발 위에 턱을 괴고 숨을 고릅니다. 잠시 뒤 고개를 들고 앞다리부터 일어섭니다.',
+ how:'"서기 → 앉기(피치 +0.5rad) → 엎드리기(몸통 0.17m) → 턱 괴기 → 일어서기" 키포즈를 보간합니다. 엎드릴 땐 앞발을 0.22m 앞으로, 뒷발을 몸 아래로 접어 IK가 관절을 완전히 접게 하고, 몸통 메시만 스케일을 흔들어 숨쉬기를 넣습니다(다리는 스케일 영향 없음).',
+ cx:()=>`[.2,  { pitch: .5, hipsY: .38, BL: [.11, G] }],            // 앉기\n[.32, { pitch: 0,  hipsY: .17, FL: [.22, G], BL: [.14, G] }],  // 엎드리기\n[.42, { neck: .05, head: -.3 }],                            // 턱 괴기\nbodyMesh.scale.y = 1 + .03 * Math.sin(t * 2);                // 숨쉬기 (몸통만)`,
+ pr:()=>`네발 동물 눕기(4.4초): 엉덩이부터 앉기(피치 +0.5rad) → 앞발 0.22m 앞으로 뻗으며 배 깔고 엎드리기(몸통 높이 0.17m, 뒷발은 몸 아래로 접기) → 앞발 위에 턱 괴기, 몸통 메시만 스케일로 숨쉬기 → 고개 들기 → 앞다리부터 일어서기`,
+ keys:(()=>{const SIT={pitch:.5,hy:.38,tx:-.03,BL:[.11,QG,0],BR:[.11,QG,0],nk:1.05,hd:.05,tb:.1,tc:.1};const LIE={pitch:0,hy:.17,tx:0,FL:[.22,QG,.01],FR:[.2,QG,-.01],BL:[.14,QG,.05],BR:[.15,QG,-.05],nk:.55,hd:-.1,tb:.05,tc:.15};
+  return [[0,{}],[.1,{}],[.2,SIT],[.32,LIE],[.42,{nk:.05,hd:-.3,ear:.35}],[.7,{}],[.78,{nk:.7,hd:0,ear:0}],[.86,{pitch:-.1,hy:.38,FL:[.05,QG,0],FR:[.05,QG,0]}],[.95,{...QSTAND}],[1,{}]];})(),
+ pose(P,u,S){if(u>.3&&u<.8){P.bth=.03*Math.sin(S.t*2.2);P.tw=.25*Math.sin(S.t*1.5);}}},
+{id:'qd-sit',ko:'앉기 (손!)',en:'Sit & Paw',D:4,icon:'<path d="M8 20V11l2-4h3l2-3 2 2-1 3 1 1v10M11 20v-6M16 12l3 1M6 20h12"/>',
+ desc:'엉덩이를 바닥에 붙이고 의젓하게 앉아 꼬리로 바닥을 쓸며, "손!" 하면 앞발 하나를 들어 내밀고 고개를 갸웃합니다.',
+ how:'몸통 피치 +0.55rad·높이 0.37m로 앞은 세우고 엉덩이는 바닥에 닿게 한 뒤, 뒷발 목표를 앞으로 0.1m 당겨 다리를 접습니다. 앞발 하나의 IK 목표만 (0.2, 0.3)으로 올리면 나머지 세 다리는 그대로 서 있고, 목 Y축 회전으로 고개를 갸웃합니다.',
+ cx:()=>`const SIT = { pitch: .55, hipsY: .37, BL: [.1, G], BR: [.1, G], neck: 1.1 };\n[.52, { FL: [.2, .3, .03], headYaw: .25 }],     // 손!\ntail.rotation.y = .6 * Math.sin(t * 10);         // 바닥 쓸기`,
+ pr:()=>`앉아·손(4초): 몸통 피치 +0.55rad·높이 0.37m로 의젓하게 앉기(뒷발 몸 아래로), 꼬리로 바닥 쓸기 → "손!" 말풍선과 함께 앞발 하나 IK로 들어 내밀기(0.2, 0.3m) + 고개 갸웃 → 내리기 → 일어서기`,
+ keys:(()=>{const S2={pitch:.55,hy:.37,tx:-.04,BL:[.1,QG,0],BR:[.1,QG,0],FL:[0,QG,0],FR:[0,QG,0],nk:1.1,hd:.05,tb:.05,tc:.1};return [[0,{}],[.12,{}],[.24,S2],[.44,{}],[.52,{FL:[.2,.3,.03],hdy:.25,hd:.15}],[.66,{}],[.72,{FL:[0,QG,0],hdy:0,hd:.05}],[.86,{}],[.97,{...QSTAND}],[1,{}]];})(),
+ pose(P,u,S){if(u>.22&&u<.9)P.tw=.6*Math.sin(S.t*10);},
+ ev:[[.5,(E,R)=>MO.say(E,R.head,'손!','#f6dad7',16,.3)]]},
+{id:'qd-scared',ko:'무서워하기',en:'Scared',D:2.4,icon:'<path d="M4 15l3-2h6l3-2 2 1v6M7 15v4M14 15v4M4 15c-1 1-1 3 1 4M19 6l1-2M21 8l2-1"/>',
+ desc:'다가오는 슬라임 앞에서 몸을 잔뜩 낮추고 귀를 납작하게 젖힌 채 꼬리를 다리 사이로 말아 넣고, 덜덜 떨며 뒷걸음질 칩니다.',
+ how:'몸통 높이를 0.36m로 낮추고 머리를 숙인 "웅크림" 포즈에 고주파 진동(몸통 x 초당 75회, 롤 초당 40회)을 더해 떨게 합니다. 뒷걸음은 걷기 보행 위상을 거꾸로 진행시키고 바닥도 반대로 흘립니다. 꼬리는 뿌리 각을 -1.15rad로 내려 다리 사이로 말아 넣습니다.',
+ cx:()=>`Object.assign(pose, { hipsY: .36, neck: .25, head: -.3, ear: 1, tail: -1.15 });\ntorso.position.x += .006 * Math.sin(t * 75);     // 덜덜\nmixGait(walk(1 - (backPhase % 1)), .55);          // 뒷걸음 (위상 역방향)\nground.x += .18 * dt;`,
+ pr:()=>`무서워하기(2.4초): 다가오는 적 앞에서 몸 낮추기(0.36m), 귀 납작, 꼬리를 다리 사이로(-1.15rad), 고주파 떨림(몸통 x 초당 75회·롤 40회), 걷기 위상을 거꾸로 돌려 뒷걸음질, "덜덜" 말풍선 + 땀방울`,
+ setup(E,R,S){S.sl=E.addSlime(1.75,0,.55);S.gb=0;},
+ pose(P,u,S,R){const t=S.t;P.hy=.36;P.pitch=-.06;P.nk=.25;P.hd=-.3;P.ear=1;P.tb=-1.15;P.tc=.35;P.tx=.006*Math.sin(t*75);P.roll=.02*Math.sin(t*40);S.gb+=S.dt*.37;MO.mixF(P,MO.gaitQ(1-(S.gb%1),'walk'),.55);S.scroll-=.18*S.dt*R.sc;S.sl.x0=1.7+.15*Math.sin(t*1.3);},
+ ev:[[.1,(E,R)=>MO.say(E,R.head,'덜덜','#cfeaff',15,.25)],[.6,(E,R)=>{MO.say(E,R.head,'덜덜','#cfeaff',15,.25);const h=MO.wp(R.head,E.T);E.burst(3,()=>({x:h.x,y:h.y+.12,z:h.z,vx:(Math.random()-.5),vy:.8,vz:(Math.random()-.5),grav:5,max:.6,size:.045,col:GH.blue,blend:'normal'}));}]]},
+{id:'qd-attack',ko:'공격하기',en:'Pounce Attack',D:3,icon:'<path d="M2 15l4-4h6l3-3 3 1 2 3-3 1M8 11l-2 6M14 11l1 6M18 12l2 1"/>',
+ desc:'몸을 낮추고 엉덩이를 씰룩씰룩 흔들며 노리다가, 앞발을 쭉 뻗으며 슬라임에게 덮쳐 물고 머리를 마구 흔듭니다. 그런 다음 뒷걸음질로 제자리에 돌아옵니다.',
+ how:'웅크리기 → 엉덩이 흔들기(롤·z 진동) → 도약(루트 x 0 → 1.05m, 몸통 0.78m, 앞발은 앞으로 뒷발은 뒤로 뻗기) → 착지·물기(턱 0.7rad) → 머리 흔들기(목 Y축 초당 40회) 순서입니다. 착지 순간 슬라임에 피격 플래시·넉백을 주고, 돌아올 땐 걷기 보행을 역방향으로 섞어 발이 미끄러지지 않게 합니다.',
+ cx:()=>`[.1,  { hipsY: .36, pitch: -.12 }],                         // 웅크림\n[.37, { rootX: .55, hipsY: .78, FL: [.24, .5], BL: [-.24, .42], jaw: .55 }, 'out'],  // 도약\n[.44, { rootX: 1.05, hipsY: .44, jaw: .7 }, 'in'],          // 덮치기\nif (biting) neck.rotation.y = .35 * Math.sin(t * 40);       // 물고 흔들기\nslime.hit(1.2); sparks(mouth);`,
+ pr:()=>`덮쳐 공격하기(3초): 몸 낮추고 엉덩이 씰룩(롤 ±0.06rad) → 도약(루트 1.05m 전진, 몸통 0.78m까지, 앞발 앞·뒷발 뒤로 뻗기, 입 벌리기) → 슬라임에 착지하며 물기(피격 플래시·넉백·스파크·"콱!") → 물고 머리 흔들기 → 놓고 역방향 보행으로 뒷걸음질 복귀`,
+ setup(E,R,S){S.sl=E.addSlime(1.95,0,.6);S.gb=0;},
+ keys:(()=>{const CR={hy:.36,pitch:-.12,nk:.35,hd:-.12,ear:.6,tb:.3,tc:.05,FL:[.04,QG,0],FR:[.04,QG,0],BL:[-.02,QG,0],BR:[-.02,QG,0]};return [[0,{rx:0}],[.1,CR],[.3,{}],
+  [.37,{rx:.55,hy:.78,pitch:.08,nk:.6,hd:-.05,jaw:.55,FL:[.24,.5,0],FR:[.27,.52,0],BL:[-.24,.42,0],BR:[-.22,.44,0]},'out'],[.44,{rx:1.05,hy:.44,pitch:-.18,nk:.35,hd:-.2,jaw:.7,FL:[.08,QG,0],FR:[.1,QG,0],BL:[0,QG,0],BR:[.02,QG,0]},'in'],
+  [.62,{jaw:.1}],[.7,{...QSTAND}],[.72,{}],[.96,{rx:0}],[1,{}]];})(),
+ pose(P,u,S,R){if(u>.1&&u<.31){P.tz=.025*Math.sin(S.t*28);P.roll=.06*Math.sin(S.t*28);}if(u>.45&&u<.62){P.hdy=.35*Math.sin(S.t*40);P.jaw=.45+.25*Math.sin(S.t*40);}
+  if(u>.72&&u<.96){const w=Math.min(1,(u-.72)/.03,(.96-u)/.03);S.gb+=S.dt*1.46*2.03;MO.mixF(P,MO.gaitQ(1-(S.gb%1),'walk'),w);}},
+ ev:(()=>{const bite=k=>(E,R,S)=>{const m=MO.wp(R.mouth,E.T);E.hitCh(S.sl,k,0xffffff);g3Sparks(E,m,k>1?18:8,5,[GH.white,GH.rose,GH.gold]);E.light({...m,col:GH.rose,i:k>1?8:4,life:.3});E.shake(k>1?.25:.08);if(k>1){E.freeze(50);E.text(m.x,m.y+.4,m.z,'콱!',{size:22,col:'#ffd27a',vy:1,max:.9});E.ring({...m,ground:false,col:GH.hi,r0:.05,r1:.6,life:.25});}};return [[.44,bite(1.3)],[.5,bite(.5)],[.56,bite(.5)]];})()},
+{id:'qd-hiss',ko:'하악질',en:'Hiss',D:2.8,sp:'cat',icon:MO_IC.cat,
+ desc:'고양이가 등을 활처럼 둥글게 세우고 꼬리털을 잔뜩 부풀린 채 귀를 납작 젖히고, 입을 크게 벌려 "하악!" 하고 위협합니다. 다리는 꼿꼿하게 펴고 슬라임을 노려봅니다.',
+ how:'몸통을 앞·뒤 반쪽 그룹으로 나눠 가운데 관절을 꺾으면(앞은 -arch, 뒤는 +arch) 등이 아치형으로 솟습니다. 하악 구간에 sin 펄스로 아치 각·몸 높이·턱 벌림을 키우고, 꼬리 메시를 Y·Z로 1.9배 스케일해 털이 부푼 느낌을 냅니다. 입 앞에서 작은 흰 파티클(침 안개)과 등 위로 털 곤두섬 파티클을 뿌립니다.',
+ cx:()=>`frontHalf.rotation.z = -arch; rearHalf.rotation.z = arch;   // 등 아치\nconst e = Math.max(bump(.08, .4), bump(.55, .87));\narch = .28 + .18 * Math.sqrt(e); jaw.rotation.z = -.75 * e;\ntail.rotation.z = -1.55; tailMesh.scale.set(1, 1.9, 1.9);     // 꼬리 부풀림\nears.forEach(ear => ear.rotation.z = 1.1);                    // 귀 납작`,
+ pr:()=>`고양이 하악질(2.8초): 몸통을 앞/뒤 반쪽으로 나눠 가운데를 꺾어 등 아치(0.28→0.46rad), 다리 꼿꼿, 꼬리 수직 + 1.9배 부풀림, 귀 납작, 하악 펄스 2회 동안 입 0.75rad 벌림 + "하악!" + 입 앞 침 안개 파티클 + 등 위 털 곤두섬 파티클 + 미세 떨림, 적(슬라임)을 노려보기`,
+ setup(E,R,S){S.sl=E.addSlime(1.6,0,.45);},
+ pose(P,u,S){const bump=(a,b)=>u>a&&u<b?Math.sin(Math.PI*(u-a)/(b-a)):0;const e=Math.max(bump(.08,.4),bump(.55,.87)),e2=Math.sqrt(e);P.arch=.28+.18*e2;P.hy=.56+.04*e2;P.FL=[.02,QG,0];P.FR=[.04,QG,0];P.BL=[-.04,QG,0];P.BR=[-.02,QG,0];P.nk=.4-.12*e2;P.hd=-.05;P.hdy=.12;P.jaw=.75*e;P.ear=1;P.tb=1.55;P.tc=.05;P.tp=1.9;P.tw=.05*Math.sin(S.t*20);P.tx=-.03*e2+.004*Math.sin(S.t*60);},
+ upd(E,R,S,p,u){const on=(u>.1&&u<.38)||(u>.57&&u<.85);if(on&&Math.random()<.5){const m=MO.wp(R.mouth,E.T);E.add({x:m.x,y:m.y,z:m.z,vx:1.2+Math.random(),vy:(Math.random()-.3)*.6,vz:(Math.random()-.5)*.6,drag:3,max:.5,size:.03,end:.08,col:GH.white,a:.5,blend:'normal'});}
+  if(on&&Math.random()<.4){const b=R.body();E.add({type:'spark',x:b.x+(Math.random()-.5)*.4,y:b.y+.2,z:b.z+(Math.random()-.5)*.15,vy:1.5,max:.25,col:GH.rose,len:.04,drag:4,grav:0,a:.8});}},
+ ev:[[.12,(E,R)=>{MO.say(E,R.head,'하악!','#ffd27a',18,.3);E.shake(.06);}],[.59,(E,R)=>{MO.say(E,R.head,'하악!','#ffd27a',18,.3);E.shake(.06);}]]},
+{id:'qd-bark',ko:'짖기',en:'Bark',D:2.2,icon:'<path d="M3 13l3-3h6l3-3 3 1 1 3-3 1M6 13v6M13 12v7M20 5l2-1M20 9h3M20 13l2 1"/>',
+ desc:'강아지가 꼬리를 바짝 세우고 흔들며 "멍! 멍! 멍!" 세 번 짖습니다. 짖을 때마다 고개가 위로 튀고 입이 크게 벌어지며 소리 파동이 퍼집니다.',
+ how:'짖는 시각마다 가우시안 펄스 e = exp(-((u-b)/0.03)²)를 만들고, e에 비례해 목을 들고(+0.3rad), 턱을 벌리고(0.65rad), 몸을 뒤로 살짝 반동시킵니다. 이벤트 시점엔 코끝 월드 좌표에서 카메라를 향한 링 2개(소리 파동)와 "멍!" 글자를 띄웁니다.',
+ cx:()=>`const e = Math.max(...[.06, .24, .42].map(b => Math.exp(-((u - b - .02) / .03) ** 2)));\npose.neck = .85 + .3 * e; pose.jaw = .65 * e; pose.torsoX = -.02 * e;\nonBark(() => { ring(nose, { billboard: true }); text(nose, '멍!'); });\ntail.rotation.y = .55 * Math.sin(t * 24);`,
+ pr:()=>`강아지 짖기(2.2초): 3번 짖기(가우시안 펄스로 목 +0.3rad 들기·턱 0.65rad 벌리기·몸 뒤로 반동), 짖을 때마다 코끝에서 카메라를 향한 소리 파동 링 2개 + "멍!" 글자, 꼬리는 바짝 세워 빠르게 흔들기, 귀 쫑긋`,
+ pose(P,u,S){let e=0;[.06,.24,.42].forEach(b=>{e=Math.max(e,Math.exp(-Math.pow((u-b-.02)/.03,2)));});P.nk=.85+.3*e;P.hd=.2*e;P.jaw=.65*e;P.tx=-.02*e;P.FL=[0,QG+.03*e,0];P.FR=[0,QG+.03*e,0];P.tb=1.2;P.tw=.55*Math.sin(S.t*24);P.ear=-.3*e;},
+ ev:[.06,.24,.42].map(b=>[b,(E,R)=>{const n=MO.wp(R.nose,E.T);E.text(n.x+.15,n.y+.25,n.z,'멍!',{size:18,col:'#ffd27a',vy:.9,max:.9});E.ring({...n,ground:false,col:GH.hi,r0:.05,r1:.45,life:.35,a:.8});setTimeout(()=>{if(E.scene)E.ring({...n,ground:false,col:GH.rose,r0:.05,r1:.6,life:.4,a:.6});},90);E.shake(.04);}])},
+{id:'qd-drag',ko:'질질 끌려가기',en:'Dragged on Leash',D:4,icon:'<path d="M4 16l2-4h6l2-2 2 1M6 12l-2 6M12 12l1 6M16 11l6-6M20 4l2 2"/><path d="M2 20h6" stroke-dasharray="1 2"/>',
+ desc:'목줄에 끌려가면서도 네 발로 버티며 "안 갈래!" 하고 질질 미끄러집니다. 목줄이 팽팽해질 때마다 몸이 끌려가고, 발밑에선 흙먼지가 계속 일어납니다. 중간에 아예 주저앉아 엉덩이로 끌려가기도 합니다.',
+ how:'네 발 목표를 모두 몸 앞쪽에 두고 피치를 들어 "버티기" 자세를 만든 뒤, 걷기 없이 바닥만 흘려서 발이 미끄러지게 했습니다. 당기는 힘 s(t)를 sin³ 펄스로 만들어 바닥 속도·몸 쏠림·먼지 양·목줄 처짐(2차 베지어 제어점 높이)을 모두 s에 연동합니다.',
+ cx:()=>`const pull = .55 + .45 * Math.max(0, Math.sin(t * 5.5)) ** 3;   // 홱홱 당김\nground.x -= 1.1 * pull * dt;          // 발은 고정 → 미끄러짐\nconst ctrl = mid.clone().setY(mid.y - .35 * (1 - pull));          // 목줄 처짐\nleash.setPoints(bezier(collar, ctrl, anchor, 20));\nif (Math.random() < pull * .5) dust(pawWorldPos);`,
+ pr:()=>`목줄에 질질 끌려가기(4초): 네 발을 몸 앞쪽에 두고 피치를 들어 버티기, 귀 젖힘·꼬리 말기·고개 돌리기, 당김 힘 pull = 0.55 + 0.45·sin³ 펄스로 바닥 미끄러짐 속도·몸 쏠림·발 먼지·목줄 처짐(2차 베지어) 연동, 중간에 주저앉아 엉덩이로 끌려가기, "끼잉…" "안 갈래!"`,
+ setup(E,R,S){const T=E.T;const g=new T.BufferGeometry().setFromPoints(Array.from({length:20},()=>new T.Vector3()));S.lsh=new T.Line(g,new T.LineBasicMaterial({color:0xf3b7bd}));S.lsh.frustumCulled=false;E.scene.add(S.lsh);S.anc=new T.Vector3(3.4,1.5,0);},
+ keys:(()=>{const BR={pitch:.16,hy:.43,FL:[.17,QG,.02],FR:[.19,QG,-.02],BL:[.11,QG,.02],BR:[.13,QG,-.02],nk:.35,hd:-.3,hdy:-.25,ear:.9,tb:-.7,tc:.3};const SI={pitch:.5,hy:.35,BL:[.12,QG,.02],BR:[.13,QG,-.02],FL:[.2,QG,.02],FR:[.22,QG,-.02],nk:.6,hd:-.2,hdy:-.4};return [[0,BR],[.45,{}],[.53,SI],[.8,{}],[.88,BR],[1,{}]];})(),
+ pose(P,u,S,R){const t=S.t;const pull=.55+.45*Math.pow(Math.max(0,Math.sin(t*5.5)),3);S.pull=pull;P.tx=.03*pull+.004*Math.sin(t*50);P.hy+=.01*pull;S.scroll+=1.1*pull*S.dt*R.sc;},
+ upd(E,R,S){const T=E.T;const c=MO.wp(R.collar,T),a=S.anc;const mid=c.clone().add(a).multiplyScalar(.5);mid.y-=.35*(1-S.pull);const pa=S.lsh.geometry.attributes.position;for(let i=0;i<20;i++){const s=i/19,s1=1-s;pa.setXYZ(i,s1*s1*c.x+2*s1*s*mid.x+s*s*a.x,s1*s1*c.y+2*s1*s*mid.y+s*s*a.y,s1*s1*c.z+2*s1*s*mid.z+s*s*a.z);}pa.needsUpdate=true;
+  if(Math.random()<S.pull*.6){const ks=['FL','FR','BL','BR'];const f=MO.wp(R.legs[ks[Math.floor(Math.random()*4)]].h,T);E.add({x:f.x+.04,y:.03,z:f.z,vx:-.4-Math.random()*.6,vy:.3+Math.random()*.5,vz:(Math.random()-.5)*.5,drag:3,max:.6,size:.06,end:.18,col:0x8d7e82,a:.45,blend:'normal'});}},
+ ev:[[.2,(E,R)=>MO.say(E,R.head,'끼잉…','#cfeaff',15,.25)],[.6,(E,R)=>MO.say(E,R.head,'안 갈래!','#ffd27a',16,.3)]]},
+{id:'qd-fetch',ko:'물고오기',en:'Fetch the Ball',D:6.4,icon:'<path d="M3 14l3-3h6l3-3 3 1 1 3-3 1M6 14v5M13 13v6"/><circle cx="21" cy="17" r="2"/>',cam:[0,1.5,5.2],look:[0,.4,0],orbit:-.25,
+ desc:'날아오는 공을 보고 신나서 달려가 입에 덥석 물고, 몸을 돌려 다시 달려와 앞에 툭 내려놓습니다. 칭찬을 기다리며 꼬리를 흔들자 하트가 떠오릅니다.',
+ how:'대기 → 달려가기 → 줍기 → 회전 → 돌아오기 → 회전 → 내려놓기의 상태 기계입니다. 루트를 실제로 이동시키고 프레임마다 속도를 구해 보행 위상(거리 × 디딤/보폭)과 걷기/질주 가중치를 정하므로 출발·정지 때 자연스럽게 감속합니다. 공은 포물선 → 바운스 → 정지 → 입의 월드 좌표 추종 → 낙하로 상태가 바뀝니다.',
+ cx:()=>`const v = (rootX - lastX) / dt; lastX = rootX;           // 실제 이동 속도\ngaitPhase += Math.abs(v) * dt * .35 / .5;\nmixGait(run(gaitPhase), clamp(Math.abs(v) / 1.2, 0, 1)); // 속도에 따라 보행 섞기\nif (holding) ball.position.copy(mouth.getWorldPosition(v));\nelse if (thrown) ball.position.set(lerp(x0, x1, s), y0 + 1.4 * 4 * s * (1 - s), 0);`,
+ pr:()=>`공 물어오기(6.4초): 공이 뒤에서 포물선으로 날아와 바운스·정지 → 강아지가 신나서 질주(루트 실제 이동, 속도로 보행 위상·가중치 결정) → 고개 숙여 입으로 물기(공이 입 월드 좌표를 따라감) → 180° 회전 → 돌아오기 → 다시 회전 → 앞에 툭 내려놓기 → 꼬리 흔들며 하트`,
+ setup(E,R,S){const T=E.T;S.ball=new T.Mesh(new T.SphereGeometry(.055,20,14),new T.MeshPhysicalMaterial({color:0xffd27a,emissive:0x6a4a10,emissiveIntensity:.4,roughness:.35,clearcoat:1}));E.scene.add(S.ball);},
+ reset(E,R,S){S.rx=-1.3;S.lx=null;S.gp=0;S.gw=0;S.hold=0;S.drop=null;},
+ pose(P,u,S,R){const sc=R.sc,X0=-1.3,BX=1.75,X1=BX-.62*sc;let rx=X0,ry=0,turn=0;
+  if(u<.1){P.pitch=.06*Math.abs(Math.sin(S.t*9));P.FL=[0,QG+.05*Math.max(0,Math.sin(S.t*9)),0];P.FR=[0,QG+.05*Math.max(0,Math.sin(S.t*9)),0];P.nk=1.05;P.hd=.2;}
+  else if(u<.34)rx=X0+(X1-X0)*MO.ss((u-.1)/.24);else if(u<.46){rx=X1;const b=Math.sin(Math.PI*MO.cl((u-.34)/.12,0,1));P.nk=.85-1.5*b;P.hd=-.6*b;P.jaw=u<.42?.4*b:.12;P.hy=.5-.03*b;P.pitch=-.1*b;}
+  else if(u<.54){rx=X1;ry=Math.PI*MO.ss((u-.46)/.08);turn=1;}else if(u<.8){rx=X1+(X0-X1)*MO.ss((u-.54)/.26);ry=Math.PI;}else if(u<.88){rx=X0;ry=Math.PI+Math.PI*MO.ss((u-.8)/.08);turn=1;}else{rx=X0;ry=0;P.pitch=.05*Math.abs(Math.sin(S.t*8));P.jaw=.25;P.nk=1.0;P.hd=.15;}
+  if(S.hold)P.jaw=Math.max(P.jaw,.12);const v=S.lx==null||S.dt<=0?0:Math.abs(rx-S.lx)/S.dt;S.lx=rx;
+  if(turn){S.gw+=S.dt*2.4;MO.mixF(P,MO.gaitQ(S.gw,'walk'),.7);}else if(v>.05){S.gp+=v*S.dt*.35/.5/sc;const w=MO.cl(v/1.2,0,1);MO.mixF(P,MO.gaitQ(S.gp,'run'),w);const ph=2*Math.PI*S.gp;P.arch=.1*Math.sin(ph)*w;P.hy+=.03*Math.sin(ph+.6)*w;P.ear=.7*w;}
+  P.tw=.6*Math.sin(S.t*(u<.1||u>.88?16:8));P.tb=1.1;P.rx=rx;P.ry=ry;},
+ upd(E,R,S,p,u){const B=S.ball,T=E.T;if(u<.06){B.visible=false;return;}B.visible=true;
+  if(u<.2){const s=(u-.06)/.14;B.position.set(-2.9+(1.45+2.9)*s,1.6*(1-s)+.055+1.4*4*s*(1-s),0);}
+  else if(u<.3){const s=(u-.2)/.1;B.position.set(1.45+.3*s,.055+.22*Math.sin(Math.PI*s),0);B.rotation.z=-s*5;}
+  else if(!S.hold&&!S.drop){B.position.set(1.75,.055,0);}
+  if(S.hold){B.position.copy(MO.wp(R.mouth,T));}
+  if(S.drop){const s=MO.cl((u-.88)/.05,0,1);const d=S.drop;B.position.set(d.x+.12*s,d.y+(.055-d.y)*s*s+.1*Math.sin(Math.PI*s)*(1-s),d.z);}
+  if(u>.12&&u<.8&&Math.random()<.25){const b=R.body();MO.dust(E,b.x,0,b.z,1,.5);}},
+ ev:[[.43,(E,R,S)=>{S.hold=1;}],[.88,(E,R,S)=>{S.hold=0;S.drop=MO.wp(R.mouth,E.T);}],[.92,(E,R)=>{const h=MO.wp(R.head,E.T);['♥','♥'].forEach((s,i)=>E.text(h.x+(i?.2:-.1),h.y+.3,h.z,s,{size:18,col:'#f3b7bd',vy:.7,vx:i?.2:-.2,max:1.2}));}]]},
+{id:'qd-wag',ko:'꼬리 흔들기 (신남)',en:'Happy Wag',D:1.6,icon:'<path d="M5 13l3-3h6l3-3 3 1 1 3-3 1M8 13v6M15 13v6M5 13c-2-1-3-3-2-5M2 10l-1-1M3 6l-1-1"/>',
+ desc:'반가워서 어쩔 줄 모르는 강아지처럼 꼬리를 세차게 흔들고 엉덩이를 들썩이며 앞발로 콩콩 뜁니다. 입을 벌리고 헥헥거리며 하트를 날립니다.',
+ how:'꼬리 Y축 회전을 초당 2.5회 ±0.75rad로 흔들고, 같은 주기로 몸통 롤·z 이동을 더해 엉덩이까지 들썩이게 합니다. 앞발은 서로 반대 위상으로 목표 높이만 올렸다 내려 콩콩 뛰게 하고, 턱을 빠르게 미세하게 여닫아 헥헥거림을 만듭니다.',
+ cx:()=>`const w = 2 * Math.PI * u;\ntail.rotation.y = .75 * Math.sin(w * 4); torso.rotation.x = .05 * Math.sin(w * 4);   // 엉덩이까지\npose.FL[1] = G + .07 * Math.max(0, Math.sin(w * 2)); pose.FR[1] = G + .07 * Math.max(0, -Math.sin(w * 2));\njaw.rotation.z = -(.28 + .06 * Math.sin(t * 18));   // 헥헥`,
+ pr:()=>`신나서 꼬리 흔들기(1.6초): 꼬리 ±0.75rad 초당 2.5회 + 몸통 롤·z 들썩임, 앞발 교대로 콩콩(높이 0.07m), 입 벌리고 헥헥(턱 미세 진동), 귀 들썩, 하트 말풍선 2회`,
+ pose(P,u,S){const w=2*Math.PI*u;P.tw=.75*Math.sin(w*4);P.tb=1.1;P.tc=.35;P.roll=.05*Math.sin(w*4);P.tz=.02*Math.sin(w*4);P.FL=[.03,QG+.07*Math.max(0,Math.sin(w*2)),0];P.FR=[.03,QG+.07*Math.max(0,-Math.sin(w*2)),0];P.pitch=.06*Math.abs(Math.sin(w*2));P.jaw=.28+.06*Math.sin(S.t*18);P.nk=1.0;P.hd=.1;P.ear=-.2+.15*Math.sin(w*4);},
+ ev:[[.05,(E,R)=>MO.say(E,R.head,'♥','#f3b7bd',18,.3)],[.55,(E,R)=>MO.say(E,R.head,'♥','#f3b7bd',18,.3)]]},
+{id:'qd-sleep',ko:'잠자기',en:'Sleep',D:3,icon:'<path d="M3 18c0-3 3-5 7-5h4c3 0 5 2 5 5zM16 4h4l-4 4h4M11 6h3l-3 3h3"/>',
+ desc:'몸을 동그랗게 말고 앞발 위에 머리를 얹어 새근새근 잠듭니다. 꼬리로 몸을 감싸고 눈을 감은 채 배가 천천히 오르내리며 "Z" 가 떠오릅니다.',
+ how:'엎드린 포즈에서 목을 옆으로 0.55rad 돌리고 꼬리 Y축을 1.1rad 감아 몸을 말았습니다. 눈 메시의 Y 스케일을 0.12로 줄여 감은 눈을 만들고, 몸통 메시 스케일을 3초 주기 sin으로 흔들어 숨쉬기를 표현합니다.',
+ cx:()=>`Object.assign(pose, { hipsY: .17, neck: .05, head: -.3, headYaw: .55, tailYaw: 1.1 });\neyes.forEach(e => e.scale.y = .12);                    // 감은 눈\nbody.scale.set(1 + .035 * Math.sin(2 * Math.PI * u), 1, 1);   // 새근새근\nevery(1, () => text(head, 'Z', { vy: .35 }));`,
+ pr:()=>`잠자기(3초): 몸을 말아 엎드리기(몸통 0.17m, 목 옆으로 0.55rad, 꼬리로 몸 감싸기 1.1rad), 눈 Y 스케일 0.12로 감기, 몸통 메시 스케일로 숨쉬기(3초 주기), "Z" 글자가 천천히 떠오름`,
+ base:{hy:.17,FL:[.22,QG,.01],FR:[.2,QG,-.01],BL:[.14,QG,.05],BR:[.15,QG,-.05],nk:.05,hd:-.3,hdy:.55,tb:.05,tc:.25,tw:1.1,ear:.35,eye:.12},
+ pose(P,u){P.bth=.035*Math.sin(2*Math.PI*u);P.nk=.05+.02*Math.sin(2*Math.PI*u);},
+ ev:[.1,.43,.76].map(t=>[t,(E,R)=>{const h=MO.wp(R.head,E.T);E.text(h.x+.1,h.y+.2,h.z,'Z',{size:14,col:'#f3b7bd',vy:.32,vx:.12,max:1.6,w:700});}])}
+];
+const MO_HOW={h:'뼈대는 Three.js Group 계층(골반 → 척추 → 가슴 → 목·머리 / 어깨 → 위팔 → 아래팔 → 손 / 엉덩이 → 허벅지 → 정강이 → 발)으로 만든 절차적 리그입니다. 발과 손은 2본 IK(코사인 법칙 + 폴 벡터로 무릎·팔꿈치 방향 지정)로 목표점에 고정하고, 발은 매 프레임 루트 기준 수평으로 맞춥니다. 무대를 드래그하면 카메라가 궤도 회전합니다.',
+ q:'몸통을 앞·뒤 반쪽 그룹으로 나눠 등을 굽힐 수 있게 하고, 목·머리·턱·귀·꼬리(3~4마디)를 따로 움직이는 절차적 네발 리그입니다. 네 다리는 각각 2본 IK로 발을 바닥에 고정하며, 앞다리는 무릎이 앞·뒷다리는 발목(hock)이 뒤를 향하도록 폴 벡터를 반대로 줍니다. 무대를 드래그하면 카메라가 궤도 회전합니다.'};
+const moMk=(d,kind)=>({id:d.id,ko:d.ko,en:d.en,mini:'pulse',target:kind==='h'?'3D 캐릭터 액션 게임':'3D 펫·동물 게임',hint:'드래그하면 카메라가 돌아갑니다',icon:d.icon||(kind==='h'?MO_IC.h:MO_IC.q),desc:d.desc,how:d.how+' '+MO_HOW[kind],
+  params:[R('speed','재생 속도',1,.25,2,.05,'×'),...(kind==='q'?[SEL('sp','동물',d.sp||'dog',[['dog','강아지'],['cat','고양이']])]:[]),...(d.params||[])],
+  build(st,p,c){return moBuild(d,kind,st,p,c);},
+  code:p=>`// ${d.ko} — ${d.D}초 루프 × 재생 속도 ${p.speed}${kind==='q'?` · ${p.sp==='cat'?'고양이':'강아지'}`:''}\nconst u = (clock * ${p.speed} / ${d.D}) % 1;\nconst pose = sampleKeys(KEYS, u);          // 키포즈 smoothstep 보간 (또는 절차식)\n${d.cx(p)}\nrig.apply(pose);                            // 골반·척추·목 FK\n${kind==='h'?'solveTwoBoneIK(leg, footTarget, .43, .42, { pole: +X });   // 무릎 앞\nsolveTwoBoneIK(arm, handTarget, .3, .27, { pole: -X });  // 팔꿈치 뒤':'for (const k of ["FL","FR","BL","BR"])\n  solveTwoBoneIK(legs[k], pose[k], .24, .23, { pole: k[0] === "F" ? +X : -X });'}`,
+  prompt:(p,t)=>`${t}에 ${kind==='h'?'3D 휴머노이드 캐릭터':'3D 네발 동물('+(p.sp==='cat'?'고양이':'강아지')+')'} "${d.ko}" 애니메이션을 넣어줘.\n- ${d.pr(p)}\n- 재생 속도 ×${p.speed}, 루프 ${d.D}초\n- ${kind==='h'?'리그: Group 계층(골반 0.93m·척추 0.5m·위팔 0.3/아래팔 0.27m·허벅지 0.43/정강이 0.42m), 메탈 로즈 재질, 발은 2본 IK(코사인 법칙 + 폴 벡터, 무릎 앞)로 바닥 고정·루트 기준 수평, 손은 필요할 때 IK(팔꿈치 뒤)와 FK를 가중치로 블렌드':'리그: 몸통 앞/뒤 반쪽(등 굽힘), 목·머리·턱·귀·꼬리 3~4마디, 다리 0.24/0.23m 2본 IK(앞다리 무릎 앞, 뒷다리 발목 뒤), 발은 바닥 고정'}\n- 이동 동작은 캐릭터를 제자리에 두고 바닥을 발 속도와 같게 스크롤(미끄러짐 0), 이벤트(착지·명중 등)에 먼지·섬광·흔들림\n- 드래그로 카메라 궤도 회전\n${engLine(p)}`});
+const moItems=[...MO_H.map(d=>[moMk(d,'h'),'motion']),...MO_Q.map(d=>[moMk(d,'q'),'beast'])];
+moItems.forEach(([it,cat])=>{it.cat=cat;it.isNew=1;it.touch=1;it.src=SRC_MO;it.params.push(ENGP);ITEMS.push(it);});
 
 /* ───────── 렌더링 ───────── */
 const $=s=>document.querySelector(s);
