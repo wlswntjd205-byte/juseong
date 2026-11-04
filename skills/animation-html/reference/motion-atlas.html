@@ -9892,7 +9892,9 @@ function rigDogGLB(T,gltf){
     const bs=[0,1,2,3].map(i=>find(pre+i));const r=bs.map(rp);
     const key=(r[0].x>0?'F':'B')+(r[0].z>0?'L':'R');
     const u=r[2].clone().sub(r[0]).normalize(),pole=r[1].clone().sub(r[0]);pole.addScaledVector(u,-pole.dot(u)).normalize();
-    IK[key]={bs,L1:bs[1].position.length(),L2:bs[2].position.length(),fv:r[2].clone().sub(r[3]),footY:r[3].y,pole};
+    /* pq: 발(bs[3])의 휴식 방향을 root 기준으로 저장 → IK에서 발 방향을 고정해 발끝이 튀지 않게 한다 */
+    const q0R=new T.Quaternion();root.getWorldQuaternion(q0R);
+    IK[key]={bs,L1:bs[1].position.length(),L2:bs[2].position.length(),fv:r[2].clone().sub(r[3]),footY:r[3].y,pole,pq:q0R.clone().invert().multiply(bs[3].getWorldQuaternion(new T.Quaternion()))};
     R.base[key]=[r[3].x,r[3].z];R.legs[key]={u:bs[0],h:bs[3]};});
   const CH={spine:['tripoSpine_0','tripoSpine_1','tripoSpine_2','tripoSpine_3','bone_7'],neck:['bone_7','bone_8','tripoHead_0','tripoHead_1','tripoHead_2','tripoHead_3'],tail:['bone_2','tripoTail_0']};
   const ch={};for(const k in CH)ch[k]=CH[k].map(find);
@@ -9936,7 +9938,9 @@ function rigDogGLB(T,gltf){
     const K=H.clone().addScaledVector(vH,a).addScaledVector(pl,h),An=H.clone().addScaledVector(vH,dc);
     aim(bs[0],bs[1],K);root.updateMatrixWorld(true);
     aim(bs[1],bs[2],An);root.updateMatrixWorld(true);
-    aim(bs[2],bs[3],Tw);root.updateMatrixWorld(true);};
+    aim(bs[2],bs[3],Tw);root.updateMatrixWorld(true);
+    /* 발 방향: 손목 비틀림(롤)을 임의로 두면 발끝이 발목 축을 따라 돌아 바닥에서 튄다 → 발은 휴식 방향(root 기준)으로 고정 */
+    bs[3].parent.getWorldQuaternion(qP);qP.invert();qS.copy(qR).multiply(I.pq);bs[3].quaternion.copy(qP.multiply(qS));root.updateMatrixWorld(true);};
   R.apply=P=>{
     root.position.x=P.rx;root.rotation.set(0,P.ry,0);pos.position.set(P.tx,P.hy-.5,P.tz);torso.rotation.set(P.roll,0,P.pitch);root.updateMatrixWorld(true);
     /* 등뼈 활 모양(arch): 중간을 위로 */
