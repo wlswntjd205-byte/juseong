@@ -300,6 +300,23 @@ pre.code{margin:10px 0 0;padding:12px 14px;background:var(--bg);border:1px solid
 .grid.cards{grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:12px}
 .card2{display:flex;flex-direction:column;padding:0;margin:0;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;text-align:left;color:inherit;font:inherit;cursor:pointer;position:relative;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;transition:border-color .25s,transform .25s cubic-bezier(.16,1,.3,1)}
 .card2:focus-visible{outline:none;border-color:var(--rose)}
+.card2.picked{border-color:var(--rose);box-shadow:0 0 0 1px var(--rose) inset}
+.cact{position:absolute;top:8px;right:8px;z-index:3;display:flex;gap:6px}
+.cact>span{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:rgba(11,10,11,.74);border:1px solid var(--line-2);color:var(--muted);cursor:pointer;font:600 12px var(--f-mono);-webkit-tap-highlight-color:transparent;transition:background .2s,color .2s,border-color .2s}
+.cact>span:focus-visible{outline:2px solid var(--rose);outline-offset:2px}
+.cact .fv svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round}
+.cact .fv.on{color:#ffd27a;border-color:rgba(255,210,122,.6)}
+.cact .fv.on svg{fill:#ffd27a}
+.cact .pk{border-radius:8px}
+.cact .pk.on{background:var(--metal);color:var(--ink);border-color:transparent}
+.pickbar{position:fixed;left:12px;right:84px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:24;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--surface-2);border:1px solid var(--line-2);border-radius:16px;padding:10px 12px;box-shadow:0 14px 34px rgba(0,0,0,.55);font-size:13px}
+.pickbar[hidden]{display:none}
+.pickbar #pickN{font-family:var(--f-mono);color:var(--rose-hi)}
+.pickbar .sp{flex:1}
+.pickbar button{border:1px solid var(--line-2);background:transparent;color:var(--rose-hi);border-radius:999px;padding:7px 12px;font-size:12.5px;cursor:pointer;white-space:nowrap}
+.pickbar button.pri{background:var(--metal);color:var(--ink);border-color:transparent;font-weight:600}
+.pickbar #pickMsg{width:100%;color:var(--muted);font-size:12px}
+@media (prefers-reduced-motion:reduce){.cact>span{transition:none}}
 @media (hover:hover){.card2:hover{border-color:var(--rose);transform:translateY(-2px)}}
 .card2:active{transform:scale(.98)}
 .pv{position:relative;width:100%;aspect-ratio:4/3;overflow:hidden;border-bottom:1px solid var(--line);background:radial-gradient(ellipse at 50% 35%,#231c1f 0%,#0f0d0e 70%),var(--bg);contain:layout paint}
@@ -528,6 +545,7 @@ html:not([lang="en"]) .en-only{display:none!important}
           <button type="button" data-s="default" aria-pressed="true"><span class="ko-only">분류순</span><span class="en-only">By category</span></button>
           <button type="button" data-s="new" aria-pressed="false"><span class="ko-only">최신순</span><span class="en-only">Newest</span></button>
           <button type="button" data-s="pop" aria-pressed="false"><span class="ko-only">인기순</span><span class="en-only">Popular</span></button>
+          <button type="button" data-s="fav" aria-pressed="false"><span class="ko-only">즐겨찾기</span><span class="en-only">Favorites</span></button>
         </div><span class="note" id="sortNote"></span></div>
       <div class="chips" id="chips" role="group" aria-label="분류"></div>
     </div>
@@ -539,6 +557,7 @@ html:not([lang="en"]) .en-only{display:none!important}
   <span><span class="ko-only">문의</span><span class="en-only">Contact</span> <a href="mailto:wlswntjd205@gmail.com">wlswntjd205@gmail.com</a></span>
 </footer>
 
+<div class="pickbar" id="pickBar" hidden role="region" aria-label="선택한 프롬프트"><span id="pickN"></span><span class="sp"></span><button type="button" id="pickClear"></button><button type="button" class="pri" id="pickCopy"></button><span id="pickMsg" aria-live="polite"></span></div>
 <button class="botbtn" id="botBtn" type="button" aria-label="도감 도우미 챗봇 열기" aria-expanded="false" aria-controls="botPanel"><span class="bav default" aria-hidden="true"><svg class="bav-svg" viewBox="0 0 40 40"><defs><radialGradient id="bavg1" cx=".38" cy=".3" r=".85"><stop offset="0" stop-color="#f6dad7"/><stop offset=".55" stop-color="#dcaaac"/><stop offset="1" stop-color="#8f6670"/></radialGradient></defs><g class="bod"><path d="M20 4.5c8 0 14 5.6 14 13.6 0 5.4-1.6 8.4-.5 12.3C33.2 33.9 27.4 36 20 36S6.8 33.9 6.5 30.4C5.4 26.5 6 23.5 6 18.1 6 10.1 12 4.5 20 4.5z" fill="url(#bavg1)"/><g class="pup"><ellipse class="ey" cx="15" cy="18" rx="2.5" ry="3.3" fill="#2a1d20"/><ellipse class="ey" cx="25" cy="18" rx="2.5" ry="3.3" fill="#2a1d20"/></g><path class="mouth" d="M16.5 26c2.2 1.5 4.8 1.5 7 0" fill="none" stroke="#2a1d20" stroke-width="1.8" stroke-linecap="round"/></g></svg></span></button>
 <div class="bottip" id="botTip" hidden role="status"><span id="botTipText"></span><button class="x" type="button" aria-label="닫기">×</button></div>
 <div class="botpanel" id="botPanel" hidden role="dialog" aria-label="도감 도우미">
@@ -9776,28 +9795,47 @@ function moLimb(R,u,tgt,a,b,pole,s){const v=R.v1.copy(tgt);R.root.localToWorld(v
   const pr=R.v6.copy(d2).addScaledVector(d1,-d2.dot(d1));if(pr.lengthSq()<1e-8)pr.copy(m).negate();pr.normalize().multiplyScalar(s);
   const yp=R.v7.copy(d1).negate(),zp=R.v8.crossVectors(pr,yp);R.M.makeBasis(pr,yp,zp);R.qIK.setFromRotationMatrix(R.M);return s*(Math.PI-ga);}
 function moBase(T,R){R.T=T;['v0','v1','v2','v3','v4','v5','v6','v7','v8','v9'].forEach(k=>R[k]=new T.Vector3());['qRoot','q2','q3','q4','qIK','qFK','qI'].forEach(k=>R[k]=new T.Quaternion());R.M=new T.Matrix4();R.eu=new T.Euler();
-  const sh=new T.Mesh(new T.CircleGeometry(1,32),new T.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.38,depthWrite:false}));sh.rotation.x=-Math.PI/2;sh.renderOrder=1;R.shadow=sh;}
+  const cv=document.createElement('canvas');cv.width=cv.height=128;const cg=cv.getContext('2d');const gr=cg.createRadialGradient(64,64,4,64,64,64);gr.addColorStop(0,'rgba(0,0,0,.6)');gr.addColorStop(.55,'rgba(0,0,0,.28)');gr.addColorStop(1,'rgba(0,0,0,0)');cg.fillStyle=gr;cg.fillRect(0,0,128,128);const sh=new T.Mesh(new T.CircleGeometry(1,40),new T.MeshBasicMaterial({map:new T.CanvasTexture(cv),transparent:true,opacity:.9,depthWrite:false}));sh.rotation.x=-Math.PI/2;sh.renderOrder=1;R.shadow=sh;}
 const moCap=(T,r,len,mat)=>{const m=new T.Mesh(new T.CapsuleGeometry(r,Math.max(.01,len-r*1.3),6,14),mat);m.position.y=-len/2;return m;};
+/* 유기적 형상 헬퍼: 회전체(LatheGeometry)로 근육·살·털의 실루엣을 만든다 (prof = [반경, 높이] 아래→위) */
+const moLathe=(T,prof,mat,seg=24)=>{const pts=prof.map(([r,y])=>new T.Vector2(Math.max(r,.0008),y));return new T.Mesh(new T.LatheGeometry(pts,seg),mat);};
+/* 관절 아래로 뻗는 마디: prof = [[위에서의 비율 t, 반경]], 관절 원점에서 아래로 len 만큼 */
+const moSeg=(T,len,prof,mat,seg=20)=>moLathe(T,prof.slice().reverse().map(([t,r])=>[r,-t*len]),mat,seg);
 const moRod=(T,a,b,r,mat)=>{const A=new T.Vector3(...a),B=new T.Vector3(...b);const m=new T.Mesh(new T.CylinderGeometry(r,r,A.distanceTo(B),10),mat);m.position.copy(A).add(B).multiplyScalar(.5);m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),B.clone().sub(A).normalize());return m;};
 const moMats=T=>({metal:new T.MeshPhysicalMaterial({color:0xeee8eb,metalness:.95,roughness:.18,clearcoat:1,envMapIntensity:1.4}),dark:new T.MeshStandardMaterial({color:0x2b2327,metalness:.6,roughness:.35}),
   rose:new T.MeshPhysicalMaterial({color:0xf3b7bd,metalness:.7,roughness:.25,clearcoat:1,envMapIntensity:1.3}),glow:new T.MeshBasicMaterial({color:0xf6dad7,toneMapped:false})});
 
 /* ── 사람 리그 ── */
 function rigHuman(T){const R={kind:'h',sc:1};moBase(T,R);
-  const skin=new T.MeshPhysicalMaterial({color:0xf2c9cc,metalness:.85,roughness:.24,clearcoat:1,clearcoatRoughness:.15,envMapIntensity:1.35});
-  const dark=new T.MeshStandardMaterial({color:0x2b2327,metalness:.55,roughness:.38,envMapIntensity:.8});const eyeM=new T.MeshBasicMaterial({color:0x141012});
-  const G=()=>new T.Group(),sph=(r,m)=>new T.Mesh(new T.SphereGeometry(r,18,14),m);
+  /* 피부·옷·머리카락: 금속 느낌을 빼고 천·살결 질감(sheen, 낮은 광택)으로 */
+  const skin=new T.MeshPhysicalMaterial({color:0xd7a287,metalness:0,roughness:.52,sheen:.35,sheenColor:new T.Color(0xffd6c4),sheenRoughness:.45,clearcoat:.12,clearcoatRoughness:.4,envMapIntensity:.9});
+  const pants=new T.MeshStandardMaterial({color:0x2d313d,metalness:0,roughness:.9,envMapIntensity:.6});
+  const shirt=new T.MeshPhysicalMaterial({color:0xa9747f,metalness:0,roughness:.88,sheen:.6,sheenColor:new T.Color(0xf6dad7),sheenRoughness:.5,envMapIntensity:.6});
+  const shoe=new T.MeshPhysicalMaterial({color:0x17131a,metalness:0,roughness:.35,clearcoat:.8,clearcoatRoughness:.2,envMapIntensity:1});
+  const hair=new T.MeshPhysicalMaterial({color:0x2a1d1f,metalness:0,roughness:.62,sheen:.4,sheenColor:new T.Color(0x6a4a50),envMapIntensity:.7});
+  const white=new T.MeshStandardMaterial({color:0xf1ece9,roughness:.25,metalness:0}),iris=new T.MeshStandardMaterial({color:0x4a3328,roughness:.2,metalness:0});
+  const G=()=>new T.Group(),sph=(r,m)=>new T.Mesh(new T.SphereGeometry(r,20,16),m);
   const root=R.root=G(),pivot=R.pivot=G(),hips=R.hips=G();root.add(pivot);pivot.add(hips);
-  const pel=new T.Mesh(new T.CapsuleGeometry(.12,.14,6,14),dark);pel.rotation.x=Math.PI/2;pel.scale.set(.85,1,1);hips.add(pel);
-  const spine=R.spine=G();spine.position.y=.02;hips.add(spine);const tor=new T.Mesh(new T.CapsuleGeometry(.16,.26,8,16),skin);tor.position.y=.27;tor.scale.set(.78,1,1.22);spine.add(tor);
-  const chest=R.chest=G();chest.position.y=.5;spine.add(chest);const neck=R.neck=G();neck.position.y=.05;chest.add(neck);neck.add(Object.assign(moCap(T,.05,.12,dark),{}));neck.children[0].position.y=.05;
-  const head=R.head=G();head.position.y=.17;neck.add(head);const hm=sph(.15,skin);hm.scale.set(1,1.06,.95);head.add(hm);
-  R.eyes=[1,-1].map(z=>{const e=sph(.024,eyeM);e.position.set(.135,.025,z*.055);head.add(e);return e;});const vis=new T.Mesh(new T.BoxGeometry(.03,.025,.16),dark);vis.position.set(.13,-.045,0);head.add(vis);
-  const limb=(par,pos,a,ra,b,rb,jr,end)=>{const u=G();u.position.set(...pos);par.add(u);u.add(sph(jr*1.25,dark));u.add(moCap(T,ra,a,skin));const k=G();k.position.y=-a;u.add(k);k.add(sph(jr,dark));k.add(moCap(T,rb,b,skin));const h=G();h.position.y=-b;k.add(h);end(h);return {u,k,h};};
-  R.armL=limb(chest,[0,-.03,.22],.3,.055,.27,.05,.05,h=>h.add(sph(.055,skin)));R.armR=limb(chest,[0,-.03,-.22],.3,.055,.27,.05,.05,h=>h.add(sph(.055,skin)));
-  const ft=h=>{const f=new T.Mesh(new T.BoxGeometry(.22,.07,.11),dark);f.position.set(.05,-.045,0);h.add(f);};
-  R.legL=limb(hips,[0,-.02,.1],.43,.075,.42,.065,.065,ft);R.legR=limb(hips,[0,-.02,-.1],.43,.075,.42,.065,.065,ft);
-  R.mats=[skin,dark];const G0=MO.G;
+  const pel=moLathe(T,[[.001,-.11],[.095,-.09],[.122,-.03],[.12,.04],[.1,.11],[.001,.13]],pants,28);pel.scale.set(.92,1,1.22);hips.add(pel);
+  const spine=R.spine=G();spine.position.y=.02;hips.add(spine);
+  const tor=R.tor=moLathe(T,[[.001,-.1],[.1,-.07],[.125,-.02],[.13,.04],[.12,.13],[.135,.23],[.158,.32],[.165,.4],[.148,.46],[.11,.51],[.07,.54],[.001,.55]],shirt,30);tor.scale.set(.78,1,1.22);spine.add(tor);
+  const chest=R.chest=G();chest.position.y=.5;spine.add(chest);const neck=R.neck=G();neck.position.y=.05;chest.add(neck);
+  neck.add(moLathe(T,[[.001,-.03],[.05,-.02],[.047,.05],[.043,.11],[.001,.14]],skin,18));
+  const head=R.head=G();head.position.y=.17;neck.add(head);
+  const hm=moLathe(T,[[.001,-.165],[.07,-.155],[.12,-.11],[.145,-.04],[.152,.03],[.14,.1],[.1,.15],[.04,.172],[.001,.178]],skin,32);hm.scale.set(1,1,.95);head.add(hm);
+  const hc=new T.Mesh(new T.SphereGeometry(.158,32,20,0,Math.PI*2,0,Math.PI*.5),hair);hc.position.set(-.04,.01,0);hc.scale.set(1.02,1,.97);head.add(hc);
+  R.eyes=[1,-1].map(z=>{const e=new T.Mesh(new T.SphereGeometry(.024,20,14),white);e.scale.set(.8,1,.7);e.position.set(.133,.025,z*.055);head.add(e);const ir=new T.Mesh(new T.SphereGeometry(.0125,16,12),iris);ir.position.set(.018,0,0);e.add(ir);return e;});
+  [1,-1].forEach(z=>{const ear=sph(.03,skin);ear.scale.set(.4,1,.6);ear.position.set(-.005,-.01,z*.148);head.add(ear);});
+  const nose=sph(.022,skin);nose.scale.set(.8,1.1,1);nose.position.set(.148,-.035,0);head.add(nose);
+  const UP_ARM=[[0,.042],[.1,.056],[.4,.055],[.72,.044],[.9,.038],[1,.035]],LO_ARM=[[0,.04],[.12,.045],[.5,.043],[.85,.033],[1,.03]];
+  const UP_LEG=[[0,.078],[.15,.09],[.45,.072],[.72,.056],[.9,.047],[1,.045]],LO_LEG=[[0,.052],[.12,.06],[.35,.058],[.7,.04],[.92,.031],[1,.028]];
+  const limb=(par,pos,a,pa,b,pb,jr,mA,mB,end)=>{const u=G();u.position.set(...pos);par.add(u);u.add(sph(jr,mA));u.add(moSeg(T,a,pa,mA));const k=G();k.position.y=-a;u.add(k);k.add(sph(jr*.92,mB));k.add(moSeg(T,b,pb,mB));const h=G();h.position.y=-b;k.add(h);end(h);return {u,k,h};};
+  R.armL=limb(chest,[0,-.03,.22],.3,UP_ARM,.27,LO_ARM,.055,skin,skin,h=>{const hd=sph(.05,skin);hd.scale.set(.75,1.25,.55);hd.position.y=-.04;h.add(hd);});
+  R.armR=limb(chest,[0,-.03,-.22],.3,UP_ARM,.27,LO_ARM,.055,skin,skin,h=>{const hd=sph(.05,skin);hd.scale.set(.75,1.25,.55);hd.position.y=-.04;h.add(hd);});
+  const ft=h=>{const s=moCap(T,.045,.2,shoe);s.rotation.z=Math.PI/2;s.position.set(.04,-.045,0);h.add(s);};
+  R.legL=limb(hips,[0,-.02,.1],.43,UP_LEG,.42,LO_LEG,.07,pants,pants,ft);R.legR=limb(hips,[0,-.02,-.1],.43,UP_LEG,.42,LO_LEG,.07,pants,pants,ft);
+  R.mats=[skin,pants,shirt];const G0=MO.G;
+  R.idle=S=>{const b=Math.sin(S.t*2.3);tor.scale.set(.78*(1+.012*b),1+.006*b,1.22*(1+.02*b));neck.rotation.y+=Math.sin(S.t*.7)*.025;};
   R.def={hx:0,hy:MO.HY,hz:0,hr:0,sp:0,tw:0,sx:0,hd:0,hdy:0,pv:0,pcy:0,prx:0,ry:0,eye:1,fk:0,lk:[0,0],rk:[0,0],lf:[0,G0,0],rf:[0,G0,0],ft:0,la:[0,.15,.12],ra:[0,.15,.12],lw:0,rw:0,lh:[.2,.9,.25],rh:[.2,.9,-.25],lr:0,rr:0};
   const PL=new T.Vector3(1,0,.12),PR=new T.Vector3(1,0,-.12),AL=new T.Vector3(-.7,-.3,.6),AR=new T.Vector3(-.7,-.3,-.6);
   R.apply=P=>{root.rotation.set(0,P.ry,0);pivot.position.set(0,P.pcy,0);pivot.rotation.set(P.prx,0,P.pv);hips.position.set(P.hx,P.hy-P.pcy,P.hz);hips.rotation.set(0,0,P.hr);spine.rotation.set(P.sx,P.tw,P.sp);neck.rotation.set(0,P.hdy,P.hd);R.eyes.forEach(e=>e.scale.y=P.eye);
@@ -9809,27 +9847,37 @@ function rigHuman(T){const R={kind:'h',sc:1};moBase(T,R);
 
 /* ── 네발 동물 리그 ── */
 function rigQuad(T,sp){const cat=sp==='cat';const R={kind:'q',sp,sc:cat?.84:1};moBase(T,R);
-  const fur=cat?new T.MeshPhysicalMaterial({color:0x8a7f84,metalness:.55,roughness:.28,clearcoat:1,clearcoatRoughness:.2,sheen:1,sheenColor:new T.Color(0xf3b7bd),sheenRoughness:.5,envMapIntensity:1.2})
-    :new T.MeshPhysicalMaterial({color:0xead7d4,metalness:.35,roughness:.42,clearcoat:.6,clearcoatRoughness:.3,envMapIntensity:1.2});
-  const dark=new T.MeshStandardMaterial({color:cat?0x16121a:0x3a2e32,metalness:.4,roughness:.4});const eyeM=new T.MeshBasicMaterial({color:cat?0xffd27a:0x141012,toneMapped:false});const roseM=new T.MeshPhysicalMaterial({color:0xf3b7bd,metalness:.7,roughness:.25,clearcoat:1});
-  const G=()=>new T.Group(),sph=(r,m)=>new T.Mesh(new T.SphereGeometry(r,18,14),m);
+  /* 털: 거친 표면 + 시맨틱 sheen(부드러운 털 광택). 금속 느낌 제거 */
+  const fur=cat?new T.MeshPhysicalMaterial({color:0x7d7179,metalness:0,roughness:.92,sheen:.8,sheenColor:new T.Color(0xd9b8c4),sheenRoughness:.6,envMapIntensity:.7})
+    :new T.MeshPhysicalMaterial({color:0xd8b48f,metalness:0,roughness:.9,sheen:.9,sheenColor:new T.Color(0xfff1e4),sheenRoughness:.55,envMapIntensity:.7});
+  const dark=new T.MeshStandardMaterial({color:cat?0x1a1417:0x2a1f22,metalness:0,roughness:.5});
+  const eyeM=new T.MeshPhysicalMaterial({color:cat?0xd9a441:0x2a1d17,metalness:0,roughness:.15,clearcoat:1,clearcoatRoughness:.1});
+  const pupil=new T.MeshStandardMaterial({color:0x0d0a0c,roughness:.2});
+  const roseM=new T.MeshPhysicalMaterial({color:0xf3b7bd,metalness:.7,roughness:.25,clearcoat:1});
+  const G=()=>new T.Group(),sph=(r,m)=>new T.Mesh(new T.SphereGeometry(r,20,16),m);
   const root=R.root=G();root.scale.setScalar(R.sc);const torso=R.torso=G();root.add(torso);const fh=R.fh=G(),rh=R.rh=G();torso.add(fh,rh);
-  const half=(par,x)=>{const m=new T.Mesh(new T.CapsuleGeometry(.15,.2,8,16),fur);m.rotation.z=Math.PI/2;m.position.x=x;m.scale.set(1,1,.95);par.add(m);return m;};
+  /* 몸통: 앞·뒤 반쪽을 회전체로 만들어 등·가슴의 볼륨을 살림 */
+  const bodyProf=cat?[[-.15,.095],[-.11,.13],[-.03,.142],[.05,.138],[.12,.12],[.15,.085]]:[[-.15,.105],[-.11,.145],[-.03,.16],[.05,.152],[.12,.13],[.15,.095]];
+  const half=(par,x)=>{const m=moLathe(T,bodyProf,fur,28);m.rotation.z=Math.PI/2;m.position.x=x;m.scale.set(1,1,.95);par.add(m);return m;};
   R.bodyMs=[half(fh,.13),half(rh,-.13)];
-  const neck=R.neck=G();neck.position.set(.3,.07,0);fh.add(neck);const nm=new T.Mesh(new T.CapsuleGeometry(.075,.1,6,12),fur);nm.rotation.z=Math.PI/2;nm.position.x=.08;neck.add(nm);
+  const neck=R.neck=G();neck.position.set(.3,.07,0);fh.add(neck);  const nm=moSeg(T,.2,[[0,.078],[.5,.07],[1,.08]],fur,18);nm.rotation.z=Math.PI/2;nm.position.x=.08;neck.add(nm);
   const col=new T.Mesh(new T.TorusGeometry(.085,.018,8,24),roseM);col.rotation.y=Math.PI/2;col.position.x=.04;neck.add(col);R.collar=col;
-  const head=R.head=G();head.position.set(.17,0,0);neck.add(head);const sk=sph(cat?.12:.115,fur);sk.scale.set(1,.95,.98);head.add(sk);
-  const sn=new T.Mesh(new T.CapsuleGeometry(cat?.045:.055,cat?.03:.09,6,12),fur);sn.rotation.z=Math.PI/2;sn.position.set(cat?.1:.13,-.025,0);head.add(sn);
-  const nose=sph(.026,dark);nose.position.set(cat?.15:.215,-.01,0);head.add(nose);R.nose=nose;
+  const head=R.head=G();head.position.set(.17,0,0);neck.add(head);
+  /* 머리: 두개골+주둥이를 하나의 회전체로 (축을 앞쪽으로 눕힘) */
+  const headP=cat?[[.001,-.11],[.09,-.1],[.115,-.05],[.12,0],[.1,.05],[.065,.09],[.04,.105],[.001,.11]]:[[.001,-.12],[.075,-.11],[.11,-.06],[.118,-.01],[.105,.03],[.08,.07],[.055,.1],[.035,.12],[.001,.125]];
+  const sk=moLathe(T,headP,fur,30);sk.rotation.z=-Math.PI/2;sk.scale.set(1,cat?1.1:1.5,.98);head.add(sk);
+  const nose=sph(cat?.024:.03,dark);nose.scale.set(1.1,.8,1.1);nose.position.set(cat?.122:.19,cat?-.005:-.004,0);head.add(nose);R.nose=nose;
   const jaw=R.jaw=G();jaw.position.set(.04,-.06,0);head.add(jaw);const jm=new T.Mesh(new T.BoxGeometry(cat?.09:.15,.025,.07),fur);jm.position.set(cat?.05:.08,-.005,0);jaw.add(jm);const mouth=new T.Object3D();mouth.position.set(cat?.11:.17,-.01,0);jaw.add(mouth);R.mouth=mouth;
-  R.eyes=[1,-1].map(z=>{const e=sph(.022,eyeM);e.position.set(.085,.04,z*.055);head.add(e);return e;});
-  R.ears=[1,-1].map(z=>{const g=G();g.position.set(-.02,.085,z*.07);head.add(g);let m;if(cat){m=new T.Mesh(new T.ConeGeometry(.042,.1,4),fur);m.position.y=.04;}else{m=new T.Mesh(new T.BoxGeometry(.06,.12,.02),dark);m.position.set(0,-.04,z*.02);g.rotation.x=z*.35;}g.add(m);g.userData.z=z;return g;});
-  // 꼬리
-  const tl=cat?[.13,.13,.12,.11]:[.1,.09,.08];let par=rh,px=-.36,py=.05;R.tail=tl.map((l,i)=>{const g=G();g.position.set(px,py,0);par.add(g);const m=new T.Mesh(new T.CapsuleGeometry(.032-i*.004,l,4,10),i===tl.length-1&&!cat?fur:fur);m.rotation.z=Math.PI/2;m.position.x=-l/2;g.add(m);g.userData.m=m;par=g;px=-l;py=0;return g;});
-  // 다리
-  const leg=(par,pos)=>{const u=G();u.position.set(...pos);par.add(u);u.add(moCap(T,.048,.24,fur));const k=G();k.position.y=-.24;u.add(k);k.add(sph(.04,fur));k.add(moCap(T,.036,.23,fur));const h=G();h.position.y=-.23;k.add(h);const pw=sph(.045,fur);pw.scale.set(1.25,.7,1);h.add(pw);return {u,k,h};};
+  R.eyes=[1,-1].map(z=>{const e=new T.Mesh(new T.SphereGeometry(.02,18,12),eyeM);e.scale.set(.85,1,.7);e.position.set(cat?.075:.08,.052,z*.07);head.add(e);const pu=new T.Mesh(new T.SphereGeometry(.0105,14,10),pupil);pu.position.set(.0165,0,0);e.add(pu);return e;});
+  R.ears=[1,-1].map(z=>{const g=G();g.position.set(-.02,.085,z*.07);head.add(g);let m;if(cat){m=new T.Mesh(new T.ConeGeometry(.045,.11,4),fur);m.position.y=.045;}else{m=new T.Mesh(new T.CapsuleGeometry(.03,.07,6,10),dark);m.position.set(0,-.05,z*.02);m.scale.set(.6,1,.35);g.rotation.x=z*.35;}g.add(m);g.userData.z=z;return g;});
+  // 꼬리 (테이퍼)
+  const tl=cat?[.13,.13,.12,.11]:[.1,.09,.08];let par=rh,px=-.36,py=.05;R.tail=tl.map((l,i)=>{const g=G();g.position.set(px,py,0);par.add(g);const r0=(cat?.034:.04)-i*.006;const m=moSeg(T,l,[[0,r0],[.5,r0*.9],[1,Math.max(.01,r0*.55)]],fur,12);m.rotation.z=-Math.PI/2;g.add(m);g.userData.m=m;par=g;px=-l;py=0;return g;});
+  // 다리 (테이퍼 + 발)
+  const UP_Q=[[0,.052],[.3,.055],[.7,.046],[1,.036]],LO_Q=[[0,.04],[.5,.036],[.9,.03],[1,.03]];
+  const leg=(par,pos)=>{const u=G();u.position.set(...pos);par.add(u);u.add(moSeg(T,.24,UP_Q,fur));const k=G();k.position.y=-.24;u.add(k);k.add(sph(.04,fur));k.add(moSeg(T,.23,LO_Q,fur));const h=G();h.position.y=-.23;k.add(h);const pw=sph(.045,fur);pw.scale.set(1.25,.7,1);h.add(pw);return {u,k,h};};
   R.legs={FL:leg(fh,[.27,-.03,.085]),FR:leg(fh,[.27,-.03,-.085]),BL:leg(rh,[-.27,-.03,.085]),BR:leg(rh,[-.27,-.03,-.085])};
   R.base={FL:[.27,.085],FR:[.27,-.085],BL:[-.27,.085],BR:[-.27,-.085]};R.mats=[fur,dark];const g0=MO.QG;
+  R.idle=S=>{const b=Math.sin(S.t*2.6)*.015;R.bodyMs.forEach(m=>{m.scale.y*=1+b;m.scale.z*=1+b*1.6;});R.tail.forEach((g,i)=>{g.rotation.y+=Math.sin(S.t*2.2-i*.6)*.05*(i+1)*.5;});};
   R.def={rx:0,ry:0,tx:0,tz:0,hy:.5,pitch:0,roll:0,arch:0,bth:0,nk:.85,hdy:0,hd:0,jaw:0,ear:0,tb:.7,tc:.25,tw:0,tp:1,eye:1,FL:[0,g0,0],FR:[0,g0,0],BL:[0,g0,0],BR:[0,g0,0]};
   const PF=new T.Vector3(1,0,0),PB=new T.Vector3(-1,0,0);
   R.apply=P=>{root.position.x=P.rx;root.rotation.set(0,P.ry,0);torso.position.set(P.tx,P.hy,P.tz);torso.rotation.set(P.roll,0,P.pitch);fh.rotation.z=-P.arch;rh.rotation.z=P.arch;R.bodyMs.forEach(m=>m.scale.set(1+P.bth,1,.95+P.bth*.8));
@@ -9851,10 +9899,10 @@ MO.streak=(E,y0,y1,z,v=12,col=0xeee8eb)=>{E.add({type:'spark',x:2.6+Math.random(
 /* ── 실행기 ── */
 function moStep(d,E,R,S,p,dt){const k=+p.speed||1;S.dt=dt*k;S.t+=S.dt;const D=d.D,cyc=Math.floor(S.t/D),u=(S.t-cyc*D)/D;S.u=u;
   if(cyc!==S.cyc){S.cyc=cyc;S.fired={};if(d.reset)d.reset(E,R,S,p);}
-  const P=d.keys?MO.kf(MO.full(d,R.def),u):MO.merge(R.def,d.base||{});if(d.pose)d.pose(P,u,S,R,E,p);R.apply(P);S.P=P;
+  const P=d.keys?MO.kf(MO.full(d,R.def),u):MO.merge(R.def,d.base||{});if(d.pose)d.pose(P,u,S,R,E,p);R.apply(P);if(R.idle)R.idle(S);S.P=P;
   if(d.ev)d.ev.forEach((x,i)=>{if(!S.fired[i]&&u>=x[0]){S.fired[i]=1;x[1](E,R,S,p);}});if(d.upd)d.upd(E,R,S,p,u);
   E.grid.position.x=-(((S.scroll%.5)+.5)%.5);const b=R.body();const hgt=Math.max(0,b.y-(R.kind==='h'?.9:.45*R.sc));const s=MO.cl(1-hgt*.16,.35,1);
-  R.shadow.position.set(b.x,.006,b.z);const sx=(d.shw||(R.kind==='h'?.42:.5*R.sc))*s,sz=(d.shd||(R.kind==='h'?.3:.24*R.sc))*s;R.shadow.scale.set(sx,sz,1);R.shadow.material.opacity=.38*s;}
+  R.shadow.position.set(b.x,.006,b.z);const sx=(d.shw||(R.kind==='h'?.42:.5*R.sc))*s,sz=(d.shd||(R.kind==='h'?.3:.24*R.sc))*s;R.shadow.scale.set(sx,sz,1);R.shadow.material.opacity=.9*s;}
 function moBuild(d,kind,st,p,c){const S={t:0,scroll:0,cyc:-1,fired:{},dt:0};
   const E=g3Engine(st,c,{noChars:1,init(E){const T=E.T;const R=kind==='h'?rigHuman(T):rigQuad(T,p.sp||d.sp||'dog');E.scene.add(R.root,R.shadow);E.rig=R;
     const nar=E.W/E.H<1.2,cb=d.cam||(kind==='h'?[0,1.45,4.5]:[0,1.05,3.3]);E.camBase.set(cb[0],cb[1],cb[2]*(nar?1.4:1));const lk=d.look||(kind==='h'?[0,.92,0]:[0,.4,0]);E.look.set(lk[0],lk[1],lk[2]);E.orbit=d.orbit!=null?d.orbit:kind==='h'?-.5:-.42;
@@ -10242,6 +10290,9 @@ const $=s=>document.querySelector(s);
 const list=$('#list'),chipsEl=$('#chips'),q=$('#q');
 $('#total').textContent=ITEMS.length;
 let cat='all',sortMode='default';
+const FAV_KEY='atlas-fav';let FAVS={};try{FAVS=JSON.parse(localStorage.getItem(FAV_KEY)||'{}')||{};}catch(e){FAVS={};}
+const isFav=id=>!!FAVS[id];
+let PICK=[];
 const svgIcon=it=>`<svg viewBox="0 0 24 24" aria-hidden="true">${it.icon}</svg>`;
 const reduce=matchMedia('(prefers-reduced-motion: reduce)');
 ITEMS.forEach((it,i)=>{it._ord=i;});
@@ -10272,6 +10323,10 @@ const UI={
  cnt:['프롬프트 복사 횟수 (모든 방문자)','Prompt copies (all visitors)'],
  newNote:['나중에 추가된 항목부터','Most recently added first'],
  popNote:['모든 방문자의 프롬프트 복사 횟수 기준','By prompt copies from all visitors'],
+ favNote:['★ 이 기기(브라우저)에만 저장됩니다','★ Saved on this device (browser) only'],
+ favH:['즐겨찾기','Favorites'],favEmpty:['즐겨찾은 애니메이션이 없어요. 카드의 ★를 눌러 추가해 보세요.','No favorites yet. Tap ★ on a card to add one.'],
+ favT:['즐겨찾기','Favorite'],pickT:['여러 개 선택해서 한 번에 복사','Select to copy several together'],
+ pickCopy:['프롬프트 한 번에 복사','Copy prompts together'],pickClear:['비우기','Clear'],
  popOff:['복사 횟수 서버에 연결하지 못해 이 기기 기준으로 보여 줍니다','Could not reach the counter; showing this device only'],
  newH:['최신순','Newest'],popH:['인기순','Popular'],
  lang:['Switch to English','한국어로 바꾸기'],help:['도움말과 출처','Help and sources'],
@@ -10319,6 +10374,11 @@ function resumePreviews(){const hs=document.getElementById('helpScrim');if(hs&&!
 const matchTerm=(i,term)=>!term||(i.ko+' '+i.en+' '+i.id+' '+i.desc+' '+(I18N.desc[i.id]||'')).toLowerCase().includes(term);
 function cardFor(it,g){const n=cntOf(it.id);const t=mk('button','card2',`<div class="pv">${reduce.matches?`<div class="pv-still">${svgIcon(it)}</div>`:''}${it.isNew?'<span class="new">NEW</span>':''}</div><div class="cmeta"><span class="ic">${it.swatch?'':svgIcon(it)}</span><span class="nm"><span class="ko">${tName(it)}</span><span class="en">${tSub(it)}</span></span><span class="cc"${n?'':' hidden'} title="${tx('cnt')}"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><b>${fmtN(n)}</b></span></div>`,g);
   t.dataset.id=it.id;t.setAttribute('aria-label',tName(it)+' · '+tSub(it)+' '+tx('open'));
+  t.insertAdjacentHTML('beforeend',`<span class="cact"><span class="pk" role="checkbox" tabindex="0" aria-checked="false" aria-label="${tx('pickT')}" title="${tx('pickT')}"></span><span class="fv" role="button" tabindex="0" aria-pressed="false" aria-label="${tx('favT')}" title="${tx('favT')}"><svg viewBox="0 0 24 24"><path d="M12 3.8l2.5 5.1 5.6.8-4 3.9.9 5.6L12 16.6 6.9 19.2l.9-5.6-4-3.9 5.6-.8z"/></svg></span></span>`);
+  const bind=(el,fn)=>{el.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();fn();});el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();fn();}});};
+  const pkEl=t.querySelector('.pk'),fvEl=t.querySelector('.fv');bind(pkEl,()=>togglePick(it.id));bind(fvEl,()=>toggleFav(it.id));
+  const pi=PICK.indexOf(it.id);if(pi>=0){pkEl.classList.add('on');pkEl.textContent=String(pi+1);pkEl.setAttribute('aria-checked','true');t.classList.add('picked');}
+  if(isFav(it.id)){fvEl.classList.add('on');fvEl.setAttribute('aria-pressed','true');}
   if(it.swatch){const ic=t.querySelector('.ic');ic.style.background=it.swatch;ic.classList.add('sw');}
   t.onclick=()=>openItem(it.id,t);pvAll.add(t);pvIO.observe(t);if(pvRO)pvRO.observe(t.querySelector('.pv'));return t;}
 let VIEW=[];
@@ -10328,12 +10388,12 @@ function renderList(){
   pvIO=new IntersectionObserver(es=>es.forEach(e=>{const cd=e.target;cd._vis=e.isIntersecting;clearTimeout(cd._t);if(e.isIntersecting)cd._t=setTimeout(()=>{if(cd._vis)startPreview(cd);},120);else stopPreview(cd);}),{rootMargin:'40px 0px'});
   pvRO=window.ResizeObserver?new ResizeObserver(es=>es.forEach(e=>fitPv(e.target))):null;
   list.innerHTML='';VIEW=[];
-  const note=$('#sortNote');note.textContent=sortMode==='new'?tx('newNote'):sortMode==='pop'?(CNT.ok?tx('popNote'):tx('popOff')):'';
+  const note=$('#sortNote');note.textContent=sortMode==='new'?tx('newNote'):sortMode==='fav'?tx('favNote'):sortMode==='pop'?(CNT.ok?tx('popNote'):tx('popOff')):'';
   if(sortMode!=='default'){
-    let its=ITEMS.filter(i=>(cat==='all'||i.cat===cat)&&matchTerm(i,term));
-    its=its.slice().sort(sortMode==='new'?(a,b)=>b._ord-a._ord:(a,b)=>(cntOf(b.id)-cntOf(a.id))||(b._ord-a._ord));
-    if(its.length){mk('div','section-h',`<h2>${tx(sortMode==='new'?'newH':'popH')}</h2><span>${cat==='all'?(EN()?'All':'전체'):tCat(cat)}</span><b class="cnt">${its.length}</b>`,list);const g=mk('div','grid cards',null,list);its.forEach(it=>{cardFor(it,g);VIEW.push(it);});}
-    else mk('p','empty',tx('empty'),list);return;}
+    let its=ITEMS.filter(i=>(cat==='all'||i.cat===cat)&&matchTerm(i,term)&&(sortMode!=='fav'||isFav(i.id)));
+    its=its.slice().sort(sortMode==='new'?(a,b)=>b._ord-a._ord:sortMode==='fav'?(a,b)=>(FAVS[b.id]||0)-(FAVS[a.id]||0):(a,b)=>(cntOf(b.id)-cntOf(a.id))||(b._ord-a._ord));
+    if(its.length){mk('div','section-h',`<h2>${tx(sortMode==='new'?'newH':sortMode==='fav'?'favH':'popH')}</h2><span>${cat==='all'?(EN()?'All':'전체'):tCat(cat)}</span><b class="cnt">${its.length}</b>`,list);const g=mk('div','grid cards',null,list);its.forEach(it=>{cardFor(it,g);VIEW.push(it);});}
+    else mk('p','empty',tx(sortMode==='fav'?'favEmpty':'empty'),list);return;}
   const groups=CATS.slice(1).filter(([k])=>cat==='all'||cat===k);
   let shown=0;
   groups.forEach(([k,l,en])=>{
@@ -10515,6 +10575,26 @@ function addMsg(who,text,extra){const m=mk('div','msg '+(who==='bot'?'ai':who),n
 function recList(m,ids){m.classList.add('wide');const box=mk('div','recs',null,m);ids.forEach(id=>{const it=ITEMS.find(i=>i.id===id);if(!it)return;const b=mk('button','rec',`${svgIcon(it)}<div><b></b><span></span></div>`,box);b.type='button';b.querySelector('b').textContent=tName(it)+(cntOf(id)?`  · ${L2('복사','copies')} ${cntOf(id)}`:'');b.querySelector('span').textContent=firstSentence(tDesc(it));b.onclick=()=>openItem(id);});}
 function actions(m,acts){const box=mk('div','acts',null,m);acts.forEach(([label,fn])=>{const b=mk('button','',null,box);b.type='button';b.textContent=label;b.onclick=fn;});}
 function showCat(c){cat=c;setSort('default');renderChips();renderList();closeBot();const el=list.querySelector('.section-h');if(el)el.scrollIntoView({behavior:reduce.matches?'auto':'smooth',block:'start'});}
+/* ── 즐겨찾기 (이 기기·브라우저에만 저장) ── */
+function saveFavs(){try{localStorage.setItem(FAV_KEY,JSON.stringify(FAVS));}catch(e){}}
+function toggleFav(id){if(FAVS[id])delete FAVS[id];else FAVS[id]=Date.now();saveFavs();
+  document.querySelectorAll(`.card2[data-id="${id}"] .fv`).forEach(el=>{el.classList.toggle('on',isFav(id));el.setAttribute('aria-pressed',isFav(id));});
+  if(sortMode==='fav')renderList();}
+/* ── 여러 개 선택 → 체크한 순서대로 프롬프트 한 번에 복사 ── */
+function togglePick(id){const i=PICK.indexOf(id);if(i>=0)PICK.splice(i,1);else PICK.push(id);paintPicks();}
+function paintPicks(){document.querySelectorAll('.card2[data-id]').forEach(c=>{const i=PICK.indexOf(c.dataset.id);const pk=c.querySelector('.pk');if(pk){pk.classList.toggle('on',i>=0);pk.setAttribute('aria-checked',i>=0);pk.textContent=i>=0?String(i+1):'';}c.classList.toggle('picked',i>=0);});renderPickBar();}
+function renderPickBar(){const bar=$('#pickBar');bar.hidden=!PICK.length;$('#pickN').textContent=EN()?`${PICK.length} selected`:`${PICK.length}개 선택`;$('#pickCopy').textContent=tx('pickCopy');$('#pickClear').textContent=tx('pickClear');}
+const COMMON_KO='\n\n공통 조건:\n- transform과 opacity 위주로 애니메이션해서 레이아웃 재계산을 피하고 60fps를 유지해줘.\n- prefers-reduced-motion: reduce 환경에서는 애니메이션을 끄거나 바로 최종 상태로 보여줘.\n- 데스크톱(마우스)과 모바일(터치) 모두에서 자연스럽게 동작하게 해줘.';
+const COMMON_EN='\n\nCommon requirements:\n- Animate mainly transform and opacity to avoid layout recalculation and keep 60fps.\n- Under prefers-reduced-motion: reduce, turn the animation off or show the final state immediately.\n- Make it work naturally on both desktop (mouse) and mobile (touch).';
+function copyPicks(){if(!PICK.length)return;const items=PICK.map(id=>ITEMS.find(i=>i.id===id)).filter(Boolean);
+  const parts=items.map(it=>{const v={};it.params.forEach(p=>v[p.k]=p.v);return `[${it.ko} · ${it.en}]\n`+it.prompt(v,it.target);});
+  const txt=parts.join('\n\n────────────\n\n')+(EN()?COMMON_EN+'\n\n(The spec above is written in Korean. Please reply in English.)':COMMON_KO);
+  const msg=$('#pickMsg');
+  const done=()=>{msg.textContent=EN()?`Copied ${items.length} prompts`:`${items.length}개 프롬프트를 복사했어요`;items.forEach(it=>bumpCount(it.id));};
+  const fb=()=>{const ta=document.createElement('textarea');ta.value=txt;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;opacity:0;top:0;left:0';document.body.appendChild(ta);ta.select();let ok=false;try{ok=document.execCommand('copy');}catch(e){}ta.remove();if(ok)done();else msg.textContent=EN()?'Copy failed. Please select the text manually.':'복사에 실패했어요. 직접 선택해 주세요.';};
+  try{navigator.clipboard.writeText(txt).then(done,fb);}catch(e){fb();}}
+$('#pickCopy').onclick=copyPicks;
+$('#pickClear').onclick=()=>{PICK=[];$('#pickMsg').textContent='';paintPicks();};
 function topPopular(n){return ITEMS.slice().sort((a,b)=>cntOf(b.id)-cntOf(a.id)||b._ord-a._ord).slice(0,n).map(i=>i.id);}
 function reply(text){const low=text.toLowerCase().trim();const has=(...a)=>a.some(k=>low.includes(k));
   if(!low)return;
