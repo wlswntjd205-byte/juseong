@@ -9874,7 +9874,8 @@ function rigQuad(T,sp){const cat=sp==='cat';const R={kind:'q',sp,sc:cat?.84:1};m
   const tl=cat?[.13,.13,.12,.11]:[.1,.09,.08];let par=rh,px=-.36,py=.05;R.tail=tl.map((l,i)=>{const g=G();g.position.set(px,py,0);par.add(g);const r0=(cat?.034:.04)-i*.006;const m=moSeg(T,l,[[0,r0],[.5,r0*.9],[1,Math.max(.01,r0*.55)]],fur,12);m.rotation.z=-Math.PI/2;g.add(m);g.userData.m=m;par=g;px=-l;py=0;return g;});
   // 다리 (테이퍼 + 발)
   const UP_Q=[[0,.052],[.3,.055],[.7,.046],[1,.036]],LO_Q=[[0,.04],[.5,.036],[.9,.03],[1,.03]];
-  const leg=(par,pos)=>{const u=G();u.position.set(...pos);par.add(u);u.add(moSeg(T,.24,UP_Q,fur));const k=G();k.position.y=-.24;u.add(k);k.add(sph(.04,fur));k.add(moSeg(T,.23,LO_Q,fur));const h=G();h.position.y=-.23;k.add(h);const pw=sph(.045,fur);pw.scale.set(1.25,.7,1);h.add(pw);return {u,k,h};};
+  /* 다리 = 윗다리(0.19) → 아랫다리(0.23) → 발목 관절 → 발등(0.05) → 발. 발목을 추가한 만큼 윗다리를 줄여 전체 길이는 유지 */
+  const leg=(par,pos)=>{const u=G();u.position.set(...pos);par.add(u);u.add(moSeg(T,.19,UP_Q,fur));const k=G();k.position.y=-.19;u.add(k);k.add(sph(.04,fur));k.add(moSeg(T,.23,LO_Q,fur));const A=G();A.position.y=-.23;k.add(A);A.add(sph(.03,fur));A.add(moSeg(T,.05,[[0,.03],[1,.024]],fur,12));const h=G();h.position.y=-.05;A.add(h);const pw=sph(.045,fur);pw.scale.set(1.25,.7,1);h.add(pw);return {u,k,an:A,h};};
   R.legs={FL:leg(fh,[.27,-.03,.085]),FR:leg(fh,[.27,-.03,-.085]),BL:leg(rh,[-.27,-.03,.085]),BR:leg(rh,[-.27,-.03,-.085])};
   R.base={FL:[.27,.085],FR:[.27,-.085],BL:[-.27,.085],BR:[-.27,-.085]};R.mats=[fur,dark];const g0=MO.QG;
   R.idle=S=>{const b=Math.sin(S.t*2.6)*.015;R.bodyMs.forEach(m=>{m.scale.y*=1+b;m.scale.z*=1+b*1.6;});R.tail.forEach((g,i)=>{g.rotation.y+=Math.sin(S.t*2.2-i*.6)*.05*(i+1)*.5;});};
@@ -9885,7 +9886,7 @@ function rigQuad(T,sp){const cat=sp==='cat';const R={kind:'q',sp,sc:cat?.84:1};m
     R.ears.forEach(g=>{if(cat)g.rotation.set(-g.userData.z*.15*P.ear,0,P.ear*1.1);else g.rotation.set(g.userData.z*(.35+.2*P.ear),0,P.ear*.9);});
     R.tail.forEach((g,i)=>{g.rotation.set(0,i===0?P.tw:P.tw*.3,i===0?-P.tb:-P.tc);g.userData.m.scale.set(1,P.tp,P.tp);});
     root.updateMatrixWorld(true);root.getWorldQuaternion(R.qRoot);
-    for(const k in R.legs){const L=R.legs[k],b=R.base[k],f=P[k];R.v0.set(b[0]+f[0],f[1],b[1]+f[2]);const fr=k[0]==='F';const phi=moLimb(R,L.u,R.v0,.24,.23,fr?PF:PB,fr?-1:1);L.u.quaternion.copy(R.qIK);L.k.rotation.set(0,0,phi);}};
+    for(const k in R.legs){const L=R.legs[k],b=R.base[k],f=P[k];const ANK=.05;R.v0.set(b[0]+f[0],f[1]+ANK,b[1]+f[2]);const fr=k[0]==='F';const phi=moLimb(R,L.u,R.v0,.19,.23,fr?PF:PB,fr?-1:1);L.u.quaternion.copy(R.qIK);L.k.rotation.set(0,0,phi);const lift=Math.max(0,f[1]-MO.QG);L.an.rotation.set(0,0,-phi*.5-lift*1.6);}};
   R.body=()=>MO.wp(torso,T);return R;}
 
 /* ── 공통 효과 ── */
@@ -10188,6 +10189,23 @@ const MO_Q=[
  keys:(()=>{const S2={pitch:.55,hy:.37,tx:-.04,BL:[.1,QG,0],BR:[.1,QG,0],FL:[0,QG,0],FR:[0,QG,0],nk:1.1,hd:.05,tb:.05,tc:.1};return [[0,{}],[.12,{}],[.24,S2],[.44,{}],[.52,{FL:[.2,.3,.03],hdy:.25,hd:.15}],[.66,{}],[.72,{FL:[0,QG,0],hdy:0,hd:.05}],[.86,{}],[.97,{...QSTAND}],[1,{}]];})(),
  pose(P,u,S){if(u>.22&&u<.9)P.tw=.6*Math.sin(S.t*10);},
  ev:[[.5,(E,R)=>MO.say(E,R.head,'손!','#f6dad7',16,.3)]]},
+{id:'qd-groom',ko:'뒷다리 그루밍 (혀로)',en:'Hind-Leg Grooming',D:4.6,sp:'cat',icon:MO_IC.cat,
+ desc:'고양이가 엉덩이를 바닥에 붙이고 앉아 한쪽 뒷다리를 번쩍 들어 올린 뒤, 고개를 숙여 혀로 뒷다리 털을 꼼꼼히 핥습니다. 핥을 때마다 혀가 살짝씩 보입니다.',
+ how:'앉기 자세(피치 .55, 높이 .37)에서 오른쪽 뒷발 IK 목표를 (.26, .46, .1)로 들어 올리고, 머리는 들린 다리 쪽으로 숙여(hd, hdy) 핥는 동작을 만듭니다. 핥는 구간에는 입 앞에서 작은 분홍 혀 파티클을 뿌리고, 머리와 꼬리를 리듬감 있게 흔듭니다.',
+ cx:()=>`const SIT = { pitch: .55, hipsY: .37, BL: [.1, G], BR: [.1, G], neck: 1.1 };\nconst LIFT = { ...SIT, BR: [.26, .46, .1], headPitch: .45, headYaw: -.45, neck: 1.35 };\n[.5, LIFT], [.88, LIFT];                       // 뒷다리 들고 핥기\nhead.rotation.x += .06 * Math.sin(t * 12);     // 핥는 리듬\nmouthTongue.spawn(mouth);                      // 혀 파티클`,
+ pr:()=>`고양이 뒷다리 그루밍(4.6초): 앉기(몸통 피치 +0.55rad·높이 0.37m) → 오른쪽 뒷발을 (0.26, 0.46, 0.1)으로 들어 올리기 → 머리를 들린 다리 쪽으로 숙이기(피치 0.4, 요 -0.45rad) → 핥는 구간 동안 머리 리듬 흔들기 + 입 앞 분홍 혀 파티클 + "챱챱" 말풍선 → 내려놓고 일어서기`,
+ keys:(()=>{const S2={pitch:.55,hy:.37,tx:-.04,BL:[.1,QG,0],BR:[.1,QG,0],FL:[0,QG,0],FR:[0,QG,0],nk:1.1,hd:.05,tb:.05,tc:.1};const LIFT={...S2,BR:[.12,.34,.14],hd:.45,hdy:-.45,nk:1.35,tb:.2};return [[0,{}],[.12,{}],[.24,S2],[.5,LIFT],[.88,LIFT],[.94,S2],[.97,{...QSTAND}],[1,{}]];})(),
+ pose(P,u,S){if(u>.5&&u<.88){P.hd=(P.hd||0)+.06*Math.sin(S.t*12);P.tw=.25*Math.sin(S.t*6);}},
+ upd(E,R,S,p,u){const on=u>.52&&u<.86;if(on&&Math.random()<.5){const m=MO.wp(R.mouth,E.T);E.add({x:m.x,y:m.y,z:m.z,vx:.6+Math.random()*.4,vy:-.2,vz:(Math.random()-.5)*.3,drag:3,max:.4,size:.025,end:.06,col:GH.rose,a:.6,blend:'normal'});}},
+ ev:[[.56,(E,R)=>MO.say(E,R.head,'챱챱','#f6dad7',16,.3)]]},
+{id:'qd-scratch',ko:'뒷다리로 귀긁기',en:'Ear Scratch',D:4.2,sp:'dog',icon:MO_IC.dog,
+ desc:'개가 앉은 자세에서 고개를 한쪽으로 기울이고, 오른쪽 뒷다리를 들어 귀 근처를 빠르게 긁습니다. 긁을 때마다 귀가 살짝 펄럭이고 꼬리가 좌우로 흔들립니다.',
+ how:'앉기 자세에서 머리를 기울이고(hdy .5, hd .25) 오른쪽 뒷발 IK 목표를 귀 높이 (.2, .5, .12)로 올린 뒤, 발 높이에 sin 진동을 더해 빠르게 긁습니다. 긁는 구간에는 귀 회전과 꼬리 흔들림을 함께 줍니다.',
+ cx:()=>`const SIT = { pitch: .55, hipsY: .37, BL: [.1, G], BR: [.1, G], neck: 1.1 };\nconst SCRATCH = { ...SIT, BR: [.2, .5, .12], headYaw: .5, headPitch: .25 };\n[.36, SCRATCH], [.86, SCRATCH];                        // 귀 긁기 구간\nBR.y = .5 + .05 * Math.sin(t * 26);                    // 빠른 긁기 진동\near.rotation.z = .6 + .3 * Math.sin(t * 13);            // 귀 펄럭임`,
+ pr:()=>`개 뒷다리로 귀긁기(4.2초): 앉기(몸통 피치 +0.55rad·높이 0.37m) → 고개를 기울이기(요 0.5rad, 피치 0.25) → 오른쪽 뒷발을 귀 높이(0.2, 0.5, 0.12)로 올리기 → 발 높이 0.05m 진동으로 빠르게 긁기 + 귀 펄럭임 + 꼬리 흔들기 + "슥슥" 말풍선 → 내려놓고 일어서기`,
+ keys:(()=>{const S2={pitch:.55,hy:.37,tx:-.04,BL:[.1,QG,0],BR:[.1,QG,0],FL:[0,QG,0],FR:[0,QG,0],nk:1.1,hd:.05,tb:.05,tc:.1};const SC={...S2,BR:[.2,.5,.12],hdy:.5,hd:.25,nk:1.25};return [[0,{}],[.12,{}],[.24,S2],[.36,SC],[.86,SC],[.94,S2],[.97,{...QSTAND}],[1,{}]];})(),
+ pose(P,u,S){if(u>.36&&u<.86){P.BR=[.2,.5+.05*Math.sin(S.t*26),.12];P.ear=.6+.3*Math.sin(S.t*13);P.tw=.5*Math.sin(S.t*9);}},
+ ev:[[.4,(E,R)=>MO.say(E,R.head,'슥슥','#ffd27a',16,.3)],[.66,(E,R)=>MO.say(E,R.head,'슥슥','#ffd27a',16,.3)]]},
 {id:'qd-scared',ko:'무서워하기',en:'Scared',D:2.4,icon:'<path d="M4 15l3-2h6l3-2 2 1v6M7 15v4M14 15v4M4 15c-1 1-1 3 1 4M19 6l1-2M21 8l2-1"/>',
  desc:'다가오는 슬라임 앞에서 몸을 잔뜩 낮추고 귀를 납작하게 젖힌 채 꼬리를 다리 사이로 말아 넣고, 덜덜 떨며 뒷걸음질 칩니다.',
  how:'몸통 높이를 0.36m로 낮추고 머리를 숙인 "웅크림" 포즈에 고주파 진동(몸통 x 초당 75회, 롤 초당 40회)을 더해 떨게 합니다. 뒷걸음은 걷기 보행 위상을 거꾸로 진행시키고 바닥도 반대로 흘립니다. 꼬리는 뿌리 각을 -1.15rad로 내려 다리 사이로 말아 넣습니다.',
@@ -10279,8 +10297,8 @@ const MO_HOW={h:'뼈대는 Three.js Group 계층(골반 → 척추 → 가슴 �
 const moMk=(d,kind)=>({id:d.id,ko:d.ko,en:d.en,mini:'pulse',target:kind==='h'?'3D 캐릭터 액션 게임':'3D 펫·동물 게임',hint:'드래그하면 카메라가 돌아갑니다',icon:d.icon||(kind==='h'?MO_IC.h:MO_IC.q),desc:d.desc,how:d.how+' '+MO_HOW[kind],
   params:[R('speed','재생 속도',1,.25,2,.05,'×'),...(kind==='q'?[SEL('sp','동물',d.sp||'dog',[['dog','강아지'],['cat','고양이']])]:[]),...(d.params||[])],
   build(st,p,c){return moBuild(d,kind,st,p,c);},
-  code:p=>`// ${d.ko} — ${d.D}초 루프 × 재생 속도 ${p.speed}${kind==='q'?` · ${p.sp==='cat'?'고양이':'강아지'}`:''}\nconst u = (clock * ${p.speed} / ${d.D}) % 1;\nconst pose = sampleKeys(KEYS, u);          // 키포즈 smoothstep 보간 (또는 절차식)\n${d.cx(p)}\nrig.apply(pose);                            // 골반·척추·목 FK\n${kind==='h'?'solveTwoBoneIK(leg, footTarget, .43, .42, { pole: +X });   // 무릎 앞\nsolveTwoBoneIK(arm, handTarget, .3, .27, { pole: -X });  // 팔꿈치 뒤':'for (const k of ["FL","FR","BL","BR"])\n  solveTwoBoneIK(legs[k], pose[k], .24, .23, { pole: k[0] === "F" ? +X : -X });'}`,
-  prompt:(p,t)=>`${t}에 ${kind==='h'?'3D 휴머노이드 캐릭터':'3D 네발 동물('+(p.sp==='cat'?'고양이':'강아지')+')'} "${d.ko}" 애니메이션을 넣어줘.\n- ${d.pr(p)}\n- 재생 속도 ×${p.speed}, 루프 ${d.D}초\n- ${kind==='h'?'리그: Group 계층(골반 0.93m·척추 0.5m·위팔 0.3/아래팔 0.27m·허벅지 0.43/정강이 0.42m), 메탈 로즈 재질, 발은 2본 IK(코사인 법칙 + 폴 벡터, 무릎 앞)로 바닥 고정·루트 기준 수평, 손은 필요할 때 IK(팔꿈치 뒤)와 FK를 가중치로 블렌드':'리그: 몸통 앞/뒤 반쪽(등 굽힘), 목·머리·턱·귀·꼬리 3~4마디, 다리 0.24/0.23m 2본 IK(앞다리 무릎 앞, 뒷다리 발목 뒤), 발은 바닥 고정'}\n- 이동 동작은 캐릭터를 제자리에 두고 바닥을 발 속도와 같게 스크롤(미끄러짐 0), 이벤트(착지·명중 등)에 먼지·섬광·흔들림\n- 드래그로 카메라 궤도 회전\n${engLine(p)}`});
+  code:p=>`// ${d.ko} — ${d.D}초 루프 × 재생 속도 ${p.speed}${kind==='q'?` · ${p.sp==='cat'?'고양이':'강아지'}`:''}\nconst u = (clock * ${p.speed} / ${d.D}) % 1;\nconst pose = sampleKeys(KEYS, u);          // 키포즈 smoothstep 보간 (또는 절차식)\n${d.cx(p)}\nrig.apply(pose);                            // 골반·척추·목 FK\n${kind==='h'?'solveTwoBoneIK(leg, footTarget, .43, .42, { pole: +X });   // 무릎 앞\nsolveTwoBoneIK(arm, handTarget, .3, .27, { pole: -X });  // 팔꿈치 뒤':'for (const k of ["FL","FR","BL","BR"])\n  solveTwoBoneIK(legs[k], [pose[k][0], pose[k][1] + .05, pose[k][2]], .19, .23, { pole: k[0] === "F" ? +X : -X }); // 발목 관절 .05 위'}`,
+  prompt:(p,t)=>`${t}에 ${kind==='h'?'3D 휴머노이드 캐릭터':'3D 네발 동물('+(p.sp==='cat'?'고양이':'강아지')+')'} "${d.ko}" 애니메이션을 넣어줘.\n- ${d.pr(p)}\n- 재생 속도 ×${p.speed}, 루프 ${d.D}초\n- ${kind==='h'?'리그: Group 계층(골반 0.93m·척추 0.5m·위팔 0.3/아래팔 0.27m·허벅지 0.43/정강이 0.42m), 메탈 로즈 재질, 발은 2본 IK(코사인 법칙 + 폴 벡터, 무릎 앞)로 바닥 고정·루트 기준 수평, 손은 필요할 때 IK(팔꿈치 뒤)와 FK를 가중치로 블렌드':'리그: 몸통 앞/뒤 반쪽(등 굽힘), 목·머리·턱·귀·꼬리 3~4마디, 다리 윗 0.19m·아랫 0.23m 2본 IK(앞다리 무릎 앞, 뒷다리 무릎 뒤) + 발목 관절(발등 0.05m), 발은 바닥 고정'}\n- 이동 동작은 캐릭터를 제자리에 두고 바닥을 발 속도와 같게 스크롤(미끄러짐 0), 이벤트(착지·명중 등)에 먼지·섬광·흔들림\n- 드래그로 카메라 궤도 회전\n${engLine(p)}`});
 const moItems=[...MO_H.map(d=>[moMk(d,'h'),'motion']),...MO_Q.map(d=>[moMk(d,'q'),'beast'])];
 moItems.forEach(([it,cat])=>{it.cat=cat;it.isNew=1;it.touch=1;it.src=SRC_MO;it.params.push(ENGP);ITEMS.push(it);});
 
