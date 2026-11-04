@@ -9886,7 +9886,7 @@ function rigQuad(T,sp){const cat=sp==='cat';const R={kind:'q',sp,sc:cat?.84:1};m
     R.ears.forEach(g=>{if(cat)g.rotation.set(-g.userData.z*.15*P.ear,0,P.ear*1.1);else g.rotation.set(g.userData.z*(.35+.2*P.ear),0,P.ear*.9);});
     R.tail.forEach((g,i)=>{g.rotation.set(0,i===0?P.tw:P.tw*.3,i===0?-P.tb:-P.tc);g.userData.m.scale.set(1,P.tp,P.tp);});
     root.updateMatrixWorld(true);root.getWorldQuaternion(R.qRoot);
-    for(const k in R.legs){const L=R.legs[k],b=R.base[k],f=P[k];const ANK=.05;const asy=k==='FL'?.004:k==='FR'?-.004:k==='BL'?-.003:.003;R.v0.set(b[0]+f[0]+asy,Math.max(f[1],MO.QG)+ANK,b[1]+f[2]);const fr=k[0]==='F';const phi=moLimb(R,L.u,R.v0,.19,.23,fr?PF:PB,fr?-1:1);L.u.quaternion.copy(R.qIK);L.k.rotation.set(0,0,phi);const lift=Math.max(0,f[1]-MO.QG);L.an.rotation.set(0,0,-phi*.5-lift*1.6);L.h.rotation.set(0,0,Math.min(.8,lift*2.6));}};
+    for(const k in R.legs){const L=R.legs[k],b=R.base[k],f=P[k];const ANK=.05;const asy=k==='FL'?.004:k==='FR'?-.004:k==='BL'?-.003:.003;R.v0.set(b[0]+f[0]+asy,Math.max(f[1],MO.QG)+ANK,b[1]+f[2]);const fr=k[0]==='F';const phi=moLimb(R,L.u,R.v0,.19,.23,fr?PB:PF,fr?1:-1);L.u.quaternion.copy(R.qIK);L.k.rotation.set(0,0,phi);const lift=Math.max(0,f[1]-MO.QG);L.an.rotation.set(0,0,-phi*.5-lift*1.6);L.h.rotation.set(0,0,Math.min(.8,lift*2.6));}};
   R.body=()=>MO.wp(torso,T);return R;}
 
 /* ── 공통 효과 ── */
