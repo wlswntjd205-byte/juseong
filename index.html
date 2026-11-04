@@ -8937,8 +8937,8 @@ ITEMS.push(
 
 /* ── 게임 이펙트 3D (Three.js) ── */
 const THREE_URLS=['https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js','https://unpkg.com/three@0.160.0/build/three.module.js'];
-let T3=null,T3P=null;
-const loadThree=()=>T3P||(T3P=(async()=>{let err;for(const u of THREE_URLS){try{T3=await import(u);return T3;}catch(e){err=e;}}T3P=null;throw err||new Error('three');})());
+let T3=null,T3P=null,T3URL=null;
+const loadThree=()=>T3P||(T3P=(async()=>{let err;for(const u of THREE_URLS){try{T3=await import(u);T3URL=u;return T3;}catch(e){err=e;}}T3P=null;throw err||new Error('three');})());
 const GH={rose:0xf3b7bd,hi:0xf6dad7,silver:0xeee8eb,blue:0x9fc6ff,ice:0xcfeaff,gold:0xffd27a,purple:0xc9a2ff,mint:0x8ff0c4,red:0xff5a6e,orange:0xff9a5a,white:0xffffff};
 const c3=h=>[((h>>16)&255)/255,((h>>8)&255)/255,(h&255)/255];
 const hexCss=h=>'#'+h.toString(16).padStart(6,'0');
@@ -9001,9 +9001,9 @@ function g3Engine(st,c,o={}){const {g,W,H,cv}=canvas(st);const key=st.closest&&s
     E.hook({upd(dt){el+=dt;const u=Math.min(1,el/life);const r=r0+(r1-r0)*easeOut(u);me.scale.set(r*2,r*2,1);if(o2.ground===false)me.quaternion.copy(E.cam.quaternion);m.opacity=(o2.a==null?1:o2.a)*(1-u);if(u>=1){E.scene.remove(me);m.dispose();return false;}}});return me;};
   E.light=(o2)=>{const L=E.lights.reduce((a,b)=>(a.userData.r<=b.userData.r?a:b));L.color.set(o2.col||0xffffff);L.position.set(o2.x||0,o2.y||1,o2.z||0);L.distance=o2.dist||7;L.userData={i:o2.i||8,life:o2.life||.4,t:0,r:1,follow:o2.follow};return L;};
   E.beam=(o2)=>{const T=E.T;const m=new T.MeshBasicMaterial({map:G3.beam,color:o2.col||0xffffff,blending:T.AdditiveBlending,transparent:true,depthWrite:false,toneMapped:false,side:T.DoubleSide,opacity:0});const me=new T.Mesh(new T.CylinderGeometry(o2.r||.5,(o2.r||.5)*(o2.taper||1),o2.h||4,40,1,true),m);me.position.set(o2.x||0,(o2.h||4)/2,o2.z||0);me.renderOrder=6;E.scene.add(me);return {me,m};};
-  const ready=loadThree().then(()=>{if(!c.alive)return;init();}).catch(()=>{g.clearRect(0,0,W,H);g.fillStyle='#9a8c90';g.font='12px "IBM Plex Sans KR",sans-serif';g.textAlign='center';g.fillText('3D 엔진(three.js)을 불러오지 못했습니다',W/2,H/2);});
+  const ready=loadThree().then(()=>o.pre?o.pre():null).then(pre=>{if(!c.alive)return;init(pre);}).catch(()=>{g.clearRect(0,0,W,H);g.fillStyle='#9a8c90';g.font='12px "IBM Plex Sans KR",sans-serif';g.textAlign='center';g.fillText('3D 엔진(three.js)을 불러오지 못했습니다',W/2,H/2);});
   E.ready=ready;
-  function init(){const T=T3;E.T=T;g3Tex();const R=r3(key);E.R=R;E._v=new T.Vector3();E.planeGeo=new T.PlaneGeometry(1,1);
+  function init(pre){const T=T3;E.T=T;g3Tex();const R=r3(key);E.R=R;E._v=new T.Vector3();E.planeGeo=new T.PlaneGeometry(1,1);
     const sc=E.scene=new T.Scene();sc.background=o.bg?new T.Color(o.bg):G3.sky;sc.fog=new T.Fog(o.bg||0x0b0a0b,7.5,18);sc.environment=R.env;
     const cam=E.cam=new T.PerspectiveCamera(38,W/H,.1,60);E.camBase=new T.Vector3(0,2.5,6.3);E.look=new T.Vector3(0,.55,0);if(W/H<1.2){E.camBase.set(0,2.8,8);}
     E.hemi=new T.HemisphereLight(0xffeef0,0x1a1012,.55);sc.add(E.hemi);const kl=new T.DirectionalLight(0xfff1ec,1.7);kl.position.set(3,5,4);sc.add(kl);E.rimL=new T.DirectionalLight(0xff9fb0,2.4);E.rimL.position.set(-3,3,-5);sc.add(E.rimL);
@@ -9012,7 +9012,7 @@ function g3Engine(st,c,o={}){const {g,W,H,cv}=canvas(st);const key=st.closest&&s
     const grid=new T.GridHelper(40,80,0xdcaaac,0xdcaaac);grid.material.transparent=true;grid.material.opacity=.07;grid.material.depthWrite=false;grid.position.y=.003;sc.add(grid);E.grid=grid;
     E.hero=g3Hero(T,o);E.enemy=g3Slime(T);sc.add(E.hero.g,E.enemy.g);if(o.noChars){E.hero.vis=false;E.enemy.vis=false;}if(o.hero0!=null)E.hero.x0=o.hero0;
     E.pa=g3Points(T,1800,true);E.pn=g3Points(T,500,false);E.ln=g3Lines(T,600);sc.add(E.pa.obj,E.pn.obj,E.ln.obj);
-    c.on(()=>{g3Dispose(sc);E.scene=null;});if(o.init)o.init(E);[E.hero,E.enemy,...(E.extra||[])].forEach(ch=>ch.g.position.set(ch.x0,ch.oy,ch.z0||0));
+    c.on(()=>{g3Dispose(sc);E.scene=null;});if(o.init)o.init(E,pre);[E.hero,E.enemy,...(E.extra||[])].forEach(ch=>ch.g.position.set(ch.x0,ch.oy,ch.z0||0));
     loop(c,step);}
   function updChar(ch,dt,t,slime){ch.flash-=dt;ch.kb*=Math.exp(-dt*10);ch.sq*=Math.exp(-dt*9);if(ch.blink>0)ch.blink-=dt;
     const fl=ch.flash>0;ch.mats.forEach(m=>{if(fl){m.emissive.set(ch.fcol);m.emissiveIntensity=1.4;}else if(ch.tint!=null){m.emissive.set(ch.tint);m.emissiveIntensity=.55;}else{m.emissive.set(0);m.emissiveIntensity=1;}});
@@ -9889,6 +9889,98 @@ function rigQuad(T,sp){const cat=sp==='cat';const R={kind:'q',sp,sc:cat?.84:1};m
     for(const k in R.legs){const L=R.legs[k],b=R.base[k],f=P[k];const ANK=.05;const asy=k==='FL'?.004:k==='FR'?-.004:k==='BL'?-.003:.003;R.v0.set(b[0]+f[0]+asy,Math.max(f[1],MO.QG)+ANK,b[1]+f[2]);const fr=k[0]==='F';const phi=moLimb(R,L.u,R.v0,.19,.23,fr?PB:PF,fr?1:-1);L.u.quaternion.copy(R.qIK);L.k.rotation.set(0,0,phi);const lift=Math.max(0,f[1]-MO.QG);L.an.rotation.set(0,0,-phi*.5-lift*1.6);L.h.rotation.set(0,0,Math.min(.8,lift*2.6));}};
   R.body=()=>MO.wp(torso,T);return R;}
 
+/* ── 강아지 GLB 골격 어댑터 ─────────────────────────────────────────────
+   실제 골격(척추 4 · 목/머리 · 꼬리 · 네 다리 각 4관절)을 가진 강아지 GLB를 rigQuad와 같은 R 인터페이스로 감쌉니다.
+   · 다리: 2본 IK. 무릎 방향(폴)은 휴식 자세의 무릎 방향에서 자동으로 구해 발끝을 지면에 고정
+   · 척추·목·꼬리: 관절 체인을 bendChain으로 굽힘 (휴식 회전을 보존하는 aim 방식)
+   · 로드 실패 시 rigQuad(절차적 강아지)로 자동 대체 */
+const DOG_GLB_URL='https://cdn.jsdelivr.net/gh/wlswntjd205-byte/juseong@3d1e02d/assets/dog-cute.glb';
+let DOG_BUF=null,GLTF_CL=null;
+const threeRoot=()=>T3URL.replace(/\/build\/three\.module\.js$/,'');
+const esmBlob=async(url,fix)=>URL.createObjectURL(new Blob([fix(await(await fetch(url)).text())],{type:'text/javascript'}));
+/* GLTFLoader는 bare 'three'를 import하므로, 엔진과 같은 three 모듈 URL로 바꿔 인스턴스를 공유한다 */
+const loadGLTFCls=()=>GLTF_CL||(GLTF_CL=(async()=>{const tm=T3URL,rt=threeRoot();
+  const bgu=await esmBlob(rt+'/examples/jsm/utils/BufferGeometryUtils.js',s=>s.replace(/from\s+['"]three['"]/g,`from '${tm}'`));
+  const gl=await esmBlob(rt+'/examples/jsm/loaders/GLTFLoader.js',s=>s.replace(/from\s+['"]three['"]/g,`from '${tm}'`).replace(/from\s+['"]\.\.\/utils\/BufferGeometryUtils\.js['"]/g,`from '${bgu}'`));
+  return (await import(gl)).GLTFLoader;})().catch(e=>{GLTF_CL=null;throw e;}));
+/* 엔진마다 따로 파싱해야 스킨 메시·뼈대가 공유되지 않는다 (버퍼만 한 번 받는다) */
+const dogGLTF=()=>(DOG_BUF||(DOG_BUF=fetch(DOG_GLB_URL).then(r=>{if(!r.ok)throw new Error('GLB '+r.status);return r.arrayBuffer();}).catch(e=>{DOG_BUF=null;throw e;})))
+  .then(buf=>loadGLTFCls().then(GL=>new Promise((res,rej)=>new GL().parse(buf.slice(0),'',res,rej))));
+function rigDogGLB(T,gltf){
+  const R={kind:'q',sp:'dog',sc:1};moBase(T,R);
+  const gs=gltf.scene;const FUR=new T.MeshPhysicalMaterial({color:0xe9ad82,roughness:.8,metalness:0,sheen:.7,sheenColor:new T.Color(0xfff1e4),sheenRoughness:.55,envMapIntensity:.7});gs.traverse(o=>{if(o.isBone)o.userData.q0=o.quaternion.clone();if(o.isMesh){o.frustumCulled=false;o.material=FUR;}});
+  const find=n=>{const o=gs.getObjectByName(n);if(!o||!o.userData.q0)throw new Error('뼈 없음: '+n);return o;};
+  /* 계층: root → pos(엉덩이 높이) → torso(몸 중심 피벗, 피치·롤) → F(앞뒤 뒤집기) → GLB */
+  const root=R.root=new T.Group(),pos=new T.Group(),torso=R.torso=new T.Group(),F=new T.Group();
+  root.add(pos);pos.add(torso);torso.position.set(0,.5,0);torso.add(F);F.position.set(0,-.5,0);F.rotation.y=Math.PI;F.add(gs);
+  root.updateMatrixWorld(true);
+  const rp=b=>root.worldToLocal(b.getWorldPosition(new T.Vector3()));
+  /* 다리: 휴식 자세에서 길이·발끝-발목 벡터·무릎 폴을 재고, 키는 발끝 위치로 FL/FR/BL/BR 부여 */
+  const IK={};R.legs={};R.base={};
+  ['tripo0_Right_Limb_','tripo0_Left_Limb_','tripo1_Right_Limb_','tripo1_Left_Limb_'].forEach(pre=>{
+    const bs=[0,1,2,3].map(i=>find(pre+i));const r=bs.map(rp);
+    const key=(r[0].x>0?'F':'B')+(r[0].z>0?'L':'R');
+    const u=r[2].clone().sub(r[0]).normalize(),pole=r[1].clone().sub(r[0]);pole.addScaledVector(u,-pole.dot(u)).normalize();
+    IK[key]={bs,L1:bs[1].position.length(),L2:bs[2].position.length(),fv:r[2].clone().sub(r[3]),footY:r[3].y,pole};
+    R.base[key]=[r[3].x,r[3].z];R.legs[key]={u:bs[0],h:bs[3]};});
+  const CH={spine:['tripoSpine_0','tripoSpine_1','tripoSpine_2','tripoSpine_3','bone_7'],neck:['bone_7','bone_8','tripoHead_0','tripoHead_1','tripoHead_2','tripoHead_3'],tail:['bone_2','tripoTail_0']};
+  const ch={};for(const k in CH)ch[k]=CH[k].map(find);
+  /* 눈·코·입·귀: 머리 뼈에 붙여 함께 움직이게 한다 (좌표는 휴식 자세의 root 기준) */
+  const dark=new T.MeshStandardMaterial({color:0x2a1f22,roughness:.5});
+  const eyeM=new T.MeshPhysicalMaterial({color:0x2a1d17,roughness:.15,clearcoat:1,clearcoatRoughness:.1});
+  const pupil=new T.MeshStandardMaterial({color:0x0d0a0c,roughness:.2});
+  const hd1=find('tripoHead_1'),hd2=find('tripoHead_2'),hd3=find('tripoHead_3');
+  const at=(par,obj,p)=>{par.add(obj);obj.position.copy(par.worldToLocal(root.localToWorld(p.clone())));return obj;};
+  R.head=hd1;R.neck=find('bone_7');R.jaw=new T.Object3D();R.collar=new T.Object3D();
+  R.mouth=at(hd2,new T.Object3D(),new T.Vector3(.44,.5,0));
+  R.nose=at(hd2,new T.Mesh(new T.SphereGeometry(.03,18,14),dark),new T.Vector3(.49,.6,0));R.nose.scale.set(1.1,.8,1.1);
+  R.eyes=[1,-1].map(z=>{const e=at(hd2,new T.Mesh(new T.SphereGeometry(.024,18,12),eyeM),new T.Vector3(.42,.67,z*.06));e.scale.set(.85,1,.7);const pu=new T.Mesh(new T.SphereGeometry(.0105,14,10),pupil);pu.position.set(.0165,0,0);e.add(pu);return e;});
+  R.ears=[1,-1].map(z=>{const g=new T.Group();at(hd1,g,new T.Vector3(.27,.74,z*.07));g.userData.z=z;g.rotation.x=z*.35;const m=new T.Mesh(new T.CapsuleGeometry(.03,.07,6,10),dark);m.position.set(0,-.05,z*.02);m.scale.set(.6,1,.35);g.add(m);return g;});
+  R.tail=[find('tripoTail_0')];R.bodyMs=[];R.mats=[];
+  const g0=MO.QG;
+  R.def={rx:0,ry:0,tx:0,tz:0,hy:.5,pitch:0,roll:0,arch:0,bth:0,nk:.85,hdy:0,hd:0,jaw:0,ear:0,tb:.7,tc:.25,tw:0,tp:1,eye:1,FL:[0,g0,0],FR:[0,g0,0],BL:[0,g0,0],BR:[0,g0,0]};
+  R.body=()=>MO.wp(torso,T);
+  /* aim: b의 자식 c가 월드 위치 Dw를 향하도록 b의 로컬 회전을 정한다 (휴식 회전 q0 기준 최소 회전) */
+  const qP=new T.Quaternion(),qS=new T.Quaternion(),qT=new T.Quaternion(),qR=new T.Quaternion();
+  const vA=new T.Vector3(),vB=new T.Vector3(),vC=new T.Vector3();
+  const aim=(b,c,Dw)=>{b.parent.getWorldQuaternion(qP);b.getWorldPosition(vA);vB.copy(Dw).sub(vA);if(vB.lengthSq()<1e-12)return;
+    vB.applyQuaternion(qP.clone().invert()).normalize();vC.copy(c.position).applyQuaternion(b.userData.q0).normalize();
+    qS.setFromUnitVectors(vC,vB);b.quaternion.copy(qS).multiply(b.userData.q0);};
+  /* bendChain: 체인을 휴식 자세로 되돌린 뒤, 관절마다 각도(angP: 몸 옆축, angY: 몸 위축)를 누적해 굽힌다 */
+  const bendChain=(chain,angP,angY)=>{chain.forEach(b=>b.quaternion.copy(b.userData.q0));root.updateMatrixWorld(true);
+    torso.getWorldQuaternion(qT);const lat=new T.Vector3(0,0,1).applyQuaternion(qT),up=new T.Vector3(0,1,0).applyQuaternion(qT);
+    const N=chain.map(b=>b.getWorldPosition(new T.Vector3()));const D=[N[0].clone()];const cum=new T.Quaternion(),rq=new T.Quaternion(),ry=new T.Quaternion();
+    for(let i=1;i<chain.length;i++){rq.setFromAxisAngle(lat,angP[i-1]||0);ry.setFromAxisAngle(up,angY[i-1]||0);rq.multiply(ry);cum.premultiply(rq);
+      const v=N[i].clone().sub(N[i-1]).applyQuaternion(cum);D.push(D[i-1].clone().add(v));}
+    for(let i=0;i<chain.length-1;i++){aim(chain[i],chain[i+1],D[i+1]);root.updateMatrixWorld(true);}};
+  /* legIK: 2본 IK. 발끝 목표는 지면(발끝 휴식 높이 + 들림), 발목은 발끝에서 휴식 거리만큼 떨어뜨린다 */
+  const legIK=(k,P)=>{const I=IK[k],bs=I.bs,f=P[k];const asy=k==='FL'?.004:k==='FR'?-.004:k==='BL'?-.003:.003;
+    const gy=Math.max(f[1]-MO.QG,0)+I.footY;
+    const tR=new T.Vector3(R.base[k][0]+f[0]+asy,gy,R.base[k][1]+f[2]);
+    const Tw=root.localToWorld(tR.clone()),Aw=root.localToWorld(tR.clone().add(I.fv));
+    const H=bs[0].getWorldPosition(new T.Vector3());const vH=Aw.clone().sub(H);const d=Math.max(vH.length(),1e-4);vH.divideScalar(d);
+    const L1=I.L1,L2=I.L2,dc=MO.cl(d,Math.abs(L1-L2)+1e-3,L1+L2-1e-3);
+    const a=(L1*L1-L2*L2+dc*dc)/(2*dc),h=Math.sqrt(Math.max(0,L1*L1-a*a));
+    root.getWorldQuaternion(qR);const pl=I.pole.clone().applyQuaternion(qR);pl.addScaledVector(vH,-pl.dot(vH)).normalize();
+    const K=H.clone().addScaledVector(vH,a).addScaledVector(pl,h),An=H.clone().addScaledVector(vH,dc);
+    aim(bs[0],bs[1],K);root.updateMatrixWorld(true);
+    aim(bs[1],bs[2],An);root.updateMatrixWorld(true);
+    aim(bs[2],bs[3],Tw);root.updateMatrixWorld(true);};
+  R.apply=P=>{
+    root.position.x=P.rx;root.rotation.set(0,P.ry,0);pos.position.set(P.tx,P.hy-.5,P.tz);torso.rotation.set(P.roll,0,P.pitch);root.updateMatrixWorld(true);
+    /* 등뼈 활 모양(arch): 중간을 위로 */
+    const c=(P.arch||0)*1.5;bendChain(ch.spine,[c/2,c/2,-c/2,-c/2],[0,0,0,0]);
+    /* 목·머리: 목 휴식 각도 1.15rad, 코끝(주둥이) 휴식 각도 -0.108rad. Head_0→Head_3 체인은 두개골을 따라 위로 뻗어 있어 코의 각도 기준으로 맞춘다 */
+    const nd=P.nk-1.15,hl=P.hd+.108-nd;bendChain(ch.neck,[nd/2,nd/2,hl/3,hl/3,hl/3],[P.hdy/2,P.hdy/2,0,0,0]);
+    /* 꼬리: 휴식 방향(π-0.25)에서 tb만큼 들고 tw만큼 좌우로 */
+    bendChain(ch.tail,[.25-P.tb],[P.tw]);
+    R.ears.forEach(g=>g.rotation.set(g.userData.z*(.35+.2*P.ear),0,P.ear*.9));
+    R.eyes.forEach(e=>e.scale.y=P.eye);
+    root.getWorldQuaternion(R.qRoot);
+    for(const k in IK)legIK(k,P);};
+  R.idle=null;
+  return R;}
+
 /* ── 공통 효과 ── */
 MO.dust=(E,x,y,z,n,s=1,col=0x8d7e82)=>E.burst(n,()=>({x:x+(Math.random()-.5)*.12,y:y+.03,z:z+(Math.random()-.5)*.12,vx:(Math.random()-.5)*1.4*s,vy:Math.random()*.7*s,vz:(Math.random()-.5)*1.4*s,drag:3,grav:-.15,max:.55+Math.random()*.45,size:.08,end:.26,col,a:.42,blend:'normal'}));
 MO.say=(E,o,s,col='#f6dad7',size=18,dy=.3)=>{const p=MO.wp(o,E.T);E.text(p.x,p.y+dy,p.z,s,{size,col,vy:.7,max:1.2,w:800});};
@@ -9905,7 +9997,7 @@ function moStep(d,E,R,S,p,dt){const k=+p.speed||1;S.dt=dt*k;S.t+=S.dt;const D=d.
   E.grid.position.x=-(((S.scroll%.5)+.5)%.5);const b=R.body();const hgt=Math.max(0,b.y-(R.kind==='h'?.9:.45*R.sc));const s=MO.cl(1-hgt*.16,.35,1);
   R.shadow.position.set(b.x,.006,b.z);const sx=(d.shw||(R.kind==='h'?.42:.5*R.sc))*s,sz=(d.shd||(R.kind==='h'?.3:.24*R.sc))*s;R.shadow.scale.set(sx,sz,1);R.shadow.material.opacity=.9*s;}
 function moBuild(d,kind,st,p,c){const S={t:0,scroll:0,cyc:-1,fired:{},dt:0};
-  const E=g3Engine(st,c,{noChars:1,init(E){const T=E.T;const R=kind==='h'?rigHuman(T):rigQuad(T,p.sp||d.sp||'dog');E.scene.add(R.root,R.shadow);E.rig=R;
+  const dogGL=kind!=='h'&&(p.sp||d.sp||'dog')==='dog';const E=g3Engine(st,c,{noChars:1,pre:dogGL?()=>dogGLTF().catch(e=>{console.warn('강아지 GLB 로드 실패, 절차적 모델 사용',e);return null;}):null,init(E,pre){const T=E.T;let R=null;if(dogGL&&pre){try{R=rigDogGLB(T,pre);}catch(e){console.warn('GLB 리그 실패, 절차적 모델 사용',e);R=null;}}if(!R)R=kind==='h'?rigHuman(T):rigQuad(T,p.sp||d.sp||'dog');E.scene.add(R.root,R.shadow);E.rig=R;
     const nar=E.W/E.H<1.2,cb=d.cam||(kind==='h'?[0,1.45,4.5]:[0,1.05,3.3]);E.camBase.set(cb[0],cb[1],cb[2]*(nar?1.4:1));const lk=d.look||(kind==='h'?[0,.92,0]:[0,.4,0]);E.look.set(lk[0],lk[1],lk[2]);E.orbit=d.orbit!=null?d.orbit:kind==='h'?-.5:-.42;
     if(d.setup)d.setup(E,R,S,p);E.hook({upd(dt){if(!E.scene)return false;moStep(d,E,R,S,p,dt);}});}});
   let dn=null;st.addEventListener('pointerdown',e=>{dn={x:e.clientX,o:E.orbit||0};});st.addEventListener('pointermove',e=>{if(dn&&E.scene)E.orbit=dn.o+(e.clientX-dn.x)*.012;});const up=()=>{dn=null;};['pointerup','pointercancel','pointerleave'].forEach(n=>st.addEventListener(n,up));
