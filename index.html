@@ -10467,10 +10467,10 @@ AD('ed-slam','키네틱 슬램 자막','Kinetic Slam',{mini:'pop',target:'훅 �
  how:'글자를 scale 2.4 · opacity 0 상태에서 scale 1로 빠르게 줄이고 살짝 흔들림을 줍니다. 단어마다 교체 시점을 맞춰 순서대로 보여줍니다.',
  params:[DUR(520,200,1000),EASE('out')],
  build(st,p){const r=rootOf(st);const c=mkE(r,'ed-t',null,{top:'40%',fontSize:'40px'});const W=['멈추지 마!','지금 바로','해보세요'];
-   const sp=W.map(w=>mkE(c,'ed-x',w,{left:0,right:0,top:0,opacity:0,textAlign:'center'}));
-   return()=>{kill(c);sp.forEach(s=>{s.style.opacity='0';});const gap=p.dur*1.5;return fin(sp.map((s,i)=>AN(s,[{transform:'scale(2.4)',opacity:0},{transform:'scale(.96)',opacity:1,offset:.7},{transform:'scale(1)',opacity:1}],p.dur,p.ease,i*gap)));};},
- code:p=>`.slam {\n  animation: slam ${p.dur}ms cubic-bezier(.16,1,.3,1) both;\n}\n@keyframes slam {\n  0%   { transform: scale(2.4); opacity: 0; }\n  70%  { transform: scale(.96); opacity: 1; }\n  100% { transform: scale(1);   opacity: 1; }\n}`,
- note:'큰 글자가 2.4배에서 쾅 줄어들며 들어옵니다. 같은 자리에서 다음 단어로 바뀝니다.'});
+   const sp=W.map(w=>mkE(c,'ed-x',w,{left:0,right:0,top:0,opacity:0,textAlign:'center'}));const gap=p.dur*1.5;
+   return()=>{kill(c);sp.forEach(s=>{s.style.opacity='0';});return fin(sp.map((s,i)=>AN(s,[{transform:'scale(2.4)',opacity:0,offset:0},{transform:'scale(.96)',opacity:1,offset:.3},{transform:'scale(1)',opacity:1,offset:.42},{transform:'scale(1)',opacity:1,offset:.85},{transform:'scale(1)',opacity:0,offset:1}],gap,'linear',i*gap)));};},
+  code:p=>`.slam {\n  animation: slam ${p.dur}ms cubic-bezier(.16,1,.3,1) both;\n}\n@keyframes slam {\n  0%   { transform: scale(2.4); opacity: 0; }\n  70%  { transform: scale(.96); opacity: 1; }\n  100% { transform: scale(1);   opacity: 1; }\n}`,
+ note:'큰 글자가 2.4배에서 쾅 줄어들며 들어온 뒤 사라지고, 다음 단어가 같은 자리에 나타납니다. 한 번에 한 단어만 보입니다.'});
 
 AD('ed-boxcap','박스 배경 자막','Box Caption',{mini:'slide',target:'정보 자막',
  icon:'<rect x="3" y="8" width="18" height="8" rx="2" fill="currentColor" stroke="none" opacity=".35"/><path d="M6 12h12"/>',
@@ -10497,7 +10497,7 @@ AD('ed-alt','교차 색 자막','Alternating Caption',{mini:'up',target:'두 줄
  desc:'두 줄이 번갈아 나오며 색이 다르게 바뀌는 자막입니다. 대비가 필요한 비교 편집에 좋습니다.',
  how:'두 줄을 위아래로 겹쳐 두고 clip-path로 아래에서 위로 드러냅니다. 줄마다 색을 다르게 줘 번갈아 보이게 합니다.',
  params:[DUR(650,300,1500),EASE('expo')],
- build(st,p){const r=rootOf(st);const c=mkE(r,'ed-cap',null,{top:'68%',height:'60px'});const a=mkE(c,'ed-x',"예전엔 3시간",{left:0,right:0,color:'#ffd0d7',top:0});const b=mkE(c,'ed-x',"지금은 10분!",{left:0,right:0,color:'#ffe14d',top:0});
+ build(st,p){const r=rootOf(st);const c=mkE(r,'ed-cap',null,{top:'62%',height:'80px'});const a=mkE(c,'ed-x',"예전엔 3시간",{left:0,right:0,color:'#ffd0d7',top:'0px'});const b=mkE(c,'ed-x',"지금은 10분!",{left:0,right:0,color:'#ffe14d',top:'40px'});
    return()=>{kill(c);return fin([AN(a,[{clipPath:'inset(0 0 100% 0)'},{clipPath:'inset(0 0 0 0)'}],p.dur,p.ease),AN(b,[{clipPath:'inset(0 0 100% 0)'},{clipPath:'inset(0 0 0 0)'}],p.dur,p.ease,p.dur*1.2)]);};},
  code:p=>`.line {\n  clip-path: inset(0 0 100% 0);\n  animation: reveal ${p.dur}ms ${ez(p.ease)} both;\n}\n@keyframes reveal {\n  to { clip-path: inset(0 0 0 0); }\n}`,
  note:'아래에서 위로 드러나는 두 줄 자막입니다. 두 번째 줄은 시간차를 둡니다.'});
