@@ -15,8 +15,8 @@ async function readMap() {
     const text = await new Response(res.stream).text();
     return { map: JSON.parse(text || '{}'), etag: meta.etag };
   } catch (e) {
-    console.error('copies readMap:', e && e.name, e && e.message);
-    if (e && (e.name === 'BlobNotFoundError' || /not found/i.test(e.message || ''))) return { map: {}, etag: null };
+    // 아직 한 번도 저장되지 않은 경우: 'The requested blob does not exist' (name이 Error인 경우도 있음)
+    if (e && (e.name === 'BlobNotFoundError' || /not found|does not exist/i.test(e.message || ''))) return { map: {}, etag: null };
     throw e;
   }
 }
@@ -66,7 +66,6 @@ export default async function handler(req, res) {
 
     return res.status(405).json({ error: 'method not allowed' });
   } catch (e) {
-    console.error('copies:', e && e.name, e && e.message);
     return res.status(500).json({ error: 'server error' });
   }
 }
