@@ -11445,14 +11445,11 @@ AP('pr-mv-city','가상 도시 탐험 (낮·밤)','Virtual City Exploration (Day
  note:'하늘이 밤으로 물들고 별과 창문이 켜지며 건물 레이어가 깊이별로 흐릅니다.'});
 
 
-/* ═════ 영상 편집: 브이로그 자막 + 한국 릴스 자막 5종 (줄노트 배경·NEW 뱃지·라벨 칩·도트 스티커) ═════ */
+/* ═════ 영상 편집: 브이로그 자막 + 한국 릴스 자막 5종 (줄노트 배경·뱃지·라벨 칩·도트 스티커) ═════ */
 const RPAPER=(r)=>{mk2(r,'',null,{position:'absolute',inset:'0',background:'linear-gradient(#a3a4ab,#8e909a)'});
   mk2(r,'',null,{position:'absolute',inset:'0',backgroundImage:'repeating-linear-gradient(180deg,transparent 0 25px,rgba(120,150,210,.38) 25px 26px)'});
   mk2(r,'',null,{position:'absolute',top:'0',bottom:'0',left:'11%',width:'1px',background:'rgba(220,90,110,.45)'});};
-const RUI=(r,handle='@your.nickname')=>{
-  const nw=mk2(r,'',null,{position:'absolute',left:'6%',top:'4%',padding:'5px 14px',background:'#111',color:'#fff',borderRadius:'14px',fontWeight:'900',fontSize:'13px',letterSpacing:'.04em'});nw.textContent='NEW';
-  const hd=mk2(r,'',null,{position:'absolute',left:'0',right:'0',top:'5%',textAlign:'center',fontSize:'10px',color:'#f4f4f4',textShadow:'0 1px 2px rgba(0,0,0,.4)'});hd.textContent=handle;
-  return {nw,hd};};
+const RUI=(r)=>({});
 const RLINE=(r,txt,css,col='#fff')=>{const d=mk2(r,'',null,{position:'absolute',left:'0',right:'0',textAlign:'center',whiteSpace:'nowrap',fontWeight:'900',lineHeight:'1.15',color:col,...css});d.textContent=txt;return d;};
 const RPOP=(el,g,d,dl)=>AN2(el,[{opacity:0,transform:'translateY(26px) scale(.9)'},{opacity:1,transform:'translateY(-4px) scale(1.05)',offset:.6},{opacity:1,transform:'none'}],g*d,'out',dl);
 const RCHIP=(r,txt,css)=>{const c=mk2(r,'',null,{position:'absolute',padding:'4px 10px',fontWeight:'700',fontSize:'13px',letterSpacing:'.12em',whiteSpace:'nowrap',...css});c.textContent=txt;return c;};
@@ -11487,7 +11484,7 @@ AP('ed-rl-label','라벨 칩 + 큰 타이틀 (릴스)','Label Chip + Big Title (
  how:'라벨은 clip-path로 가로가 펼쳐지고, 타이틀 줄은 translateY와 scale 오버슈트로 튑니다. 화살표는 stroke-dashoffset으로 그려지고 살짝 반복합니다.',
  params:[DUR(2600,800,5000),EASE('out'),R('fs','타이틀 크기',44,24,64,1,'px')],
  build(st,p){const r=root2(st);RPAPER(r);const ui=RUI(r);
-   const chip=RCHIP(r,'5년차 마케터의',{left:'50%',top:'22%',transform:'translateX(-50%)',background:'#111',color:'#fff',clipPath:'inset(0 100% 0 0)'});
+   const chip=RCHIP(r,'11년차 마케터의',{left:'50%',top:'22%',transform:'translateX(-50%)',background:'#111',color:'#fff',clipPath:'inset(0 100% 0 0)'});
    const t1=RLINE(r,'터지는 릴스',{top:'31%',fontSize:p.fs+'px',color:'#ffe14d',WebkitTextStroke:'2px #111',paintOrder:'stroke fill',textShadow:'0 4px 0 rgba(0,0,0,.25)'});
    const t2=RLINE(r,'만드는 법 4',{top:'45%',fontSize:p.fs+'px',color:'#fff',WebkitTextStroke:'2px #111',paintOrder:'stroke fill',textShadow:'0 4px 0 rgba(0,0,0,.25)'});
    const sub=RLINE(r,'저장해두고 꺼내보세요!',{top:'62%',fontSize:'13px',color:'#fff',opacity:'0'});
@@ -11501,7 +11498,7 @@ AP('ed-rl-label','라벨 칩 + 큰 타이틀 (릴스)','Label Chip + Big Title (
        AN2(chev.firstElementChild.querySelectorAll('polyline')[1],[{strokeDashoffset:60},{strokeDashoffset:0}],g*.25,'out',g*.7),
        AN2(chev,[{opacity:1},{opacity:.3,offset:.5},{opacity:1}],g*.5,'linear',g*.8)]);};},
  code:p=>`/* 한국 릴스 라벨 칩 + 타이틀 */\n.chip  { background:#111; color:#fff; letter-spacing:.12em; clip-path: inset(0 100% 0 0); animation: open .5s ease-out forwards; }\n.title { font-size:${p.fs}px; font-weight:900; -webkit-text-stroke:2px #111; paint-order: stroke fill; animation: pop .5s cubic-bezier(.2,1.3,.4,1) both; }\n.chev  { stroke-dasharray:60; animation: draw .3s ease-out both; }`,
- prompt:(p,t)=>`${t}용 한국 릴스 자막 화면을 만들어줘.\n- 배경: 회색 줄노트(파란 줄 + 빨간 세로 여백선), 상단 NEW 뱃지(검정 둥근 사각)와 가운데 @닉네임.\n- 라벨 칩: 검정 배경 흰 글씨, 자간 넓게. 0.5초에 걸쳐 가로로 펼쳐짐.\n- 타이틀 두 줄: 첫 줄 노랑, 둘째 줄 흰색, 굵은 검정 외곽선 2px, 크기 ${p.fs}px. 한 줄씩 튀어 오름(오버슈트).\n- 하단 화살표 ›› 가 그려졌다가 살짝 반복. 보조 문구는 마지막에 페이드인.\n- 모바일 폭에서도 줄바꿈이 없도록 글자 크기는 vw 단위로 제한.`,
+ prompt:(p,t)=>`${t}용 한국 릴스 자막 화면을 만들어줘.\n- 배경: 회색 줄노트(파란 줄 + 빨간 세로 여백선), \n- 라벨 칩: 검정 배경 흰 글씨, 자간 넓게. 0.5초에 걸쳐 가로로 펼쳐짐.\n- 타이틀 두 줄: 첫 줄 노랑, 둘째 줄 흰색, 굵은 검정 외곽선 2px, 크기 ${p.fs}px. 한 줄씩 튀어 오름(오버슈트).\n- 하단 화살표 ›› 가 그려졌다가 살짝 반복. 보조 문구는 마지막에 페이드인.\n- 모바일 폭에서도 줄바꿈이 없도록 글자 크기는 vw 단위로 제한.`,
  note:'검정 라벨이 펼쳐지고 노랑·흰색 타이틀이 튀어 오르며 화살표가 그려집니다.'});
 
 /* 3. 한국 릴스: 파스텔 형광펜 + 아웃라인 타이틀 */
@@ -11511,7 +11508,7 @@ AP('ed-rl-highlight','파스텔 형광펜 타이틀 (릴스)','Pastel Highlight 
  how:'형광펜은 scaleX를 0에서 1로 키우며 글자 뒤에 깔고, 칩은 rotate와 translateY로 붙습니다. 두 줄은 시차를 두고 blur 없이 페이드·이동합니다.',
  params:[DUR(2600,800,5000),EASE('out'),R('fs','타이틀 크기',40,22,60,1,'px')],
  build(st,p){const r=root2(st);RPAPER(r);RUI(r);
-   const chip=RCHIP(r,'필테 5년차 유지어터',{left:'18%',top:'20%',background:'#ffd6e4',color:'#111',fontWeight:'900',letterSpacing:'.02em',fontSize:'13px',transform:'rotate(-2deg)'});
+   const chip=RCHIP(r,'필테 10년차 유지어터',{left:'18%',top:'20%',background:'#ffd6e4',color:'#111',fontWeight:'900',letterSpacing:'.02em',fontSize:'13px',transform:'rotate(-2deg)'});
    const hl1=mk2(r,'',null,{position:'absolute',left:'14%',top:'36%',width:'72%',height:'0.9em',background:'#ffe14d',opacity:'.9',transformOrigin:'0 50%',transform:'scaleX(0)'});
    const t1=RLINE(r,'필라테스로',{top:'32%',fontSize:p.fs+'px',color:'#111',textAlign:'center'});
    const hl2=mk2(r,'',null,{position:'absolute',left:'22%',top:'52%',width:'56%',height:'0.9em',background:'#ffd6e4',transformOrigin:'0 50%',transform:'scaleX(0)'});
@@ -11526,7 +11523,7 @@ AP('ed-rl-highlight','파스텔 형광펜 타이틀 (릴스)','Pastel Highlight 
        RPOP(t2,g,.22,g*.55),
        AN2(sub,[{opacity:0},{opacity:1}],g*.2,'linear',g*.8)]);};},
  code:p=>`/* 파스텔 형광펜 */\n.hl { background:#ffe14d; transform-origin:0 50%; animation: wipe .3s ease-out both; }\n@keyframes wipe { from { transform: scaleX(0); } to { transform: scaleX(1); } }\n.title { color:#fff; -webkit-text-stroke:2px #ff8fa3; paint-order: stroke fill; font-size:${p.fs}px; }`,
- prompt:(p,t)=>`${t}용 한국 릴스 형광펜 자막을 만들어줘.\n- 라벨 칩: 파스텔 분홍 배경, 검정 굵은 글씨, -2° 기울어 붙음.\n- 형광펜: 노랑(#ffe14d) 또는 분홍(#ffd6e4)이 글자 뒤에서 왼쪽부터 쓱 칠해짐(scaleX 0→1).\n- 타이틀: 크기 ${p.fs}px, 흰 글씨 + 분홍 외곽선 2px, 한 줄씩 시차 등장.\n- 배경은 회색 줄노트, 상단에 NEW 뱃지.`,
+ prompt:(p,t)=>`${t}용 한국 릴스 형광펜 자막을 만들어줘.\n- 라벨 칩: 파스텔 분홍 배경, 검정 굵은 글씨, -2° 기울어 붙음.\n- 형광펜: 노랑(#ffe14d) 또는 분홍(#ffd6e4)이 글자 뒤에서 왼쪽부터 쓱 칠해짐(scaleX 0→1).\n- 타이틀: 크기 ${p.fs}px, 흰 글씨 + 분홍 외곽선 2px, 한 줄씩 시차 등장.\n- 배경은 회색 줄노트, `,
  note:'파스텔 형광펜이 글자 뒤를 쓱 칠하고 타이틀이 한 줄씩 등장합니다.'});
 
 /* 4. 한국 릴스: 도트(픽셀) 스티커 + 웨딩 브이로그 */
@@ -11539,10 +11536,10 @@ AP('ed-rl-dots','도트 스티커 + 브이로그 타이틀 (릴스)','Dot Sticke
  build(st,p){const r=root2(st);RPAPER(r);RUI(r);
    const dots=[];const cell=10;
    DOTMAP.forEach((row,y)=>[...row].forEach((c,x)=>{if(c!=='#')return;const d=mk2(r,'',null,{position:'absolute',left:(8+x*cell*.52)+'%',top:(14+y*cell*.55)+'%',width:'8px',height:'8px',marginLeft:'-4px',marginTop:'-4px',borderRadius:'50%',background:'#ffd6e4',boxShadow:'0 0 6px rgba(255,214,228,.7)',transform:'scale(0)'});dots.push({d,x,y});}));
-   const ring=RLINE(r,'💍',{top:'78%',fontSize:'28px'});
-   const chip=RCHIP(r,'My Wedding Day',{left:'50%',top:'40%',transform:'translateX(-50%)',background:'#bfe6ff',color:'#111',fontWeight:'700',fontSize:'13px'});
-   const t1=RLINE(r,'신부의',{top:'50%',fontSize:p.fs+'px',color:'#fff',WebkitTextStroke:'2px #3a4a5a',paintOrder:'stroke fill'});
-   const t2=RLINE(r,'결혼식 당일',{top:'62%',fontSize:(p.fs*.9)+'px',color:'#bfe6ff',WebkitTextStroke:'2px #fff',paintOrder:'stroke fill'});
+   const ring=RLINE(r,'💍',{top:'85%',fontSize:'28px'});
+   const chip=RCHIP(r,'Our Wedding Day',{left:'50%',top:'40%',transform:'translateX(-50%)',background:'#bfe6ff',color:'#111',fontWeight:'700',fontSize:'13px'});
+   const t1=RLINE(r,'예비신부의',{top:'50%',fontSize:p.fs+'px',color:'#fff',WebkitTextStroke:'2px #3a4a5a',paintOrder:'stroke fill'});
+   const t2=RLINE(r,'결혼식 당일',{top:'66%',fontSize:(p.fs*.9)+'px',color:'#bfe6ff',WebkitTextStroke:'2px #fff',paintOrder:'stroke fill'});
    return()=>{kill2(r);const g=p.dur;
      return fin2([
        ...dots.map(({d,x,y})=>AN2(d,[{transform:'scale(0)',opacity:0},{transform:'scale(1.3)',opacity:1,offset:.6},{transform:'scale(1)',opacity:1}],g*.2,'out',g*.04*(x+y))),
@@ -11550,7 +11547,7 @@ AP('ed-rl-dots','도트 스티커 + 브이로그 타이틀 (릴스)','Dot Sticke
        RPOP(t1,g,.2,g*.55),RPOP(t2,g,.2,g*.7),
        AN2(ring,[{transform:'translateY(0)'},{transform:'translateY(-8px) rotate(-8deg)',offset:.5},{transform:'translateY(0)'}],g*.6,'inout',g*.4,{iterations:Infinity})]);};},
  code:p=>`/* 도트 스티커: 비트맵 → 점 */\nconst HEART = ['.##...##.','#########', ...];\nHEART.forEach((row,y)=>[...row].forEach((c,x)=>{ if(c==='#') dot(x,y).pop({ delay: (x+y)*40 }); }));\n/* 타이틀 ${p.fs}px, 이모지 통통 */`,
- prompt:(p,t)=>`${t}용 도트 스티커 브이로그 자막을 만들어줘.\n- 도트 스티커: 9×7 비트맵(하트·나비·장미 등)을 점으로 찍고, 대각선 순서로 한 점씩 팝 등장.\n- 점 색 #ffd6e4, 살짝 글로우.\n- 라벨 칩(하늘색 배경) 펼쳐짐 → 타이틀 두 줄(외곽선 글씨, ${p.fs}px) 순서로 등장.\n- 반지 이모지는 제자리에서 통통 튀는 루프.\n- 줄노트 배경, 상단 NEW UI.`,
+ prompt:(p,t)=>`${t}용 도트 스티커 브이로그 자막을 만들어줘.\n- 도트 스티커: 9×7 비트맵(하트·나비·장미 등)을 점으로 찍고, 대각선 순서로 한 점씩 팝 등장.\n- 점 색 #ffd6e4, 살짝 글로우.\n- 라벨 칩(하늘색 배경) 펼쳐짐 → 타이틀 두 줄(외곽선 글씨, ${p.fs}px) 순서로 등장.\n- 반지 이모지는 제자리에서 통통 튀는 루프.\n- 줄노트 배경, `,
  note:'하트 도트 스티커가 점 하나씩 찍히고 브이로그 타이틀이 이어서 등장합니다.'});
 
 /* 5. 한국 릴스: 손글씨 타이틀 + 별 스티커 + 밑줄 드로잉 */
@@ -11560,7 +11557,7 @@ AP('ed-rl-hand','손글씨 타이틀 + 별 스티커 (릴스)','Handwritten Titl
  how:'타이틀은 scale·rotate 지터로 손글씨 느낌을 내고, 밑줄은 stroke-dashoffset으로 그립니다. 별은 scale 오버슈트 후 천천히 회전하는 루프입니다.',
  params:[DUR(2800,800,5000),EASE('out'),R('fs','타이틀 크기',38,22,58,1,'px')],
  build(st,p){const r=root2(st);RPAPER(r);RUI(r);
-   const chip=RCHIP(r,'벌써 직장인 9년차',{left:'12%',top:'22%',background:'#e4f5c8',color:'#111',fontWeight:'700',fontSize:'13px',transform:'rotate(-2deg)'});
+   const chip=RCHIP(r,'벌써 직장인 5년차',{left:'12%',top:'22%',background:'#e4f5c8',color:'#111',fontWeight:'700',fontSize:'13px',transform:'rotate(-2deg)'});
    const t1=RLINE(r,'30대 여자',{top:'32%',fontSize:p.fs+'px',color:'#fff',textShadow:'0 3px 0 rgba(0,0,0,.25)',transform:'rotate(-1deg)'});
    const t2=RLINE(r,'하루 일기',{top:'45%',fontSize:p.fs+'px',color:'#fff',textShadow:'0 3px 0 rgba(0,0,0,.25)',transform:'rotate(1deg)'});
    const ul=mk2(r,'',SV('0 0 200 20','<path d="M10 12 Q60 4 100 12 T190 10" stroke="#fff" stroke-width="4" fill="none" stroke-dasharray="220" stroke-dashoffset="220"/>'),{position:'absolute',left:'22%',top:'58%',width:'56%',height:'10%'});
@@ -11576,19 +11573,19 @@ AP('ed-rl-hand','손글씨 타이틀 + 별 스티커 (릴스)','Handwritten Titl
        AN2(s2,[{transform:'scale(0) rotate(0deg)'},{transform:'scale(1.3) rotate(-30deg)',offset:.5},{transform:'scale(1) rotate(-60deg)'}],g*.4,'out',g*.6),
        AN2(memo,[{opacity:0,transform:'rotate(3deg) translateY(12px)'},{opacity:1,transform:'rotate(3deg) translateY(0)'}],g*.2,'back',g*.7)]);};},
  code:p=>`/* 손글씨 타이틀 + 별 스티커 */\n.title { font-size:${p.fs}px; color:#fff; text-shadow: 0 3px 0 rgba(0,0,0,.25); animation: pop .5s cubic-bezier(.2,1.3,.4,1) both; }\n.underline path { stroke-dasharray: 220; animation: draw .6s ease-out both; }\n.star { animation: spinPop .5s cubic-bezier(.2,1.6,.4,1) both; }`,
- prompt:(p,t)=>`${t}용 손글씨 감성 릴스 자막을 만들어줘.\n- 연두색 라벨 칩(-2° 기울기), 흰 타이틀 두 줄(${p.fs}px, 줄마다 -1°/+1° 지터).\n- 타이틀 밑 흰 손글씨 밑줄이 그려지고, 별 스티커(연두·분홍) 두 개가 반짝 튀어 회전.\n- 분홍 메모 칩(+3°)이 마지막에 가볍게 올라옴.\n- 줄노트 배경, NEW·@닉네임 UI.`,
+ prompt:(p,t)=>`${t}용 손글씨 감성 릴스 자막을 만들어줘.\n- 연두색 라벨 칩(-2° 기울기), 흰 타이틀 두 줄(${p.fs}px, 줄마다 -1°/+1° 지터).\n- 타이틀 밑 흰 손글씨 밑줄이 그려지고, 별 스티커(연두·분홍) 두 개가 반짝 튀어 회전.\n- 분홍 메모 칩(+3°)이 마지막에 가볍게 올라옴.\n- 줄노트 배경.`,
  note:'흰 손글씨 타이틀이 떠오르고 밑줄이 그려지며 별 스티커가 반짝 튑니다.'});
 
 /* 6. 한국 릴스: 목록형 (추천템 3) + 형광 외곽선 + 화살표 CTA */
 AP('ed-rl-cta','추천 목록 자막 + 화살표 (릴스)','Recommendation List + Arrows (Reels)',{cat:'edit',mini:'bounce',target:'릴스 추천 목록',
  icon:'<path d="M5 5l6 7-6 7M13 5l6 7-6 7"/>',
- desc:'"3년차 견주 Pick" 노란 칩이 먼저 붙고, "나가면 꼭 묻는" 흰 글씨와 파란 외곽선 타이틀이 튑니다. 화살표 두 개가 흐르고 마지막에 저장 안내 타자가 찍힙니다.',
+ desc:'"5년차 견주 Pick" 노란 칩이 먼저 붙고, "나가면 꼭 묻는" 흰 글씨와 파란 외곽선 타이틀이 튑니다. 화살표 두 개가 흐르고 마지막에 저장 안내 타자가 찍힙니다.',
  how:'칩은 translateY로 붙고, 타이틀은 두 줄 시차 등장, 화살표는 dashoffset으로 그린 뒤 좌우로 흐르는 루프입니다. 저장 문구는 steps로 한 글자씩 노출합니다.',
  params:[DUR(3000,1000,5000),EASE('out'),R('fs','타이틀 크기',36,22,56,1,'px')],
  build(st,p){const r=root2(st);RPAPER(r);RUI(r);
-   const chip=RCHIP(r,'🐶 3년차 견주 Pick 🐾',{left:'50%',top:'30%',transform:'translateX(-50%)',background:'#ffe14d',color:'#111',fontWeight:'900',fontSize:'13px',letterSpacing:'0'});
+   const chip=RCHIP(r,'🐶 5년차 견주 Pick 🐾',{left:'50%',top:'30%',transform:'translateX(-50%)',background:'#ffe14d',color:'#111',fontWeight:'900',fontSize:'13px',letterSpacing:'0'});
    const t1=RLINE(r,'나가면 꼭 묻는',{top:'40%',fontSize:p.fs+'px',color:'#fff',WebkitTextStroke:'2px #111',paintOrder:'stroke fill'});
-   const t2=RLINE(r,'산책 추천템 3',{top:'52%',fontSize:p.fs+'px',color:'#bfe6ff',WebkitTextStroke:'2px #fff',paintOrder:'stroke fill'});
+   const t2=RLINE(r,'산책 추천템 5',{top:'52%',fontSize:p.fs+'px',color:'#bfe6ff',WebkitTextStroke:'2px #fff',paintOrder:'stroke fill'});
    const chev=RCHEV(r,'10%','74%',2);
    const cta=RLINE(r,'저장해두고 꺼내보세요',{top:'85%',fontSize:'12px',color:'#fff',textAlign:'center'});
    return()=>{kill2(r);const g=p.dur;
@@ -11600,7 +11597,7 @@ AP('ed-rl-cta','추천 목록 자막 + 화살표 (릴스)','Recommendation List 
        AN2(chev,[{transform:'translateX(0)'},{transform:'translateX(14px)',offset:.5},{transform:'translateX(0)'}],g*.9,'inout',g*.4,{iterations:Infinity}),
        AN2(cta,[{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0 0 0)'}],g*.25,'steps(11, end)',g*.7)]);};},
  code:p=>`/* 추천 목록 자막 */\n.chip  { background:#ffe14d; font-weight:900; animation: drop .3s ease-out both; }\n.title { font-size:${p.fs}px; -webkit-text-stroke:2px #111; paint-order: stroke fill; }\n.chev  { animation: nudge .9s ease-in-out infinite; }\n.cta   { animation: type .25s steps(11, end) both; }`,
- prompt:(p,t)=>`${t}용 추천 목록 릴스 자막을 만들어줘.\n- 노랑 칩 "3년차 견주 Pick"이 위에서 붙고, 타이틀 두 줄(${p.fs}px, 흰 글씨 검정 외곽선 / 하늘색 글씨 흰 외곽선)이 시차 등장.\n- 하단 화살표 ›› 두 개가 그려진 뒤 좌우로 14px 흐르는 루프.\n- "저장해두고 꺼내보세요"를 한 글자씩 타자 효과로.\n- 줄노트 배경, NEW·@닉네임 UI, 모바일에서 줄바꿈 없이.`,
+ prompt:(p,t)=>`${t}용 추천 목록 릴스 자막을 만들어줘.\n- 노랑 칩 "5년차 견주 Pick"이 위에서 붙고, 타이틀 두 줄(${p.fs}px, 흰 글씨 검정 외곽선 / 하늘색 글씨 흰 외곽선)이 시차 등장.\n- 하단 화살표 ›› 두 개가 그려진 뒤 좌우로 14px 흐르는 루프.\n- "저장해두고 꺼내보세요"를 한 글자씩 타자 효과로.\n- 줄노트 배경, 모바일에서 줄바꿈 없이.`,
  note:'노랑 칩이 붙고 추천 타이틀이 튀며 화살표가 흐르고 저장 안내가 타자로 찍힙니다.'});
 
 /* ── 브이로그 자막 추가 4종 (검정 그라데이션 배경) ── */
