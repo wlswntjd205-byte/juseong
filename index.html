@@ -11023,556 +11023,800 @@ AD('ed-neonframe','네온 테두리 펄스','Neon Frame Pulse',{mini:'pulse',tar
  note:'네온 테두리가 맥박처럼 밝아졌다 어두워집니다.'});
 })();
 (function(){
-/* ═════════ 프롬프트 레시피 (메타버스 · 지도 · 리깅 · 웹툰) + 브이로그 자막 ═════════ */
 const SRC_PR='프롬프트 레시피 (직접 제작 · CSS·SVG·WAAPI)';
 const kill2=r=>{try{r.getAnimations({subtree:true}).forEach(a=>a.cancel());}catch(e){}};
-const AN2=(e,kf,dur,ease,delay=0,ex={})=>{const k=ease||'expo';return e.animate(kf,{duration:dur,delay,easing:E[k]?ez(k):k,fill:'both',...ex});};
-const fin2=arr=>Promise.all(arr.map(a=>a.finished)).then(()=>{},()=>{});
-const mk2=(par,cls,txt,css)=>{const d=document.createElement('div');if(cls)d.className=cls;if(txt!=null){if(typeof txt==='string'&&txt.startsWith('<'))d.innerHTML=txt;else d.textContent=txt;}if(css)Object.assign(d.style,css);par.appendChild(d);return d;};
+const AN2=(e,kf,dur,ease,delay=0,ex={})=>{const k=ease||'expo';return e.animate(kf,{duration:dur,delay,easing:(E[k]?ez(k):k),fill:'both',...ex});};
+/* 무한 반복 애니메이션은 기다리지 않음 (finished가 영원히 안 끝남) */
+const fin2=arr=>Promise.all(arr.filter(a=>a.effect&&a.effect.getTiming().iterations!==Infinity).map(a=>a.finished)).then(()=>{},()=>{});
+const mk2=(par,cls,txt,css)=>{const d=document.createElement('div');if(cls)d.className=cls;if(txt!=null){if(typeof txt==='string'&&txt.startsWith('<'))d.innerHTML=txt;else d.textContent=txt;}if(css)Object.assign(d.style,css);if(par)par.appendChild(d);return d;};
 const root2=st=>{const r=mk2(st,'ed');mk2(r,'ed-sc ed-b');return r;};
 const AP=(id,ko,en,o)=>ITEMS.push({id,cat:o.cat||'prompt',isNew:1,src:SRC_PR,ko,en,mini:o.mini||'fade',target:o.target,hint:o.hint,icon:o.icon,desc:o.desc,how:o.how,params:o.params,build:o.build,code:o.code,prompt:o.prompt,note:o.note});
-const cyc=a=>[{transform:`rotate(${-a}deg)`},{transform:`rotate(${a}deg)`},{transform:`rotate(${-a}deg)`}];
-const knee=a=>[{transform:'rotate(0deg)'},{transform:`rotate(${a}deg)`},{transform:'rotate(0deg)'}];
-
-/* 1. 브이로그 자막 (영상 편집) */
-AP('ed-vlog','브이로그 자막','Vlog Caption',{cat:'edit',mini:'slide',target:'브이로그 자막',
- icon:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 15h5M7 11h10"/>',
- desc:'날짜·장소 스탬프는 조용히 나타나고, 본문 자막은 단어마다 아래에서 올라오며 등장합니다. 아래에 분홍 밑줄이 펼쳐져 일상 브이로그 느낌을 줍니다.',
- how:'스탬프는 opacity만 바꾸고, 단어는 translateY와 opacity를 순서대로 지연시킵니다. 밑줄은 scaleX를 0에서 1로 키워 가운데에서 펼칩니다.',
- params:[DUR(2600,800,6000),EASE('out'),R('ds','자막 올라오는 거리',14,0,40,1,'px')],
- build(st,p){const r=root2(st);
-   const stamp=mk2(r,'ed-mono','2026.11.06  ·  JEJU',{position:'absolute',left:'14px',top:'14px',fontSize:'12px',color:'#fff',letterSpacing:'.08em',textShadow:'0 1px 2px rgba(0,0,0,.6)'});
-   const cap=mk2(r,'ed-cap',null,{top:'66%'});
-   const W=['오늘은','제주','바다','브이로그'];
-   const sp=W.map(w=>mk2(cap,'ed-w',w,{margin:'0 4px',color:'#fff'}));
-   const ul=mk2(r,'',null,{position:'absolute',left:'30%',right:'30%',top:'calc(66% + 44px)',height:'4px',borderRadius:'2px',background:'#ff8fa3'});
-   return()=>{kill2(r);const gap=p.dur/(W.length+2);
-     stamp.style.opacity='0';sp.forEach(s=>{s.style.opacity='0';s.style.transform=`translateY(${p.ds}px)`;});ul.style.transform='scaleX(0)';
-     return fin2([AN2(stamp,[{opacity:0},{opacity:1}],gap*2,'linear'),
-       ...sp.map((s,i)=>AN2(s,[{opacity:0,transform:`translateY(${p.ds}px)`},{opacity:1,transform:'translateY(0)'}],gap*2.2,p.ease,i*gap)),
-       AN2(ul,[{transform:'scaleX(0)'},{transform:'scaleX(1)'}],gap*2.4,'out',gap*W.length*.6)]);};},
- code:p=>`.stamp {\n  font-family: ui-monospace, monospace;\n  letter-spacing: .08em;\n  animation: fade ${Math.round(p.dur*.2)}ms linear both;\n}\n.word {\n  display: inline-block;\n  animation: rise ${Math.round(p.dur/6)}ms ${ez(p.ease)} both;\n  animation-delay: calc(var(--i) * ${Math.round(p.dur/12)}ms);\n}\n@keyframes rise {\n  from { opacity: 0; transform: translateY(${p.ds}px); }\n  to   { opacity: 1; transform: none; }\n}`,
- prompt:(p,t)=>`${t}에 브이로그 스타일 자막을 넣어줘.\n- 상단 왼쪽 날짜·장소 스탬프: 모노스페이스, 흰색, 작은 글씨, 페이드 인\n- 본문 자막: 단어마다 아래 ${p.ds}px에서 올라오며 등장(stagger), 전체 ${p.dur}ms, 이징 ${ez(p.ease)}\n- 자막 아래 분홍색(#ff8fa3) 밑줄이 가운데에서 좌우로 펼쳐짐\n- 가독성을 위해 text-shadow: 0 2px 0 rgba(0,0,0,.6)을 넣어줘.\n- 자막 위치는 화면 세로 66% 지점, 모바일에서도 줄바꿈이 어색하지 않게 해줘.`,
- note:'날짜 스탬프와 자막 단어가 순서대로 올라오고 밑줄이 펼쳐집니다.'});
-
-/* 6. 웹툰 만드는 프롬프트 */
-AP('pr-webtoon','웹툰 만들기 (컷 연출)','Webtoon Panels',{mini:'pop',target:'웹툰 컷',
- icon:'<rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="18" height="8" rx="1"/>',
- desc:'컷이 좌·우·아래에서 차례로 들어오고, 말풍선이 튀어 오르며, 효과음 쾅!이 터집니다. 세로 스크롤 웹툰의 컷 연출을 보여줍니다.',
- how:'컷마다 opacity와 translate를 지연시켜 등장시키고, 말풍선은 back 이징으로 튀어 오르게 합니다. 효과음은 크게 나타났다 줄어들며 기울어집니다.',
- params:[DUR(1800,600,4000),EASE('out'),R('sfx','효과음 크기',2.2,1.2,3.5,0.1,'배')],
- build(st,p){const r=root2(st);
-   const p1=mk2(r,'',null,{position:'absolute',left:'6%',top:'7%',width:'42%',height:'40%',border:'3px solid #fff',borderRadius:'4px',background:'linear-gradient(160deg,#8a5a6a,#2a1f24)'});
-   const p2=mk2(r,'',null,{position:'absolute',left:'52%',top:'7%',width:'42%',height:'40%',border:'3px solid #fff',borderRadius:'4px',background:'linear-gradient(200deg,#3c5a7a,#15121a)'});
-   const p3=mk2(r,'',null,{position:'absolute',left:'6%',top:'51%',width:'88%',height:'42%',border:'3px solid #fff',borderRadius:'4px',background:'linear-gradient(170deg,#c2185b,#2a0f1e)'});
-   const speed=mk2(p3,'',null,{position:'absolute',inset:'0',opacity:'0',background:'repeating-linear-gradient(115deg,rgba(255,255,255,.18) 0 2px,transparent 2px 14px)'});
-   const bub=mk2(r,'',null,{position:'absolute',left:'58%',top:'16%',padding:'6px 10px',background:'#fff',color:'#111',borderRadius:'14px',fontWeight:'900',fontSize:'13px',whiteSpace:'nowrap',transform:'scale(0)',transformOrigin:'0 100%'},);
-   bub.textContent='이게 무슨 일이야?!';
-   const sfx=mk2(r,'',null,{position:'absolute',left:'20%',top:'58%',fontWeight:'900',fontSize:'40px',color:'#ffe14d',textShadow:'3px 3px 0 #111',transform:'scale(0)'});
-   sfx.textContent='쾅!';
-   return()=>{kill2(r);
-     [p1,p2,p3].forEach(x=>x.style.opacity='0');speed.style.opacity='0';bub.style.transform='scale(0)';sfx.style.transform='scale(0)';
-     const g=p.dur;
-     return fin2([
-       AN2(p1,[{opacity:0,transform:'translateX(-40px)'},{opacity:1,transform:'none'}],g*.35,p.ease,0),
-       AN2(p2,[{opacity:0,transform:'translateX(40px)'},{opacity:1,transform:'none'}],g*.35,p.ease,g*.15),
-       AN2(p3,[{opacity:0,transform:'translateY(30px)'},{opacity:1,transform:'none'}],g*.35,p.ease,g*.3),
-       AN2(speed,[{opacity:0},{opacity:1},{opacity:0}],g*.6,'linear',g*.45),
-       AN2(bub,[{transform:'scale(0)'},{transform:'scale(1.12)'},{transform:'scale(1)'}],g*.3,'back',g*.55),
-       AN2(sfx,[{transform:`scale(${p.sfx}) rotate(-8deg)`,opacity:0},{transform:'scale(1) rotate(-8deg)',opacity:1},{transform:'scale(1) rotate(-8deg)',opacity:1}],g*.3,'back',g*.7)]);};},
- code:p=>`/* 세로 스크롤 웹툰 컷 연출 */\n.panel { border: 3px solid #fff; border-radius: 4px; }\n.panel.in-view { animation: slideIn ${p.dur}ms ${ez(p.ease)} both; }\n.bubble { animation: pop .3s cubic-bezier(.34,1.56,.64,1) both; }\n.sfx { animation: slam .3s ease-out both; }\n@keyframes slam { from { transform: scale(${p.sfx}) rotate(-8deg); } to { transform: scale(1) rotate(-8deg); } }`,
- prompt:(p,t)=>`${t}용 웹툰 뷰어와 컷 연출을 만들어줘.\n- 컷 구성: 위쪽 2컷 + 아래 넓은 1컷, 컷마다 흰색 테두리 3px, 모서리 4px.\n- 등장: 컷이 왼쪽·오른쪽·아래에서 순서대로 슬라이드 인 (전체 ${p.dur}ms, 이징 ${ez(p.ease)}).\n- 말풍선: 0에서 1.12배로 튀었다가 1배로 정착(back 이징). 꼬리는 말하는 인물 쪽을 향하게.\n- 효과음(쾅!): ${p.sfx}배로 크게 나타났다 1배로 줄어들며 살짝 기울기.\n- 속도선: 액션 컷에만 반복 그라데이션으로 깔고, 다음 컷으로 넘어갈 때 페이드 아웃.\n- 세로 스크롤 웹툰이므로 컷이 화면에 들어올 때(IntersectionObserver)만 재생하고, 한 번 재생한 컷은 다시 돌리지 않게 해줘.`,
- note:'컷이 차례로 들어오고 말풍선이 튀고 효과음이 터집니다.'});
-})();
-
-(function(){
-const SRC_PR='프롬프트 레시피 (직접 제작 · CSS·SVG·WAAPI)';
-const kill2=r=>{try{r.getAnimations({subtree:true}).forEach(a=>a.cancel());}catch(e){}};
-const AN2=(e,kf,dur,ease,delay=0,ex={})=>{const k=ease||'expo';return e.animate(kf,{duration:dur,delay,easing:E[k]?ez(k):k,fill:'both',...ex});};
-const fin2=arr=>Promise.all(arr.map(a=>a.finished)).then(()=>{},()=>{});
-const mk2=(par,cls,txt,css)=>{const d=document.createElement('div');if(cls)d.className=cls;if(txt!=null){if(typeof txt==='string'&&txt.startsWith('<'))d.innerHTML=txt;else d.textContent=txt;}if(css)Object.assign(d.style,css);par.appendChild(d);return d;};
-const root2=st=>{const r=mk2(st,'ed');mk2(r,'ed-sc ed-b');return r;};
-const AP=(id,ko,en,o)=>ITEMS.push({id,cat:o.cat||'prompt',isNew:1,src:SRC_PR,ko,en,mini:o.mini||'fade',target:o.target,hint:o.hint,icon:o.icon,desc:o.desc,how:o.how,params:o.params,build:o.build,code:o.code,prompt:o.prompt,note:o.note});
-const SV=(vb,inner)=>`<svg viewBox="${vb}" style="position:absolute;inset:0;width:100%;height:100%" fill="none" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
-/* 관절 체인: 점 P[0]→P[1]→… 각 뼈는 자기 시작 관절이 축인 중첩 그룹(FK). tail은 마지막 뼈에 붙는 자식(머리 등) */
+const SV=(vb,inner)=>`<svg viewBox="${vb}" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible" fill="none" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+/* 파형 도우미: 모든 f(t)는 t∈[0,1]에서 정의, 반복 항목은 정수 주기로 끝과 처음이 이어짐 */
+const wrap1=x=>((x%1)+1)%1;
+const SIN=(c,ph=0)=>t=>Math.sin(2*Math.PI*c*t+ph);
+const DAMP=(c,d=2)=>t=>Math.sin(2*Math.PI*c*t)*Math.exp(-d*t);
+const PULSE=t=>(1-Math.cos(2*Math.PI*t))/2;
+const GRIP=t=>{const a=.35,b=.7;return t<a?(1-Math.cos(Math.PI*t/a))/2:t<b?1:(1+Math.cos(Math.PI*(t-b)/(1-b)))/2;};
+const ROT=a=>`rotate(${a.toFixed(2)}deg)`;
+const KF3=(f,tf,n=40)=>Array.from({length:n+1},(_,i)=>{const t=i/n;return {offset:t,transform:tf(f(t))};});
+const KFXY=(fx,fy,n=48)=>Array.from({length:n+1},(_,i)=>{const t=i/n;return {offset:t,transform:`translate(${fx(t).toFixed(2)}px,${fy(t).toFixed(2)}px)`};});
 const chainPts=(x,y,a,lens)=>{const r=a*Math.PI/180;let px=x,py=y;const o=[[x,y]];lens.forEach(L=>{px+=Math.sin(r)*L;py+=Math.cos(r)*L;o.push([+px.toFixed(1),+py.toFixed(1)]);});return o;};
+/* 관절 체인: 각 뼈는 자기 시작 관절이 축인 중첩 그룹(FK). tail은 마지막 바로 앞 뼈 그룹 안에 붙는 자식 */
 const ch=(id,P,col,w=4,tail='')=>{const nest=i=>{if(i>=P.length-1)return '';const [x,y]=P[i],[nx,ny]=P[i+1];return `<g data-c="${id}" data-i="${i}" style="transform-origin:${x}px ${y}px"><path d="M${x} ${y}L${nx} ${ny}" stroke="${col}" stroke-width="${w}"/><circle cx="${nx}" cy="${ny}" r="${(w*.55).toFixed(1)}" fill="#ffe14d" stroke="none"/>${i===P.length-2?tail:''}${nest(i+1)}</g>`;};return `<circle cx="${P[0][0]}" cy="${P[0][1]}" r="${(w*.55).toFixed(1)}" fill="#ffe14d" stroke="none"/>`+nest(0);};
-/* 체인 재생: 뼈마다 amp·sign으로 회전, 뒤쪽 뼈일수록 fade만큼 작게, stag 시간차로 파도처럼 전달 */
-const rigPlay=(w,spec,dur,ease)=>{const out=[];spec.forEach(s=>w.querySelectorAll(`[data-c="${s.id}"]`).forEach(el=>{const i=+el.dataset.i;const a=(s.amp||20)*(s.sign||1)*(1-i*(s.fade||0));out.push(AN2(el,[{transform:'rotate(0deg)'},{transform:`rotate(${a.toFixed(1)}deg)`},{transform:'rotate(0deg)'}],dur,ease,(s.delay||0)+i*(s.stag||0)));}));return out;};
-const RIG=(id,ko,en,o)=>AP(id,ko,en,{mini:o.mini||'swing',target:o.target,icon:o.icon,desc:o.desc,how:o.how,params:o.params,
+/* 체인 파도: 뼈 i는 같은 파형을 lag*i만큼 늦게 따라가고, 진폭은 (1-fade*i)로 줄어듦 */
+const CH3=(w,id,f,amp,lag,fade,dur,delay=0)=>[...w.querySelectorAll(`[data-c="${id}"]`)].map(el=>{const i=+el.dataset.i;const g=amp*(1-fade*i);return AN2(el,KF3(t=>g*f(wrap1(t-lag*i)),ROT),dur,'linear',delay);});
+/* 리그 항목 생성기: svg(p)로 골격을 만들고 run(w,p)가 애니메이션 배열을 돌려줌 */
+const RIG3=(id,ko,en,o)=>AP(id,ko,en,{mini:o.mini||'swing',target:o.target,icon:o.icon,desc:o.desc,how:o.how,params:o.params,
   build(st,p){const r=root2(st);const w=mk2(r,'',o.svg(p),{position:'absolute',inset:'0'});
-    return()=>{kill2(r);return fin2([...rigPlay(w,o.spec(p),p.dur,p.ease),...(o.anim?o.anim(w,p):[])]);};},
+    return()=>{kill2(r);return fin2(o.run(w,p));};},
   code:o.code,prompt:o.prompt,note:o.note});
-/* 사람 리그 */
 const HB='#ff8fa3',HO='#ffd6c7';
-const FG=[[-50,[26,18]],[-20,[36,26,20]],[-6,[40,28,22]],[8,[34,25,19]],[24,[28,21,16]]];
-RIG('pr-rig-finger','손가락 리깅','Finger Rig',{mini:'pulse',target:'손 (손가락 5개)',
- icon:'<path d="M8 14V5a1.5 1.5 0 0 1 3 0v6M11 11V3.5a1.5 1.5 0 0 1 3 0V11M14 11V5a1.5 1.5 0 0 1 3 0v8a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-3l-2-4"/>',
- desc:'손가락 다섯 개가 손목에서 뻗고, 각 손가락은 세 마디로 나뉩니다. 검지부터 새끼까지 순서대로 굽어 주먹을 쥐었다 펴는 동작입니다.',
- how:'손가락마다 손목을 시작점으로 한 3마디 체인을 만들고, 마디마다 자기 관절을 축으로 회전시킵니다. 손가락 사이 시간차를 주면 굽힘이 퍼집니다.',
- params:[DUR(1400,500,3000),EASE('inout'),R('curl','굽힘 각도',60,10,100,1,'°')],
- svg:()=>SV('0 0 300 300',`<path d="M124 250Q150 232 176 250L182 292Q150 306 118 292Z" stroke="${HO}" stroke-width="2.4"/>`+FG.map(([a,L],k)=>ch('f'+k,chainPts(150,250,180+a,L),HB,4)).join('')),
- spec:p=>FG.map(([a],k)=>({id:'f'+k,amp:p.curl,sign:a<0?1:-1,delay:k*90,stag:70,fade:.15})),
- code:p=>`/* 손가락 리그 */\nHand\n ├ Thumb  : T1 → T2 → T3\n ├ Index  : I1 → I2 → I3\n ├ Middle : M1 → M2 → M3\n ├ Ring   : R1 → R2 → R3\n └ Pinky  : P1 → P2 → P3\n/* 굽힘: 각 마디 0 → ${p.curl}°, 손가락 간 시간차 90ms */`,
- prompt:(p,t)=>`${t}에 손가락 리그를 만들어줘.\n- 손가락 5개(엄지 포함)를 각각 3마디(근위·중위·말단) 뼈 체인으로 만들고, 모두 손목 뼈를 부모로 연결해줘.\n- 관절은 한 축(X)으로만 굽히고, 굽힘 범위는 0~${p.curl}°로 제한해줘. 엄지는 맞은편 회전(opposition) 축을 따로 둬.\n- 쥐기(grip) 프리셋 하나로 다섯 손가락을 한 번에 조절할 수 있게 하고, 손가락별 가중치 슬라이더도 추가해줘.\n- 검지부터 새끼까지 90ms 간격으로 차례로 굽혀 주먹을 쥐고 펴는 클립을 만들어줘.\n- 손 메쉬는 손목 뼈에 붙이고, 굽힐 때 손등이 찌그러지지 않게 보정(corrective blend)을 넣어줘.`,
- note:'손가락 다섯 개가 검지부터 차례로 굽어 주먹을 쥐었다 펴집니다.'});
-
-RIG('pr-rig-toe','발가락 리깅','Toe Rig',{mini:'bounce',target:'발 (발가락 5개)',
- icon:'<path d="M5 19c0-3 2-5 4-6l2-4 3 1-1 4c2 1 4 3 4 5v1H5z"/><circle cx="18" cy="18" r="1"/><circle cx="20" cy="15" r="1"/>',
- desc:'발목에서 이어진 발등과 다섯 개의 발가락을 보여줍니다. 발가락이 한꺼번에 오므라들었다 벌어지는 동작입니다.',
- how:'발볼 지점을 시작점으로 발가락마다 두 마디 체인을 만들고, 가운데 두 개는 반대로 굽혀 자연스럽게 부채꼴로 움직입니다.',
- params:[DUR(1200,400,3000),EASE('inout'),R('curl','발가락 굽힘',50,10,90,1,'°'),R('ank','발목 꺾임',10,0,30,1,'°')],
- svg:()=>SV('0 0 300 300',ch('sh',[[120,30],[126,96],[130,128]],HO,5)+ch('ft',[[130,128],[168,150],[196,168]],HB,6)+
-   [[40,[12,8]],[55,[10,7]],[70,[12,8]],[85,[10,7]],[100,[9,6]]].map(([a,L],k)=>ch('t'+k,chainPts(196,168,a,L),'#ffe14d',3)).join('')),
- spec:p=>[{id:'ft',amp:p.ank,sign:1,stag:0,fade:0},...[0,1,2,3,4].map(k=>({id:'t'+k,amp:p.curl,sign:-1,delay:k*40,stag:50,fade:.1}))],
- code:p=>`/* 발 리그 */\nFoot\n ├ Shin → Ankle → Heel\n ├ Ball (발볼)\n │   ├ Toe1 → Toe1_tip\n │   ├ Toe2 → Toe2_tip\n │   ├ Toe3 …  Toe4 …  Toe5 …\n/* 발가락 굽힘 ${p.curl}°, 발목 꺾임 ${p.ank}° */`,
- prompt:(p,t)=>`${t}에 발 리그를 만들어줘.\n- 뼈: 정강이 → 발목 → 발뒤꿈치, 발볼에서 발가락 5개가 갈라지는 구조로 만들어줘.\n- 각 발가락은 두 마디이고 굽힘 축은 발바닥 방향 한 축으로, 범위는 0~${p.curl}°로 제한해줘.\n- 발목은 ${p.ank}° 안에서만 꺾이게 하고, 발가락이 바닥에 닿으면 IK로 지면에 고정해줘.\n- 발가락 벌림/오므림을 하나의 슬라이더로 묶고, 걸을 때 뒤꿈치→발볼→발가락 순서로 굴러가는 롤링 모션을 넣어줘.`,
- note:'발가락이 오므라들고 벌어지며 발목이 살짝 꺾입니다.'});
-
-RIG('pr-rig-arm','팔 리깅 (FK·IK)','Arm Rig (FK·IK)',{mini:'swing',target:'팔',
- icon:'<path d="M4 18 9 12l3 1 3-4 5 2"/><circle cx="4" cy="18" r="1.5"/>',
- desc:'어깨에서 팔꿈치, 손목으로 이어지는 팔을 보여줍니다. 팔꿈치가 굽혀지면서 손(IK 목표점)이 따라 움직입니다.',
- how:'어깨를 시작점으로 세 점 체인을 만들고 팔꿈치를 축으로 회전시킵니다. 손끝의 노란 점은 IK 목표점으로, 그 위치에 맞춰 팔이 펴지고 굽습니다.',
- params:[DUR(1600,600,3500),EASE('inout'),R('bend','팔꿈치 굽힘',40,0,80,1,'°')],
- svg:()=>SV('0 0 300 300',`<path d="M60 230Q108 270 150 232" stroke="#ffe14d" stroke-dasharray="4 6" stroke-width="2"/>`+ch('ar',[[150,60],[120,130],[98,186],[108,214]],HB,7)+`<circle class="tgt" cx="108" cy="214" r="6" fill="#ffe14d" stroke="none"/>`),
- spec:p=>[{id:'ar',amp:p.bend,sign:1,delay:0,stag:160,fade:.2}],
- anim:(w,p)=>[AN2(w.querySelector('.tgt'),[{transform:'translate(0px,0px)'},{transform:'translate(40px,-26px)'},{transform:'translate(0px,0px)'}],p.dur,'inout')],
- code:p=>`/* 팔 리그 */\nShoulder ─ Upper_Arm ─ Elbow ─ Forearm ─ Wrist ─ Hand\nIK target: Hand_IK (손 위치를 목표로 두고 두 뼈 길이로 팔꿈치 계산)\n/* FK 굽힘 ${p.bend}°, 팔꿈치 폴 벡터는 몸 뒤쪽 */`,
- prompt:(p,t)=>`${t}에 팔 리그를 만들어줘.\n- 뼈: 어깨(Clavicle 포함) → 상완 → 팔꿈치 → 하완 → 손목 → 손.\n- FK와 IK를 전환할 수 있게 해줘. IK 목표점은 손에 두고, 팔꿈치 폴 벡터는 몸 뒤쪽을 향하게.\n- 팔꿈치는 한 방향으로만 굽고, 굽힘 범위는 0~${p.bend}°로 제한해줘.\n- 손이 목표점을 따라 움직일 때 어깨가 함께 살짝 올라가도록 가중치를 넣어줘.\n- 애니메이션은 목표점을 왕복시키는 클립 하나로 테스트해줘.`,
- note:'손 목표점이 움직이면 팔꿈치가 굽혀지며 팔이 따라 움직입니다.'});
-
-RIG('pr-rig-leg','다리 리깅 (고관절·무릎·발목)','Leg Rig (Hip·Knee·Ankle)',{mini:'swing',target:'다리',
- icon:'<path d="M9 3h6l-1 8 2 6-1 4h-3l-1-4-2-6z"/>',
- desc:'고관절에서 무릎, 발목으로 이어지는 다리입니다. 무릎이 한 방향으로만 굽으며 발끝의 목표점(IK)을 따라갑니다.',
- how:'고관절을 시작점으로 세 마디 체인을 만들고 무릎과 발목을 축으로 굽힙니다. 무릎은 반대 방향으로만 굽도록 회전 범위를 제한합니다.',
- params:[DUR(1600,600,3500),EASE('inout'),R('bend','무릎 굽힘',35,0,70,1,'°')],
- svg:()=>SV('0 0 300 300',ch('lg',[[150,50],[170,130],[140,206],[158,262]],HB,7)+`<circle class="tgt" cx="158" cy="262" r="6" fill="#ffe14d" stroke="none"/>`),
- spec:p=>[{id:'lg',amp:p.bend,sign:-1,stag:150,fade:.15}],
- anim:(w,p)=>[AN2(w.querySelector('.tgt'),[{transform:'translate(0px,0px)'},{transform:'translate(-26px,-14px)'},{transform:'translate(0px,0px)'}],p.dur,'inout')],
- code:p=>`/* 다리 리그 */\nHip ─ Thigh ─ Knee ─ Shin ─ Ankle ─ Toe\nIK target: Foot_IK (지면 고정, 무릎 폴 벡터는 앞쪽)\n/* 무릎 굽힘 ${p.bend}° (한 방향 제한) */`,
- prompt:(p,t)=>`${t}에 다리 리그를 만들어줘.\n- 뼈: 골반 → 고관절 → 허벅지 → 무릎 → 정강이 → 발목 → 발.\n- 발 IK 목표점을 지면에 고정하고, 무릎 폴 벡터는 앞쪽을 향하게 설정해줘.\n- 무릎은 한 방향으로만 굽고, 범위를 0~${p.bend}°로 제한해줘.\n- 걸을 때 골반이 위아래로 살짝 움직이도록 골반 가중치를 넣어줘.`,
- note:'발 목표점을 따라 무릎이 굽혀지고 다리가 움직입니다.'});
-
-RIG('pr-rig-spine','척추·목·머리 리깅','Spine, Neck & Head Rig',{mini:'shake',target:'상반신',
- icon:'<circle cx="12" cy="5" r="2.5"/><path d="M12 9v11M9 12h6"/>',
- desc:'골반에서 목, 머리로 이어지는 척추를 보여줍니다. 척추가 한 마디씩 굽고, 머리는 맨 위 마디에 붙어 함께 움직입니다.',
- how:'척추 마디를 체인으로 만들고, 머리는 마지막 마디의 자식으로 붙입니다. 마디 시간차를 두면 허리에서 목으로 물결치듯 굽습니다.',
- params:[DUR(1800,600,3500),EASE('inout'),R('bend','척추 굽힘',14,0,30,1,'°')],
- svg:()=>SV('0 0 300 300',ch('sp',[[150,270],[150,226],[154,184],[150,144],[148,108]],HB,6,`<circle cx="148" cy="80" r="22" stroke="${HO}" stroke-width="2.4"/><circle cx="156" cy="76" r="2.4" fill="#ffe14d" stroke="none"/>`)),
- spec:p=>[{id:'sp',amp:p.bend,sign:1,stag:110,fade:.12}],
- code:p=>`/* 척추 리그 */\nHips\n └ Spine1 → Spine2 → Spine3 → Chest\n    └ Neck1 → Neck2\n       └ Head (자식, 목 끝에 고정)\n/* 마디별 굽힘 ${p.bend}°, 허리→목 시간차 110ms */`,
- prompt:(p,t)=>`${t}에 척추·목·머리 리그를 만들어줘.\n- 뼈: 골반 → 척추 3마디 → 가슴 → 목 2마디 → 머리. 머리는 목 끝의 자식으로 붙여.\n- 각 마디는 ${p.bend}° 이내로만 굽고, 허리에서 목까지 굽힘이 전달되게 가중치를 줘.\n- 시선(Look-at) 제약을 머리에 걸어서 카메라나 대상을 바라보게 해줘.\n- 앉기·숙이기·뒤로 젖히기 포즈 3개를 프리셋으로 만들어줘.`,
- note:'허리에서 목까지 척추가 한 마디씩 굽어 머리가 따라 움직입니다.'});
-
-AP('pr-rig-face','얼굴 리깅 (눈·눈썹·입)','Face Rig (Eyes, Brows, Mouth)',{mini:'blink',target:'캐릭터 얼굴',
- icon:'<circle cx="12" cy="12" r="9"/><path d="M8.5 10h.01M15.5 10h.01M8.5 15c1 1 2.2 1.5 3.5 1.5s2.5-.5 3.5-1.5"/>',
- desc:'눈이 깜빡이고, 눈썹이 올라가고, 입이 벌어지는 얼굴 리그입니다. 블렌드셰이프(모양 변형)를 시간에 맞춰 섞어 줍니다.',
- how:'눈은 세로 비율을 줄여 깜빡이고, 눈썹은 위로 옮기고, 입은 path의 d 값을 키프레임으로 바꿔 모양을 모핑합니다.',
- params:[DUR(1800,600,3500),EASE('inout'),R('open','입 벌림',14,0,30,1,'px')],
- build(st,p){const r=root2(st);
-   const w=mk2(r,'',SV('0 0 300 300',`<circle cx="150" cy="150" r="84" stroke="${HO}" stroke-width="2.4"/><ellipse class="eye" cx="120" cy="130" rx="9" ry="12" fill="${HO}" stroke="none" style="transform-box:fill-box;transform-origin:center"/><ellipse class="eye" cx="180" cy="130" rx="9" ry="12" fill="${HO}" stroke="none" style="transform-box:fill-box;transform-origin:center"/><path class="brow" d="M104 100Q120 90 136 100" stroke="${HB}" stroke-width="5"/><path class="brow" d="M164 100Q180 90 196 100" stroke="${HB}" stroke-width="5"/><path class="mouth" d="M118 180Q150 190 182 180" stroke="${HB}" stroke-width="5"/>`),{position:'absolute',inset:'0'});
-   return()=>{kill2(r);const es=[...w.querySelectorAll('.eye')],bs=[...w.querySelectorAll('.brow')],m=w.querySelector('.mouth');
-     return fin2([...es.map(e=>AN2(e,[{transform:'scaleY(1)'},{transform:'scaleY(.1)'},{transform:'scaleY(1)'}],p.dur*.25,'inout',p.dur*.6)),
-       ...bs.map(b=>AN2(b,[{transform:'translateY(0px)'},{transform:'translateY(-7px)'},{transform:'translateY(0px)'}],p.dur,'inout')),
-       AN2(m,[{d:'path("M118 180Q150 190 182 180")'},{d:`path("M116 176Q150 ${180+p.open*2} 184 176")`},{d:'path("M118 180Q150 190 182 180")'}],p.dur,'inout')]);};},
- code:p=>`/* 얼굴 리그 (블렌드셰이프) */\nEye_L / Eye_R   : blink  (scaleY 1 → 0.1 → 1)\nBrow_L / Brow_R : raise  (translateY 0 → -7px)\nMouth           : open   (path d 모핑, 벌림 ${p.open}px)`,
- prompt:(p,t)=>`${t}에 얼굴 리그를 만들어줘.\n- 블렌드셰이프: 눈 깜빡임(blink), 눈썹 올리기(brow raise), 입 벌리기·웃기(mouth open/smile) 최소 3개.\n- 눈 깜빡임은 4~6초 간격으로 랜덤하게, 좌우 눈이 약간 어긋나게 해줘.\n- 입 벌림은 0~${p.open}px 범위로 제한하고, 말할 때는 음소(모음)별 입 모양 프리셋을 사용해줘.\n- 시선(eye look-at) 값을 0~1로 두고 머리 회전과 함께 움직이게 해줘.`,
- note:'눈이 깜빡이고 눈썹이 올라가며 입이 벌어집니다.'});
-
-/* 동물 리그: 네발 공통 실루엣 (focus에 든 체인만 강조색) */
+/* 네발 공통 골격: 앞다리 fn/ff, 뒷다리 hn/hf, 꼬리 tl, 척추 sp, 귀 ea (강조 id만 분홍) */
 const QUAD=(focus,extra='')=>{const C=id=>focus.includes(id)?HB:'#6a5a60';
  return SV('0 0 300 300',
   ch('tl',[[88,140],[68,124],[52,104],[44,84]],C('tl'),5)+
   ch('hf',[[96,152],[90,198],[100,238],[88,262]],C('hf'),4)+
   ch('ff',[[208,152],[214,198],[220,242],[226,262]],C('ff'),4)+
   `<ellipse cx="150" cy="150" rx="70" ry="30" stroke="${HO}" stroke-width="2.4"/>`+
-  ch('sp',[[88,146],[118,146],[148,146],[180,140],[206,136]],C('sp'),5,`<circle cx="228" cy="116" r="20" stroke="${HO}" stroke-width="2.4"/><circle cx="236" cy="112" r="2.6" fill="#ffe14d" stroke="none"/>`)+
+  ch('sp',[[88,146],[118,146],[148,146],[180,140],[206,136]],C('sp'),5,`<g class="hd" style="transform-origin:206px 136px"><circle cx="228" cy="116" r="20" stroke="${HO}" stroke-width="2.4"/><circle cx="236" cy="112" r="2.6" fill="#ffe14d" stroke="none"/></g>`)+
   ch('ea',[[222,96],[214,76],[226,64]],C('ea'),3)+
   ch('hn',[[104,152],[98,198],[108,238],[96,262]],C('hn'),5)+
   ch('fn',[[200,152],[196,198],[190,242],[184,262]],C('fn'),5)+extra);};
-const ANIMAL_CODE=(title)=>p=>`/* ${title} */\nroot\n ├ spine ×4 → neck → head\n ├ tail ×3 (회전 체인)\n ├ front_L / front_R (상완 → 하완 → 발목 → 발가락)\n └ back_L  / back_R  (대퇴 → 정강이 → 뒤꿈치 → 발가락)`;
 
-RIG('pr-rig-foreleg','앞다리 리깅 (어깨·팔꿈치·손목)','Front Leg Rig (Shoulder·Elbow·Wrist)',{mini:'swing',target:'강아지·고양이 앞다리',
+
+/* ═════ 리깅 12종 (업그레이드): 파형 전달·정수 주기 루프·IK 목표 궤적 ═════ */
+const FGF=[[-50,[26,18,14]],[-20,[36,26,20]],[-6,[40,28,22]],[8,[34,25,19]],[24,[28,21,16]]];
+RIG3('pr-rig-finger','손가락 리깅','Finger Rig',{mini:'pulse',target:'손 (손가락 5개)',
+ icon:'<path d="M8 14V5a1.5 1.5 0 0 1 3 0v6M11 11V3.5a1.5 1.5 0 0 1 3 0V11M14 11V5a1.5 1.5 0 0 1 3 0v8a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-3l-2-4"/>',
+ desc:'다섯 손가락이 검지부터 새끼까지 차례로 굽었다가 펴집니다. 관절마다 굽힘 비율이 달라 자연스럽게 말립니다. 쥘 때 손바닥이 살짝 눌렸다 돌아옵니다.',
+ how:'손가락마다 3마디 체인을 만들고, 굽힘 곡선(GRIP)을 마디별 비율 1 : 1.25 : 1.1로 곱합니다. 손가락 사이에는 50ms 시간차를 두고, 손바닥은 scale로 눌립니다.',
+ params:[DUR(1400,500,3000),EASE('inout'),R('curl','굽힘 각도',70,10,110,1,'°')],
+ svg:()=>SV('0 0 300 300',`<path class="palm" style="transform-box:fill-box;transform-origin:center" d="M124 250Q150 232 176 250L182 292Q150 306 118 292Z" stroke="${HO}" stroke-width="2.4"/>`+FGF.map(([a,L],k)=>ch('f'+k,chainPts(150,250,180+a,L),HB,4)).join('')),
+ run(w,p){const g=p.dur;const out=[];
+   FGF.forEach(([a],k)=>{const sg=a<0?1:-1;const dl=k*g*.05;
+     [...w.querySelectorAll(`[data-c="f${k}"]`)].forEach(el=>{const i=+el.dataset.i;const gain=[1,1.25,1.1][i];
+       out.push(AN2(el,KF3(t=>sg*p.curl*gain*GRIP(t),ROT,40),g,'linear',dl));});});
+   out.push(AN2(w.querySelector('.palm'),[{transform:'scale(1,1)'},{transform:'scale(.92,1.05)',offset:.5},{transform:'scale(1,1)'}],g,'inout'));
+   return out;},
+ code:p=>`/* 손가락 리그 */\nHand ─ Thumb / Index / Middle / Ring / Pinky\n each finger: M1 → M2 → M3 (3 bones)\n/* grip: 굽힘 0 → ${p.curl}°, 마디 비율 1 : 1.25 : 1.1, 손가락 간 50ms */`,
+ prompt:(p,t)=>`${t}에 손가락 리그를 만들어줘.\n- 손가락 5개를 3마디 뼈 체인으로, 모두 손목을 부모로 연결.\n- 쥐기 프리셋 하나로 5개를 함께 조절하고, 손가락별 가중치 슬라이더 추가.\n- 굽힘 곡선은 ease-in-out으로 쥐고(0.35), 유지(0.35), 펴기(0.3) 세 구간. 굽힘 최대 ${p.curl}°.\n- 손바닥은 쥘 때 살짝 눌리는 보정 블렌드를 넣어 손등이 찌그러지지 않게.`,
+ note:'검지부터 새끼까지 차례로 말렸다 펴지며 손바닥이 살짝 눌립니다.'});
+
+RIG3('pr-rig-toe','발가락 리깅','Toe Rig',{mini:'bounce',target:'발 (발가락 5개)',
+ icon:'<path d="M5 19c0-3 2-5 4-6l2-4 3 1-1 4c2 1 4 3 4 5v1H5z"/><circle cx="18" cy="18" r="1"/><circle cx="20" cy="15" r="1"/>',
+ desc:'발목이 먼저 꺾여 발뒤꿈치에서 발볼로 체중이 옮겨가고, 그다음 발가락이 차례로 오므라듭니다. 걸음의 롤링 동작을 보여줍니다.',
+ how:'발목 뼈를 사인 파형으로 꺾고, 발가락은 발목 파형보다 늦게(lag) 같은 펄스로 오므립니다. 발가락 체인은 마디마다 0.15씩 감쇠해 끝이 더 잘 말립니다.',
+ params:[DUR(1200,400,3000),EASE('inout'),R('curl','발가락 굽힘',55,10,90,1,'°'),R('ank','발목 꺾임',12,0,30,1,'°')],
+ svg:()=>SV('0 0 300 300',ch('sh',[[120,30],[126,96],[130,128]],HO,5)+ch('ft',[[130,128],[168,150],[196,168]],HB,6)+
+   [[40,[12,8]],[55,[10,7]],[70,[12,8]],[85,[10,7]],[100,[9,6]]].map(([a,L],k)=>ch('t'+k,chainPts(196,168,a,L),'#ffe14d',3)).join('')),
+ run(w,p){const g=p.dur;const out=[];
+   out.push(...CH3(w,'ft',SIN(1),p.ank,0,0,g));
+   for(let k=0;k<5;k++)out.push(...CH3(w,'t'+k,t=>PULSE(t),-p.curl,0.05,0.15,g,k*g*.03));
+   return out;},
+ code:p=>`/* 발 리그 */\nFoot ─ Shin ─ Ankle ─ Heel\n └ Ball ─ Toe1..Toe5 (2마디씩)\n/* 롤링: 발목 ±${p.ank}°, 발가락 ${p.curl}° (발목보다 늦게) */`,
+ prompt:(p,t)=>`${t}에 발 리그를 만들어줘.\n- 뼈: 정강이 → 발목 → 발뒤꿈치, 발볼에서 발가락 5개가 갈라지는 구조.\n- 발목은 ±${p.ank}° 안에서 꺾이고, 발가락은 발목 동작 뒤에 따라 오므라듦.\n- 발가락이 바닥에 닿으면 IK로 지면에 고정, 들리면 풀리는 상태 전환.\n- 걸을 때 뒤꿈치→발볼→발가락 순서로 굴러가는 롤링 루프.`,
+ note:'발목이 꺾이며 발가락이 차례로 오므라듭니다.'});
+
+RIG3('pr-rig-arm','팔 리깅 (FK·IK)','Arm Rig (FK·IK)',{mini:'swing',target:'팔',
+ icon:'<path d="M4 18 9 12l3 1 3-4 5 2"/><circle cx="4" cy="18" r="1.5"/>',
+ desc:'손 목표점(노란 점)이 8자 궤적을 그리며 움직이고, 팔꿈치가 목표를 따라 굽었다 펴집니다. 손을 뻗을 때 팔꿈치가 먼저 나가는 IK 느낌입니다.',
+ how:'목표점은 x=cos, y=sin(2×) 궤적으로 이동하고, 팔꿈치 굽힘은 같은 주기의 파형을 약간 늦춰 적용합니다. 어깨 뼈는 진폭을 줄여 함께 흔들립니다.',
+ params:[DUR(2400,800,5000),EASE('inout'),R('bend','팔꿈치 굽힘',45,0,80,1,'°'),R('reach','목표점 반경',40,10,70,1,'px')],
+ svg:()=>SV('0 0 300 300',`<path d="M60 230Q108 270 150 232" stroke="#ffe14d" stroke-dasharray="4 6" stroke-width="2"/>`+ch('ar',[[150,60],[120,130],[98,186],[108,214]],HB,7)+`<circle class="tgt" cx="108" cy="214" r="6" fill="#ffe14d" stroke="none"/>`),
+ run(w,p){const g=p.dur;const out=[];
+   out.push(...CH3(w,'ar',SIN(1),p.bend,0.1,0.2,g));
+   out.push(AN2(w.querySelector('.tgt'),KFXY(t=>p.reach*Math.cos(2*Math.PI*t),t=>-p.reach*.65*Math.sin(4*Math.PI*t),64),g,'linear'));
+   return out;},
+ code:p=>`/* 팔 리그 + IK */\nShoulder ─ UpperArm ─ Elbow ─ Forearm ─ Wrist ─ Hand\nIK target: Hand_IK (8자 궤적, 반경 ${p.reach}px)\n/* 팔꿈치 굽힘 ${p.bend}°, 폴 벡터 = 몸 뒤쪽 */`,
+ prompt:(p,t)=>`${t}에 팔 리그를 만들어줘.\n- 뼈: 쇄골 → 상완 → 팔꿈치 → 하완 → 손목 → 손.\n- FK/IK 전환. IK 목표점은 손에, 팔꿈치 폴 벡터는 몸 뒤쪽.\n- 목표점을 8자 궤적(반경 ${p.reach}px)으로 움직이고, 팔꿈치는 0~${p.bend}°로 한 방향으로만 굽힘.\n- 손이 멀어질 때 어깨가 함께 가중치 0.3만큼 올라가도록 연동.`,
+ note:'손 목표점을 따라 팔꿈치가 굽었다 펴집니다.'});
+
+RIG3('pr-rig-leg','다리 리깅 (고관절·무릎·발목)','Leg Rig (Hip·Knee·Ankle)',{mini:'swing',target:'다리',
+ icon:'<path d="M9 3h6l-1 8 2 6-1 4h-3l-1-4-2-6z"/>',
+ desc:'발끝 목표점이 지면에서 타원을 그리며 한 걸음씩 나아갑니다. 발이 들릴 때만 무릎이 굽고, 디딜 때는 곧게 펴집니다.',
+ how:'발 목표점은 지면 위에서는 직선, 들릴 때는 타원 호로 움직입니다. 무릎 굽힘은 발이 들리는 구간에만 양수가 되도록 max(0, sin)로 만듭니다.',
+ params:[DUR(1800,600,3500),EASE('inout'),R('bend','무릎 굽힘',40,0,70,1,'°'),R('step','보폭',26,8,40,1,'px')],
+ svg:()=>SV('0 0 300 300',ch('lg',[[150,50],[170,130],[140,206],[158,262]],HB,7)+`<circle class="tgt" cx="158" cy="262" r="6" fill="#ffe14d" stroke="none"/>`),
+ run(w,p){const g=p.dur;const out=[];
+   out.push(...CH3(w,'lg',t=>Math.max(0,Math.sin(2*Math.PI*t)),-p.bend,0.08,0.15,g));
+   out.push(AN2(w.querySelector('.tgt'),KFXY(t=>p.step*Math.cos(2*Math.PI*t),t=>-16*Math.max(0,Math.sin(2*Math.PI*t)),64),g,'linear'));
+   return out;},
+ code:p=>`/* 다리 리그 */\nHip ─ Thigh ─ Knee ─ Shin ─ Ankle ─ Toe\nIK target: Foot_IK (지면 고정, 들릴 때만 호 이동)\n/* 무릎 굽힘 0~${p.bend}°, 보폭 ±${p.step}px */`,
+ prompt:(p,t)=>`${t}에 다리 리그를 만들어줘.\n- 뼈: 골반 → 고관절 → 허벅지 → 무릎 → 정강이 → 발목 → 발.\n- 발 IK 목표점은 디딜 때 지면 고정, 들릴 때 호를 그리며 보폭 ${p.step}px로 이동.\n- 무릎은 한 방향으로만 0~${p.bend}°까지 굽힘, 폴 벡터는 앞쪽.\n- 골반은 걸음마다 위아래로 가중치 0.2만큼 움직여 리듬을 줌.`,
+ note:'발이 들릴 때만 무릎이 굽고 발끝이 호를 그리며 나아갑니다.'});
+
+RIG3('pr-rig-spine','척추·목·머리 리깅','Spine, Neck & Head Rig',{mini:'shake',target:'상반신',
+ icon:'<circle cx="12" cy="5" r="2.5"/><path d="M12 9v11M9 12h6"/>',
+ desc:'허리에서 시작한 굽힘이 목을 타고 올라가고, 머리는 반대로 살짝 기울어 시선을 유지합니다. 물결이 척추를 따라 흐릅니다.',
+ how:'척추 마디에 사인 파형을 0.1씩 늦춰 전달하고, 머리는 마지막 마디의 반대 방향으로 0.8배 보정해 수평을 잡습니다.',
+ params:[DUR(2000,600,3500),EASE('inout'),R('bend','척추 굽힘',16,0,30,1,'°')],
+ svg:()=>SV('0 0 300 300',ch('sp',[[150,270],[150,226],[154,184],[150,144],[148,108]],HB,6,`<g class="hd" style="transform-origin:148px 108px"><circle cx="148" cy="80" r="22" stroke="${HO}" stroke-width="2.4"/><circle cx="156" cy="76" r="2.4" fill="#ffe14d" stroke="none"/></g>`)),
+ run(w,p){const g=p.dur;const out=[];
+   out.push(...CH3(w,'sp',SIN(1),p.bend,0.1,0.12,g));
+   out.push(AN2(w.querySelector('.hd'),KF3(t=>-p.bend*.8*SIN(1)(wrap1(t-0.4)),ROT),g,'linear'));
+   return out;},
+ code:p=>`/* 척추 리그 */\nHips └ Spine1..3 └ Chest └ Neck1..2 └ Head (자식)\n/* 마디별 ${p.bend}°, 허리→목 0.1 주기 지연, 머리 역보정 0.8 */`,
+ prompt:(p,t)=>`${t}에 척추·목·머리 리그를 만들어줘.\n- 뼈: 골반 → 척추 3마디 → 가슴 → 목 2마디 → 머리(목 끝의 자식).\n- 마디당 ${p.bend}° 이내, 허리에서 목으로 굽힘이 전달되도록 지연 0.1.\n- 머리는 역보정(0.8배)으로 수평 유지, 시선(look-at) 제약 추가.\n- 앉기·숙이기·뒤로 젖히기 프리셋 3개.`,
+ note:'허리에서 목으로 물결이 올라가고 머리는 수평을 유지합니다.'});
+
+AP('pr-rig-face','얼굴 리깅 (눈·눈썹·입)','Face Rig (Eyes, Brows, Mouth)',{mini:'blink',target:'캐릭터 얼굴',
+ icon:'<circle cx="12" cy="12" r="9"/><path d="M8.5 10h.01M15.5 10h.01M8.5 15c1 1 2.2 1.5 3.5 1.5s2.5-.5 3.5-1.5"/>',
+ desc:'눈이 두 번 깜빡이고, 눈동자가 시선을 따라 움직이며, 입은 웃음→"아"→"오" 모양으로 바뀝니다. 블렌드셰이프 여러 개가 시간에 맞춰 섞입니다.',
+ how:'눈은 scaleY 키프레임으로 이중 깜빡임, 눈동자는 원형 궤적으로 이동, 입은 path의 d를 3개 모양 사이에서 모핑합니다. 눈썹은 감쇠 진동으로 한 번 올라갔다 내려옵니다.',
+ params:[DUR(2800,1000,5000),EASE('inout'),R('open','입 벌림',14,0,30,1,'px'),R('gaze','시선 반경',6,0,12,1,'px')],
+ build(st,p){const r=root2(st);
+   const w=mk2(r,'',SV('0 0 300 300',`<circle cx="150" cy="150" r="84" stroke="${HO}" stroke-width="2.4"/>`+
+     `<g class="eyeg"><ellipse class="eye" cx="120" cy="130" rx="9" ry="12" fill="${HO}" stroke="none"/><ellipse class="eye" cx="180" cy="130" rx="9" ry="12" fill="${HO}" stroke="none"/></g>`+
+     `<circle class="pup" cx="120" cy="131" r="4" fill="#2a1d20"/><circle class="pup" cx="180" cy="131" r="4" fill="#2a1d20"/>`+
+     `<path class="brow" d="M104 100Q120 90 136 100" stroke="${HB}" stroke-width="5"/><path class="brow" d="M164 100Q180 90 196 100" stroke="${HB}" stroke-width="5"/>`+
+     `<path class="mouth" d="M118 180Q150 190 182 180" stroke="${HB}" stroke-width="5"/>`),{position:'absolute',inset:'0'});
+   return()=>{kill2(r);const g=p.dur;
+     const eyes=[...w.querySelectorAll('.eye')],pups=[...w.querySelectorAll('.pup')],brows=[...w.querySelectorAll('.brow')],m=w.querySelector('.mouth');
+     const blink=[{offset:0,transform:'scaleY(1)'},{offset:.22,transform:'scaleY(1)'},{offset:.25,transform:'scaleY(.1)'},{offset:.29,transform:'scaleY(1)'},{offset:.62,transform:'scaleY(1)'},{offset:.65,transform:'scaleY(.1)'},{offset:.69,transform:'scaleY(1)'},{offset:1,transform:'scaleY(1)'}];
+     const open=p.open;
+     const mouthKF=[{offset:0,d:'path("M118 180Q150 190 182 180")'},{offset:.3,d:'path("M118 180Q150 190 182 180")'},{offset:.4,d:`path("M116 176Q150 ${176+open*2.2} 184 176")`},{offset:.55,d:`path("M140 176Q150 ${176+open*1.2} 160 176")`},{offset:.7,d:'path("M118 180Q150 190 182 180")'},{offset:1,d:'path("M118 180Q150 190 182 180")'}];
+     const gazeX=KFXY(t=>p.gaze*Math.cos(2*Math.PI*t),t=>p.gaze*.45*Math.sin(2*Math.PI*t),48);
+     return fin2([
+       ...eyes.map(e=>AN2(e,blink,g,'linear')),
+       ...pups.map(e=>AN2(e,gazeX,g,'linear')),
+       ...brows.map((b,i)=>AN2(b,[{offset:0,transform:'translateY(0px)'},{offset:.15,transform:'translateY(-7px)'},{offset:.35,transform:'translateY(-2px)'},{offset:.5,transform:'translateY(0px)'},{offset:1,transform:'translateY(0px)'}],g,'inout',i*g*.02)),
+       AN2(m,mouthKF,g,'inout')]);};},
+ code:p=>`/* 얼굴 리그 (블렌드셰이프) */\nEye_L/R   : blink 이중 깜빡임 (scaleY 1→0.1→1)\nPupil_L/R : look-at 원형 궤적 ±${p.gaze}px\nBrow      : raise 감쇠 진동 -7px\nMouth     : smile → "아"(${p.open}px) → "오" → smile (path d 모핑)`,
+ prompt:(p,t)=>`${t}에 얼굴 리그를 만들어줘.\n- 블렌드셰이프: 눈 깜빡임(이중 깜빡임 포함), 눈썹, 입(웃음·"아"·"오") 최소 5개.\n- 깜빡임은 4~6초 간격 랜덤, 좌우 눈이 0.02초 어긋나게.\n- 눈동자(look-at)는 머리 회전과 연동, 최대 ±${p.gaze}px.\n- 입 모양은 음소별 프리셋(모음 5개)으로 말하기 연동.`,
+ note:'눈이 두 번 깜빡이고 눈동자가 움직이며 입 모양이 바뀝니다.'});
+
+/* 동물 리그: 대각선 짝 위상(앞왼+뒤오른, 앞오른+뒤왼) 보행 */
+RIG3('pr-rig-foreleg','앞다리 리깅 (어깨·팔꿈치·손목)','Front Leg Rig (Shoulder·Elbow·Wrist)',{mini:'swing',target:'강아지·고양이 앞다리',
  icon:'<path d="M7 3v8l4 3v7M17 3v8l-4 3"/>',
- desc:'어깨에서 팔꿈치, 손목, 발로 이어지는 앞다리입니다. 두 앞다리가 번갈아 움직이며 걷는 동작을 만듭니다.',
- how:'어깨를 시작점으로 네 점 체인을 만들고 마디마다 관절을 축으로 회전합니다. 좌우 앞다리는 반대 위상으로 움직입니다.',
+ desc:'두 앞다리가 반대 위상으로 번갈아 스윙합니다. 팔꿈치가 몸 뒤로 굽었다가 펴지며 발끝이 한 마디씩 따라옵니다.',
+ how:'각 다리 체인에 사인 파형을 적용하고 마디마다 0.07씩 늦춥니다. 두 앞다리는 π 위상차로 움직여 교대 보행을 만듭니다.',
  params:[DUR(1200,400,3000),EASE('inout'),R('swing','앞다리 스윙',26,5,45,1,'°')],
  svg:()=>QUAD(['fn','ff']),
- spec:p=>[{id:'fn',amp:p.swing,sign:1,stag:130,fade:.15},{id:'ff',amp:p.swing,sign:-1,stag:130,fade:.15}],
- code:ANIMAL_CODE('앞다리 리그'),
- prompt:(p,t)=>`${t}에 앞다리 리그를 만들어줘.\n- 뼈: 견갑(Scapula) → 상완 → 팔꿈치 → 하완 → 손목 → 발가락. 팔꿈치는 몸 뒤쪽으로만 굽게 설정해줘.\n- 두 앞다리는 반대 위상으로 ${p.swing}° 스윙하고, 발끝은 지면에 IK로 고정해줘.\n- 손목은 발끝이 튀지 않도록 휴식 자세 기준으로 잠가줘.`,
+ run(w,p){const g=p.dur;return [...CH3(w,'fn',SIN(1,0),p.swing,0.07,0.15,g),...CH3(w,'ff',SIN(1,Math.PI),p.swing,0.07,0.15,g)];},
+ code:p=>`/* 앞다리 리그 */\nroot ─ shoulder ─ upper ─ elbow ─ lower ─ wrist ─ toe\n/* 교대 보행: 위상차 π, 스윙 ±${p.swing}°, 마디 지연 0.07 */`,
+ prompt:(p,t)=>`${t}에 앞다리 리그를 만들어줘.\n- 뼈: 견갑 → 상완 → 팔꿈치 → 하완 → 손목 → 발가락. 팔꿈치는 몸 뒤쪽으로만 굽힘.\n- 두 앞다리는 반대 위상(π), 스윙 ±${p.swing}°, 마디마다 0.07 지연.\n- 발끝은 지면에 IK로 고정하고, 들릴 때만 풀리게.\n- 손목은 휴식 자세 기준으로 잠가 발끝이 튀지 않게.`,
  note:'두 앞다리가 번갈아 스윙하며 팔꿈치가 굽혀집니다.'});
 
-RIG('pr-rig-hindleg','뒷다리 리깅 (고관절·무릎·뒤꿈치)','Hind Leg Rig (Hip·Stifle·Hock)',{mini:'bounce',target:'강아지·고양이 뒷다리',
+RIG3('pr-rig-hindleg','뒷다리 리깅 (고관절·무릎·뒤꿈치)','Hind Leg Rig (Hip·Stifle·Hock)',{mini:'bounce',target:'강아지·고양이 뒷다리',
  icon:'<path d="M9 3v8l-3 4v6M15 3v8l3 4v6"/>',
- desc:'고관절에서 무릎(스티플), 뒤꿈치(호크)로 이어지는 뒷다리입니다. 뒤꿈치가 반대로 굽으며 밀어내는 힘을 보여줍니다.',
- how:'고관절을 시작점으로 네 점 체인을 만들고, 무릎과 뒤꿈치 관절을 반대 방향으로 굽혀 실제 뒷다리처럼 보이게 합니다.',
- params:[DUR(1200,400,3000),EASE('inout'),R('swing','뒷다리 스윙',24,5,45,1,'°')],
+ desc:'고관절이 스윙하면 무릎(스티플)은 앞으로, 뒤꿈치(호크)는 뒤로 굽으며 밀어내는 힘을 보여 줍니다. 대각선 앞다리와 같은 위상으로 움직입니다.',
+ how:'무릎과 뒤꿈치는 반대 방향 굽힘을 주고, 뒤꿈치 굽힘은 밀어내는 순간(사인의 음수 구간)에 최대가 되게 합니다.',
+ params:[DUR(1200,400,3000),EASE('inout'),R('swing','뒷다리 스윙',24,5,45,1,'°'),R('push','뒤꿈치 밀기',18,0,35,1,'°')],
  svg:()=>QUAD(['hn','hf']),
- spec:p=>[{id:'hn',amp:p.swing,sign:-1,stag:120,fade:.15},{id:'hf',amp:p.swing,sign:1,stag:120,fade:.15}],
- code:ANIMAL_CODE('뒷다리 리그'),
- prompt:(p,t)=>`${t}에 뒷다리 리그를 만들어줘.\n- 뼈: 골반 → 고관절 → 대퇴 → 무릎(스티플) → 정강이 → 뒤꿈치(호크) → 발가락.\n- 무릎은 앞으로, 뒤꿈치는 뒤로 굽도록 폴 벡터를 반대로 설정해줘.\n- 대각선 짝(앞왼+뒤오른)과 함께 움직이게 하고, 스윙은 ${p.swing}°로 제한해줘.\n- 뒤꿈치 관절에 IK를 걸어 바닥에 닿는 동안은 미끄러지지 않게 고정해줘.`,
- note:'뒷다리가 무릎과 뒤꿈치를 굽히며 번갈아 움직입니다.'});
+ run(w,p){const g=p.dur;const S=t=>Math.sin(2*Math.PI*t);
+   /* 스윙과 뒤꿈치 밀기를 한 파형으로 합성 (같은 요소에 애니메이션을 두 개 걸면 뒤쪽이 덮어씀) */
+   const hf=t=>p.swing*S(t)-p.push*Math.max(0,-S(t));
+   const hn=t=>{const s=-S(t);return p.swing*s-p.push*Math.max(0,-s);};
+   return [...CH3(w,'hf',hf,1,0.07,0,g),...CH3(w,'hn',hn,1,0.07,0,g)];},
+ code:p=>`/* 뒷다리 리그 */\nroot ─ pelvis ─ hip ─ thigh ─ stifle ─ shin ─ hock ─ toe\n/* 대각선 위상: hf=0, hn=π. 뒤꿈치 밀기 ${p.push}° */`,
+ prompt:(p,t)=>`${t}에 뒷다리 리그를 만들어줘.\n- 뼈: 골반 → 고관절 → 대퇴 → 무릎(스티플) → 정강이 → 뒤꿈치(호크) → 발가락.\n- 무릎은 앞으로, 뒤꿈치는 뒤로 굽도록 폴 벡터를 반대로.\n- 대각선 앞다리와 같은 위상으로 움직이고, 밀어내는 순간 뒤꿈치가 ${p.push}°까지 굽힘.\n- 뒤꿈치 IK는 바닥에 닿는 동안 미끄러지지 않게 고정.`,
+ note:'뒷다리가 밀어내는 순간 뒤꿈치가 굽히며 대각선으로 움직입니다.'});
 
-RIG('pr-rig-tail','꼬리 리깅','Tail Rig',{mini:'swing',target:'꼬리',
+RIG3('pr-rig-tail','꼬리 리깅','Tail Rig',{mini:'swing',target:'꼬리',
  icon:'<path d="M4 18c4 0 5-4 8-5s4-5 8-6"/>',
- desc:'엉덩이에서 뻗은 꼬리가 세 마디로 나뉘어 물결치듯 흔들립니다. 몸이 움직일 때 꼬리 끝이 한 박자 늦게 따라옵니다.',
- how:'꼬리 뿌리를 시작점으로 세 마디 체인을 만들고, 마디 시간차를 크게 줘서 끝으로 갈수록 늦게 반응하게 합니다.',
- params:[DUR(1000,400,2500),EASE('inout'),R('wag','꼬리 흔들림',30,5,50,1,'°')],
+ desc:'꼬리 뿌리에서 파도가 올라가 끝으로 갈수록 늦게 흔들립니다. 기쁠 때는 빠르고 넓게, 긴장할 때는 느리고 좁게 흔듭니다.',
+ how:'사인 파형을 두 주기로 돌리고, 마디마다 0.12씩 지연시키면 채찍처럼 끝이 늦게 따라옵니다. 진폭은 마디마다 10%씩 줄어듭니다.',
+ params:[DUR(1000,400,2500),EASE('inout'),R('wag','꼬리 흔들림',32,5,50,1,'°'),R('cyc','흔드는 빈도',2,1,4,1,'회')],
  svg:()=>QUAD(['tl']),
- spec:p=>[{id:'tl',amp:p.wag,sign:1,stag:110,fade:.12}],
- code:ANIMAL_CODE('꼬리 리그'),
- prompt:(p,t)=>`${t}에 꼬리 리그를 만들어줘.\n- 꼬리 뼈 3마디를 회전 체인으로 만들고, 뿌리는 엉덩이 뼈에 붙여줘.\n- 꼬리 흔들림은 스프링 물리(감쇠 0.8)로 계산하고 진폭은 ${p.wag}°까지만.\n- 기쁠 때는 빠르고 넓게, 긴장할 때는 느리고 좁게 흔드는 모드 두 개를 만들어줘.\n- 걸을 때 엉덩이 움직임에 따라 꼬리가 반대 방향으로 살짝 흔들리게 해줘.`,
- note:'꼬리가 세 마디로 물결치듯 흔들리고 끝이 늦게 따라옵니다.'});
+ run(w,p){const g=p.dur;return CH3(w,'tl',SIN(Math.round(p.cyc)),p.wag,0.12,0.1,g);},
+ code:p=>`/* 꼬리 리그 */\ntail: base → mid → tip (회전 체인)\n/* 파형 ${Math.round(p.cyc)}주기, 진폭 ±${p.wag}°, 마디 지연 0.12 */`,
+ prompt:(p,t)=>`${t}에 꼬리 리그를 만들어줘.\n- 꼬리 뼈 3마디를 회전 체인으로, 뿌리는 엉덩이 뼈에 붙이기.\n- 흔들림은 스프링 물리(감쇠 0.8)로 계산, 진폭 ±${p.wag}° 제한.\n- 기쁨 모드(빠르고 넓게)와 긴장 모드(느리고 좁게) 전환.\n- 걸을 때 엉덩이 움직임에 반대 방향으로 살짝 따라오게.`,
+ note:'꼬리가 뿌리에서 끝으로 파도처럼 흔들리며 끝이 늦게 따라옵니다.'});
 
-RIG('pr-rig-animal-spine','동물 척추·목·머리 리깅','Animal Spine, Neck & Head Rig',{mini:'shake',target:'동물 상체',
+RIG3('pr-rig-animal-spine','동물 척추·목·머리 리깅','Animal Spine, Neck & Head Rig',{mini:'shake',target:'동물 상체',
  icon:'<path d="M4 16h16M7 12c3-4 7-4 10 0"/>',
- desc:'척추 네 마디와 목, 머리를 보여줍니다. 걸을 때 몸통이 살짝 들썩이고, 귀도 머리 움직임에 맞춰 흔들립니다.',
- how:'척추를 체인으로 만들고 머리를 마지막 마디에 자식으로 붙입니다. 귀는 머리 위의 짧은 체인으로 따로 흔들어 리듬을 줍니다.',
+ desc:'척추가 걸음마다 물결치고, 머리는 몸통 움직임을 상쇄해 흔들림이 적습니다. 귀도 머리 움직임에 맞춰 한 박자 늦게 따라옵니다.',
+ how:'척추 체인에 사인 파형을 전달하고, 머리(.hd) 그룹에 역방향 보정을 줍니다. 귀는 머리 뒤에서 두 주기 파형으로 따로 흔듭니다.',
  params:[DUR(1200,400,3000),EASE('inout'),R('bend','척추 굽힘',12,0,25,1,'°'),R('ear','귀 흔들림',14,4,30,1,'°')],
  svg:()=>QUAD(['sp','ea']),
- spec:p=>[{id:'sp',amp:p.bend,sign:1,stag:90,fade:.12},{id:'ea',amp:p.ear,sign:1,stag:60,fade:0}],
- code:ANIMAL_CODE('척추·목·머리 리그'),
- prompt:(p,t)=>`${t}에 척추·목·머리 리그를 만들어줘.\n- 척추 4마디, 목 2마디, 머리를 마지막 마디의 자식으로 연결해줘.\n- 걸을 때 척추가 ${p.bend}° 안에서 한 마디씩 굽혀 몸통이 물결치게 하고, 머리는 반대로 살짝 안정시켜줘.\n- 귀는 머리의 자식 체인으로 만들고 흔들림 ${p.ear}°를 스프링 물리로 계산해줘.\n- 앉기·엎드리기 포즈에서는 척추 가중치를 바꿔 자세를 전환하게 해줘.`,
- note:'척추가 물결치듯 굽고 귀가 머리 움직임에 맞춰 흔들립니다.'});
+ run(w,p){const g=p.dur;const out=[];
+   out.push(...CH3(w,'sp',SIN(1),p.bend,0.08,0.1,g));
+   out.push(AN2(w.querySelector('.hd'),KF3(t=>-p.bend*.9*SIN(1)(wrap1(t-0.32)),ROT),g,'linear'));
+   out.push(...CH3(w,'ea',SIN(2),p.ear,0.15,0,g));
+   return out;},
+ code:p=>`/* 척추·목·머리 리그 (네발) */\nroot ─ spine ×4 ─ neck ─ head (역보정)\n ├ ears (2마디, 지연 0.15)\n/* 척추 ±${p.bend}°, 귀 ±${p.ear}° */`,
+ prompt:(p,t)=>`${t}에 척추·목·머리 리그를 만들어줘.\n- 척추 4마디, 목 2마디, 머리를 마지막 마디의 자식으로.\n- 걸을 때 척추가 ${p.bend}° 안에서 물결치고, 머리는 역보정으로 흔들림을 줄임.\n- 귀는 머리의 자식 체인으로 스프링 물리를 걸어 ${p.ear}°까지.\n- 앉기·엎드리기 포즈에서는 척추 가중치를 바꿔 자세를 전환.`,
+ note:'척추가 물결치듯 굽고 머리는 수평을 지키며 귀가 따라 흔들립니다.'});
 
-RIG('pr-rig-ear','귀·눈 리깅','Ear & Eye Rig',{mini:'blink',target:'동물 얼굴',
+RIG3('pr-rig-ear','귀·눈 리깅','Ear & Eye Rig',{mini:'blink',target:'동물 얼굴',
  icon:'<path d="M6 19c0-6 2-13 6-14 4 1 6 8 6 14"/><circle cx="12" cy="14" r="1.2"/>',
- desc:'쫑긋 선 귀가 체인으로 나뉘어 쫑긋거리고, 눈은 깜빡입니다. 귀 끝이 뒤에서 한 박자 늦게 따라옵니다.',
- how:'귀 뿌리를 시작점으로 세 점 체인을 만들어 귀 끝이 늦게 움직이게 합니다. 눈은 세로 비율을 줄여 깜빡입니다.',
- params:[DUR(1400,500,3000),EASE('inout'),R('ear','귀 움직임',18,4,40,1,'°')],
- svg:()=>QUAD(['ea'],`<ellipse class="eye" cx="236" cy="112" rx="3" ry="4" fill="#2a1d20" stroke="none" style="transform-box:fill-box;transform-origin:center"/>`),
- spec:p=>[{id:'ea',amp:p.ear,sign:1,stag:70,fade:.05}],
- anim:(w,p)=>[AN2(w.querySelector('.eye'),[{transform:'scaleY(1)'},{transform:'scaleY(.1)'},{transform:'scaleY(1)'}],p.dur*.3,'inout',p.dur*.5)],
- code:ANIMAL_CODE('귀·눈 리그'),
- prompt:(p,t)=>`${t}에 귀와 눈 리그를 만들어줘.\n- 귀: 뿌리 1 + 마디 2의 체인으로 만들고, 감정에 따라 쫑긋(${p.ear}°)·납작(반대 방향)을 바꿔줘.\n- 귀 끝은 한 박자 늦게 따라오게 스프링 물리를 걸어줘.\n- 눈: 깜빡임(blink)은 4~6초 간격 랜덤, 시선(look-at)은 머리 회전과 연동.\n- 귀와 눈의 움직임을 하나의 감정 슬라이더(기쁨·경계·졸림)로 묶어줘.`,
- note:'귀가 쫑긋거리고 눈이 깜빡입니다.'});
+ desc:'쫑긋 선 귀가 두 번 빠르게 털리고 귀 끝이 한 박자 늦게 따라옵니다. 눈은 한 번 깜빡입니다.',
+ how:'귀 체인에 두 주기 사인 파형을 주고 마디마다 0.12씩 지연합니다. 눈은 scaleY 키프레임으로 짧게 감았다 뜹니다.',
+ params:[DUR(1400,500,3000),EASE('inout'),R('ear','귀 움직임',20,4,40,1,'°')],
+ svg:()=>QUAD(['ea'],`<ellipse class="eye" cx="236" cy="112" rx="3" ry="4" fill="#2a1d20" stroke="none"/>`),
+ run(w,p){const g=p.dur;const out=[];
+   out.push(...CH3(w,'ea',SIN(2),p.ear,0.12,0,g));
+   out.push(AN2(w.querySelector('.eye'),[{offset:0,transform:'scaleY(1)'},{offset:.6,transform:'scaleY(1)'},{offset:.64,transform:'scaleY(.1)'},{offset:.7,transform:'scaleY(1)'},{offset:1,transform:'scaleY(1)'}],g,'linear'));
+   return out;},
+ code:p=>`/* 귀·눈 리그 */\near: root → tip (지연 0.12, 2주기)\neye : blink scaleY 1→0.1→1\n/* 귀 ±${p.ear}° */`,
+ prompt:(p,t)=>`${t}에 귀와 눈 리그를 만들어줘.\n- 귀: 뿌리 1 + 마디 2 체인. 쫑긋(${p.ear}°)과 납작(반대 방향)을 감정 값으로 전환.\n- 귀 끝은 한 박자 늦게 따라오게 스프링 물리.\n- 눈: 깜빡임 4~6초 간격 랜덤, 시선은 머리 회전과 연동.\n- 귀와 눈은 감정 슬라이더(기쁨·경계·졸림) 하나로 묶기.`,
+ note:'귀가 두 번 털리고 눈이 깜빡입니다.'});
 
-RIG('pr-rig-paw','발바닥·발가락 리깅','Paw & Toe Rig',{mini:'bounce',target:'동물 발바닥',
+RIG3('pr-rig-paw','발바닥·발가락 리깅','Paw & Toe Rig',{mini:'bounce',target:'동물 발바닥',
  icon:'<circle cx="7" cy="8" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="17" cy="8" r="2"/><path d="M8 16c0-3 2-5 4-5s4 2 4 5c0 2-2 3-4 3s-4-1-4-3z"/>',
- desc:'앞발과 뒷발의 발가락이 부채꼴로 벌어졌다 모입니다. 발바닥 패드가 땅을 누르는 느낌을 보여줍니다.',
- how:'발목 끝을 시작점으로 발가락 체인을 부채꼴로 만들고, 바깥쪽 발가락일수록 반대 방향으로 벌려 줍니다.',
- params:[DUR(1200,400,3000),EASE('inout'),R('spread','발가락 벌림',20,5,40,1,'°')],
+ desc:'발이 디딜 때 발가락이 부채꼴로 벌어지고, 들릴 때 다시 모입니다. 앞발과 뒷발이 교대로 디뎌 걸음이 됩니다.',
+ how:'발가락 체인마다 펄스(0→1→0) 파형을 주고, 바깥 발가락일수록 반대 방향으로 벌립니다. 디딤 시점은 발가락마다 0.03주기씩 늦춥니다.',
+ params:[DUR(1200,400,3000),EASE('inout'),R('spread','발가락 벌림',22,5,40,1,'°')],
  svg:()=>QUAD(['fn','hn'],[0,1,2,3,4].map(k=>ch('pa'+k,chainPts(184,262,-30+k*15,[9,7]),'#ffe14d',3)).join('')+[0,1,2,3,4].map(k=>ch('pb'+k,chainPts(96,262,-30+k*15,[9,7]),'#ffe14d',3)).join('')),
- spec:p=>[0,1,2,3,4].flatMap(k=>[{id:'pa'+k,amp:p.spread,sign:k<2?-1:(k>2?1:0),stag:40,fade:.1},{id:'pb'+k,amp:p.spread,sign:k<2?-1:(k>2?1:0),stag:40,fade:.1}]),
- code:p=>`/* 발바닥·발가락 리그 */\nPaw\n ├ Pad (패드, 바닥 접촉 IK)\n └ Toe1..Toe5 (각 2마디, 부채꼴 벌림 ${p.spread}°)`,
- prompt:(p,t)=>`${t}에 발바닥과 발가락 리그를 만들어줘.\n- 발가락 5개를 두 마디 체인으로 발목 끝에서 부채꼴로 펼치고, 바깥 발가락일수록 벌림 축이 반대가 되게 해줘.\n- 벌림 한계는 ${p.spread}°. 발바닥 패드는 지면 접촉 시 살짝 눌리는 블렌드셰이프로 만들어줘.\n- 앞발과 뒷발 모두 같은 리그 템플릿을 쓰되 크기 비율만 다르게.\n- 걸을 때 발가락이 바닥에 닿는 순간 벌어지고, 들릴 때 모이도록 연동해줘.`,
- note:'발가락이 부채꼴로 벌어졌다 모이며 발바닥 패드가 드러납니다.'});
+ run(w,p){const g=p.dur;const out=[];
+   [0,1,2,3,4].forEach(k=>{const sg=k<2?-1:(k>2?1:0);
+     out.push(...CH3(w,'pa'+k,PULSE,p.spread*sg,0.03,0.1,g,k*g*.03));
+     out.push(...CH3(w,'pb'+k,PULSE,p.spread*sg,0.03,0.1,g,g*.5+k*g*.03));});
+   out.push(...CH3(w,'fn',SIN(1,0),7,0.07,0.1,g),...CH3(w,'hn',SIN(1,Math.PI),7,0.07,0.1,g));
+   return out;},
+ code:p=>`/* 발바닥·발가락 리그 */\nPaw ─ Pad (접촉 IK)\n └ Toe1..5 (2마디, 벌림 ±${p.spread}°, 디딤 순서 지연)`,
+ prompt:(p,t)=>`${t}에 발바닥과 발가락 리그를 만들어줘.\n- 발가락 5개를 두 마디 체인으로 발목 끝에서 부채꼴로 펼치기.\n- 벌림 한계 ${p.spread}°, 바깥 발가락일수록 벌림 축을 반대로.\n- 발바닥 패드는 접촉 시 눌리는 블렌드셰이프.\n- 디딤 순서는 앞발→뒷발 교대, 발가락은 접촉 순간 벌어지고 들릴 때 모이기.`,
+ note:'발가락이 디딜 때 벌어지고 들릴 때 모이며 앞발과 뒷발이 교대합니다.'});
 
 
-/* 웹툰 추가 항목 */
+/* ═════ 웹툰 5종 (업그레이드): 찌그러짐·흔들림·속도 잔상·패럴랙스 ═════ */
+const WBOX=(par,x,y,w,h,css={})=>mk2(par,'',null,{position:'absolute',left:x,top:y,width:w,height:h,...css});
+AP('pr-webtoon','웹툰 만들기 (컷 연출)','Webtoon Panels',{mini:'pop',target:'웹툰 컷',
+ icon:'<rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="18" height="8" rx="1"/>',
+ desc:'컷이 좌·우·아래에서 튕기듯 들어오고, 말풍선은 찌그러졌다 튀어 오릅니다. 쾅 효과음이 터질 때는 화면 전체가 한 번 흔들리고, 컷은 천천히 확대됩니다.',
+ how:'컷마다 translate와 rotate를 오버슈트 키프레임으로 주고, 말풍선은 squash-stretch(가로 세로 비율 변형)로 튀게 합니다. 효과음 순간에는 루트 전체를 감쇠 흔들림으로 흔듭니다.',
+ params:[DUR(2000,800,4000),EASE('out'),R('sfx','효과음 크기',2.2,1.2,3.5,0.1,'배'),R('shake','화면 흔들림',6,0,14,1,'px')],
+ build(st,p){const r=root2(st);
+   const pn=[WBOX(r,'6%','7%','42%','40%',{border:'3px solid #fff',borderRadius:'4px',background:'linear-gradient(160deg,#8a5a6a,#2a1f24)'}),
+     WBOX(r,'52%','7%','42%','40%',{border:'3px solid #fff',borderRadius:'4px',background:'linear-gradient(200deg,#3c5a7a,#15121a)'}),
+     WBOX(r,'6%','51%','88%','42%',{border:'3px solid #fff',borderRadius:'4px',background:'linear-gradient(170deg,#c2185b,#2a0f1e)',overflow:'hidden'})];
+   const speed=mk2(pn[2],'',null,{position:'absolute',inset:'-40%',opacity:'0',background:'repeating-linear-gradient(115deg,rgba(255,255,255,.2) 0 2px,transparent 2px 14px)'});
+   const bub=mk2(r,'',null,{position:'absolute',left:'58%',top:'16%',padding:'6px 10px',background:'#fff',color:'#111',borderRadius:'14px',fontWeight:'900',fontSize:'13px',whiteSpace:'nowrap',transform:'scale(0)',transformOrigin:'0 100%'});bub.textContent='이게 무슨 일이야?!';
+   const sfx=mk2(r,'',null,{position:'absolute',left:'20%',top:'58%',fontWeight:'900',fontSize:'40px',color:'#ffe14d',textShadow:'3px 3px 0 #111',transform:'scale(0)'});sfx.textContent='쾅!';
+   return()=>{kill2(r);const g=p.dur;const s=p.shake;
+     pn.forEach(x=>x.style.opacity='0');
+     const shakeKF=[];for(let i=0;i<=12;i++){const t=i/12;const a=s*Math.sin(t*Math.PI*6)*(1-t);shakeKF.push({offset:t*.1+.6,transform:`translate(${a.toFixed(1)}px,${(-a*.5).toFixed(1)}px)`});}
+     shakeKF.unshift({offset:0,transform:'translate(0,0)'});shakeKF.push({offset:1,transform:'translate(0,0)'});
+     return fin2([
+       AN2(pn[0],[{opacity:0,transform:'translate(-70px,0) rotate(-4deg)'},{opacity:1,transform:'translate(8px,0) rotate(1deg)',offset:.7},{opacity:1,transform:'none'}],g*.35,p.ease,0),
+       AN2(pn[1],[{opacity:0,transform:'translate(70px,0) rotate(4deg)'},{opacity:1,transform:'translate(-8px,0) rotate(-1deg)',offset:.7},{opacity:1,transform:'none'}],g*.35,p.ease,g*.15),
+       AN2(pn[2],[{opacity:0,transform:'translate(0,50px) scale(.96)'},{opacity:1,transform:'translate(0,-6px) scale(1.01)',offset:.7},{opacity:1,transform:'none'}],g*.35,p.ease,g*.3),
+       AN2(pn[2].firstChild,[{transform:'scale(1)'},{transform:'scale(1.06) translate(-2%,-1%)'}],g,'linear',g*.3),
+       AN2(speed,[{opacity:0,backgroundPosition:'0 0'},{opacity:1,backgroundPosition:'60px 0',offset:.5},{opacity:0,backgroundPosition:'120px 0'}],g*.6,'linear',g*.45),
+       AN2(bub,[{transform:'scale(0,0)'},{transform:'scale(1.3,.7)',offset:.4},{transform:'scale(.9,1.12)',offset:.7},{transform:'scale(1)'}],g*.3,'linear',g*.55),
+       AN2(sfx,[{transform:`scale(${p.sfx}) rotate(-8deg)`,opacity:0},{transform:'scale(.9) rotate(-8deg)',opacity:1,offset:.6},{transform:'scale(1.05) rotate(-8deg)',opacity:1,offset:.8},{transform:'scale(1) rotate(-8deg)',opacity:1}],g*.3,'linear',g*.7),
+       AN2(r,shakeKF,g,'linear')]);};},
+ code:p=>`/* 세로 스크롤 웹툰 컷 연출 */\n.panel.left  { animation: inL ${p.dur}ms cubic-bezier(.2,1.2,.4,1) both; }\n.bubble      { animation: squash .3s linear both; }  /* 0→1.3×0.7→0.9×1.12→1 */\n.sfx         { animation: slam .3s ease-out both; }\n.frame       { animation: shake ${p.dur}ms linear; }  /* ±${p.shake}px 감쇠 */`,
+ prompt:(p,t)=>`${t}용 웹툰 뷰어와 컷 연출을 만들어줘.\n- 컷 구성: 위쪽 2컷 + 아래 넓은 1컷, 흰 테두리 3px, 모서리 4px.\n- 등장: 좌·우 컷은 살짝 오버슈트하며 들어오고(${ez(p.ease)}), 아래 컷은 위로 올라와 정착.\n- 말풍선: squash-stretch(1.3×0.7 → 0.9×1.12 → 1), 꼬리는 말하는 인물 쪽.\n- 효과음(쾅!): ${p.sfx}배에서 내려앉는 순간 화면 전체를 ±${p.shake}px 감쇠 흔들림.\n- 컷은 천천히 확대(Ken Burns 1→1.06)되고, 액션 컷에만 속도선.\n- IntersectionObserver로 화면에 들어올 때 한 번만 재생.`,
+ note:'컷이 튕기듯 들어오고 말풍선이 찌그러졌다 튀며 쾅 순간 화면이 흔들립니다.'});
+
 AP('pr-wt-bubble','말풍선 3종 (대사·생각·외침)','Bubble Types (Speech·Thought·Shout)',{mini:'pop',target:'말풍선',
  icon:'<path d="M4 5h16v11H9l-5 4z"/><path d="M16 9l2 2-2 2"/>',
- desc:'대사 말풍선은 꼬리가 달린 둥근 상자, 생각 말풍선은 구름 모양에 작은 원 꼬리, 외침 말풍선은 가시처럼 뾰족한 테두리입니다. 세 가지가 차례로 튀어 오릅니다.',
- how:'말풍선마다 scale 0에서 back 이징으로 키우고, 지연 시간을 다르게 줍니다. 외침은 별 모양 polygon을, 생각은 원 여러 개를 쓰는 SVG로 그립니다.',
- params:[DUR(1800,600,4000),EASE('back'),R('pop','튀는 정도',1.12,1,1.3,0.01,'배')],
+ desc:'대사 말풍선은 글자가 왼쪽부터 써지고, 생각 말풍선은 구름 안에서 천천히 떠 있으며, 외침 말풍선은 테두리가 떨리며 튑니다. 세 말풍선의 움직임이 각각 다릅니다.',
+ how:'글자는 clip-path 폭을 키워 타자처럼 보이게 하고, 생각 말풍선은 사인 파형으로 떠 있고, 외침은 scale 키프레임을 짧게 떨어 뜨립니다.',
+ params:[DUR(2400,800,5000),EASE('back'),R('pop','튀는 정도',1.14,1,1.3,0.01,'배'),R('float','생각 말풍선 떠오름',5,0,12,1,'px')],
  build(st,p){const r=root2(st);
-   const mkb=(css,svg)=>mk2(r,'',svg,{position:'absolute',transform:'scale(0)',transformOrigin:'50% 100%',...css});
-   const b1=mkb({left:'6%',top:'10%',width:'44%',height:'30%'},SV('0 0 120 90','<path d="M8 8H112V62H50L26 84V62H8z" fill="#fff" stroke="#111" stroke-width="4"/><text x="60" y="41" text-anchor="middle" font-size="13" font-weight="900" fill="#111">안녕하세요</text>'));
-   const b2=mkb({left:'50%',top:'40%',width:'44%',height:'30%'},SV('0 0 120 90','<path d="M30 14C44 2 80 2 92 14C112 16 114 40 102 48C112 66 96 76 82 70C72 82 46 82 38 70C18 72 6 56 16 44C4 32 12 18 30 14z" fill="#fff" stroke="#111" stroke-width="4"/><circle cx="20" cy="82" r="5" fill="#fff" stroke="#111" stroke-width="3"/><circle cx="10" cy="88" r="3" fill="#fff" stroke="#111" stroke-width="2"/><text x="60" y="46" text-anchor="middle" font-size="12" font-weight="900" fill="#111">뭐지...</text>'));
-   const b3=mkb({left:'10%',top:'72%',width:'46%',height:'24%'},SV('0 0 120 90','<polygon points="60,4 70,18 88,8 86,26 106,30 94,44 112,52 96,60 106,76 86,72 80,88 68,76 54,88 50,74 30,80 34,62 12,56 26,46 14,30 34,28 36,10 50,20" fill="#ffe14d" stroke="#111" stroke-width="3"/><text x="60" y="52" text-anchor="middle" font-size="14" font-weight="900" fill="#111">으악!!</text>'));
-   return()=>{kill2(r);const g=p.dur;
-     return fin2([b1,b2,b3].map((b,i)=>AN2(b,[{transform:'scale(0)'},{transform:`scale(${p.pop})`},{transform:'scale(1)'}],g*.3,'back',i*g*.2)));};},
- code:p=>`/* 말풍선 3종 */\n.bubble-say   { border-radius: 14px; }            /* 대사: 꼬리 + 둥근 상자 */\n.bubble-think { background: url(cloud.svg); }    /* 생각: 구름 + 작은 원 꼬리 */\n.bubble-shout { clip-path: polygon(/* 별 모양 */); } /* 외침: 뾰족한 테두리 */\n.bubble { animation: pop ${Math.round(p.dur*.3)}ms cubic-bezier(.34,1.56,.64,1) both; }\n@keyframes pop { 0% { transform: scale(0); } 60% { transform: scale(${p.pop}); } 100% { transform: scale(1); } }`,
- prompt:(p,t)=>`${t}용 말풍선 세 종류를 만들어줘.\n- 대사: 흰 배경, 검은 테두리 4px, 꼬리는 말하는 인물 쪽을 향함.\n- 생각: 구름 모양 외곽, 꼬리는 작은 원 두 개로 점점 작아지게.\n- 외침: 노란 배경 + 뾰족한 별 모양 테두리, 굵은 글씨.\n- 등장: scale 0 → ${p.pop}배 → 1배 (back 이징, ${p.dur}ms 안에서 0.2초 간격으로 순서대로).\n- 말풍선 텍스트는 줄바꿈 없이, 최대 가로 폭 44%를 넘지 않게 해줘.`,
- note:'대사, 생각, 외침 말풍선이 차례로 튀어 오릅니다.'});
+   const mkb=(x,y,w,h,svg)=>mk2(r,'',svg,{position:'absolute',left:x,top:y,width:w,height:h,transform:'scale(0)',transformOrigin:'50% 100%'});
+   const b1=mkb('6%','10%','44%','30%',SV('0 0 120 90','<path d="M8 8H112V62H50L26 84V62H8z" fill="#fff" stroke="#111" stroke-width="4"/><text class="txt" x="60" y="41" text-anchor="middle" font-size="13" font-weight="900" fill="#111" style="clip-path:inset(0 0 0 0)">안녕하세요</text>'));
+   const b2=mkb('50%','40%','44%','30%',SV('0 0 120 90','<path d="M30 14C44 2 80 2 92 14C112 16 114 40 102 48C112 66 96 76 82 70C72 82 46 82 38 70C18 72 6 56 16 44C4 32 12 18 30 14z" fill="#fff" stroke="#111" stroke-width="4"/><circle cx="20" cy="82" r="5" fill="#fff" stroke="#111" stroke-width="3"/><circle cx="10" cy="88" r="3" fill="#fff" stroke="#111" stroke-width="2"/><text class="txt" x="60" y="46" text-anchor="middle" font-size="12" font-weight="900" fill="#111">뭐지...</text>'));
+   const b3=mkb('10%','72%','46%','24%',SV('0 0 120 90','<polygon points="60,4 70,18 88,8 86,26 106,30 94,44 112,52 96,60 106,76 86,72 80,88 68,76 54,88 50,74 30,80 34,62 12,56 26,46 14,30 34,28 36,10 50,20" fill="#ffe14d" stroke="#111" stroke-width="3"/><text class="txt" x="60" y="52" text-anchor="middle" font-size="14" font-weight="900" fill="#111">으악!!</text>'));
+   return()=>{kill2(r);const g=p.dur;const pop=p.pop;
+     const txts=[...r.querySelectorAll('.txt')];
+     return fin2([
+       AN2(b1,[{transform:'scale(0)'},{transform:`scale(${pop})`,offset:.45},{transform:'scale(1)'}],g*.25,'linear',0),
+       AN2(txts[0],[{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0 0 0)'}],g*.3,'linear',g*.2),
+       AN2(b2,[{transform:'scale(0)'},{transform:`scale(${pop})`,offset:.45},{transform:'scale(1)'}],g*.25,'linear',g*.3),
+       AN2(b2.firstElementChild,[{transform:'translateY(0)'},{transform:`translateY(-${p.float}px)`},{transform:'translateY(0)'}],g*.5,'inout',g*.55),
+       AN2(b3,[{transform:'scale(0)'},{transform:`scale(${pop})`,offset:.4},{transform:'scale(.97)',offset:.6},{transform:'scale(1.02)',offset:.8},{transform:'scale(1)'}],g*.3,'linear',g*.6),
+       AN2(b3.firstElementChild,[{transform:'rotate(0deg)'},{transform:'rotate(-1.5deg)'},{transform:'rotate(1.5deg)'},{transform:'rotate(0deg)'}],g*.25,'linear',g*.75)]);};},
+ code:p=>`/* 말풍선 3종 */\n.say   { animation: type ${p.dur}ms steps(8) both; }   /* 대사: 글자 타자 */\n.think{ animation: float 2.4s ease-in-out infinite; } /* 생각: ${p.float}px 떠오름 */\n.shout{ animation: pop .3s linear both, wobble .2s linear .4s; } /* 외침: 떨림 */`,
+ prompt:(p,t)=>`${t}용 말풍선 세 종류를 만들어줘.\n- 대사: 흰 상자, 검은 테두리 4px, 꼬리는 말하는 인물 쪽. 글자는 왼쪽부터 타자 효과.\n- 생각: 구름 외곽, 작은 원 꼬리. 떠오름 ${p.float}px 루프.\n- 외침: 노란 별 테두리, 등장 후 ±1.5° 떨림 두 번.\n- 등장은 0→${p.pop}배→1배 (back 이징), 순서는 대사→생각→외침.`,
+ note:'대사는 글자가 써지고, 생각은 떠오르며, 외침은 튀고 떨립니다.'});
 
 AP('pr-wt-speed','집중선 (액션 컷)','Focus Lines (Action Panel)',{mini:'pop',target:'액션 컷',
  icon:'<circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M19 5l-3 3M5 19l3-3"/>',
- desc:'컷의 중심에서 선이 사방으로 뻗고, 가운데 인물이 충격에 흔들립니다. 웹툰에서 긴장과 충돌을 강조할 때 쓰는 연출입니다.',
- how:'집중선 24개를 중심에서 바깥으로 뻗게 그리고, 그룹을 scale 0.4에서 1로 키우며 페이드인합니다. 인물은 짧은 흔들림 키프레임을 줍니다.',
- params:[DUR(1400,500,3000),EASE('out'),R('shake','흔들림 크기',8,2,20,1,'px')],
+ desc:'집중선이 중심에서 튀어나오며 컷이 한 번 번쩍입니다. 인물은 충격에 눌렸다 튕기고, 집중선은 천천히 회전하며 긴장을 만듭니다.',
+ how:'집중선 그룹은 scale 0.4→1.1→1로 튀면서 천천히 회전하고, 흰 플래시 오버레이가 짧게 깜빡입니다. 인물은 scaleX·scaleY를 번갈아 찌그러뜨려 충격을 표현합니다.',
+ params:[DUR(1600,500,3000),EASE('out'),R('spin','집중선 회전',8,0,25,1,'°'),R('impact','충격 찌그러짐',18,5,30,1,'%')],
  build(st,p){const r=root2(st);
    const FL=Array.from({length:24},(_,i)=>{const a=i*Math.PI*2/24,c=Math.cos(a),s=Math.sin(a);return `<line x1="${(150+c*70).toFixed(1)}" y1="${(150+s*70).toFixed(1)}" x2="${(150+c*190).toFixed(1)}" y2="${(150+s*190).toFixed(1)}" stroke="#fff" stroke-width="${i%3?2:4}"/>`;}).join('');
    const svg=mk2(r,'',SV('0 0 300 300',`<rect width="300" height="300" fill="#2a1f24"/><g class="fl" style="transform-origin:150px 150px">${FL}</g><g class="hero" style="transform-origin:150px 150px"><circle cx="150" cy="150" r="34" fill="#ffd6c7" stroke="#111" stroke-width="4"/><text x="150" y="157" text-anchor="middle" font-size="18" font-weight="900" fill="#111">!</text></g>`),{position:'absolute',inset:'0'});
-   return()=>{kill2(r);const fl=svg.querySelector('.fl'),h=svg.querySelector('.hero');const s=p.shake;
+   const flash=mk2(r,'',null,{position:'absolute',inset:'0',background:'#fff',opacity:'0'});
+   return()=>{kill2(r);const g=p.dur;const fl=svg.querySelector('.fl'),h=svg.querySelector('.hero');
+     const im=p.impact/100;
      return fin2([
-       AN2(fl,[{transform:'scale(.4)',opacity:0},{transform:'scale(1)',opacity:1}],p.dur*.5,p.ease),
-       AN2(h,[{transform:'translate(0,0)'},{transform:`translate(${s}px,-${s/2}px)`},{transform:`translate(-${s}px,${s/2}px)`},{transform:`translate(${s/2}px,0)`},{transform:'translate(0,0)'}],p.dur*.6,'linear',p.dur*.3)]);};},
- code:p=>`/* 집중선 액션 컷 */\n.focus-lines { transform-origin: 50% 50%; animation: burst ${p.dur}ms ${ez(p.ease)} both; }\n@keyframes burst { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }\n.hero { animation: shake .3s linear; }\n/* 흔들림 ±${p.shake}px */`,
- prompt:(p,t)=>`${t}용 액션 컷 집중선 연출을 만들어줘.\n- 집중선 24개(3개마다 굵은 선 하나)를 컷 중심에서 방사형으로 배치.\n- 등장: scale 0.4 → 1, 페이드인, 이징 ${ez(p.ease)}, 전체 ${p.dur}ms.\n- 중앙 인물은 ${p.shake}px 안에서 짧게 흔들리는 키프레임(0.3초).\n- 집중선 색은 컷 배경과 대비되는 흰색, 컷을 벗어나지 않도록 overflow hidden.`,
- note:'집중선이 사방으로 퍼지고 인물이 충격에 흔들립니다.'});
+       AN2(fl,[{transform:'scale(.4) rotate(0deg)',opacity:0},{transform:`scale(1.1) rotate(${p.spin*.4}deg)`,opacity:1,offset:.4},{transform:`scale(1) rotate(${p.spin}deg)`,opacity:1}],g*.6,p.ease),
+       AN2(flash,[{opacity:0},{opacity:.55,offset:.08},{opacity:0}],g*.25,'linear',0),
+       AN2(h,[{transform:'scale(1,1)'},{transform:`scale(${1+im},${1-im})`,offset:.15},{transform:`scale(${1-im*.6},${1+im*.6})`,offset:.3},{transform:'scale(1,1)',offset:.5},{transform:'scale(1,1)'}],g*.5,'out',g*.25)]);};},
+ code:p=>`/* 집중선 액션 컷 */\n.focus { animation: burst ${p.dur}ms ease-out both, spin 6s linear infinite; }\n@keyframes burst { 0% { transform: scale(.4); } 40% { transform: scale(1.1) rotate(${Math.round(p.spin*.4)}deg); } 100% { transform: scale(1) rotate(${p.spin}deg); } }\n.flash { animation: flash .25s linear; }\n.hero  { animation: squash .5s linear; }   /* 찌그러짐 ±${p.impact}% */`,
+ prompt:(p,t)=>`${t}용 액션 컷 집중선을 만들어줘.\n- 집중선 24개(3개마다 굵은 선)를 중심에서 방사형으로.\n- 등장: 0.4 → 1.1 → 1 오버슈트, 회전 ${p.spin}°, 전체 ${p.dur}ms.\n- 흰 플래시가 8% 구간에서 55%까지 번쩍였다 사라짐.\n- 중앙 인물은 찌그러짐(±${p.impact}%)으로 충격을 표현하고 정착.`,
+ note:'집중선이 튀어나오고 컷이 번쩍이며 인물이 충격에 찌그러집니다.'});
 
 AP('pr-wt-sfx','효과음 SFX 3종','Sound Effects (3 Styles)',{mini:'pop',target:'효과음',
  icon:'<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8c2 2 2 6 0 8M19 5c3 3 3 11 0 14"/>',
- desc:'쾅!은 크게 내리꽂히고, 휙!은 옆에서 미끄러지며, 두근은 심장처럼 두 번 뛰는 소리 글자입니다. 소리마다 움직임을 다르게 줍니다.',
- how:'쾅!은 scale 큰 값에서 1로 내려앉고, 휙!은 translateX로 미끄러지며 흐려지고, 두근은 scale 키프레임을 두 번 반복합니다.',
- params:[DUR(2000,800,4000),EASE('out'),R('big','쾅 시작 크기',2.4,1.5,4,0.1,'배')],
+ desc:'쾅!은 내리꽂히며 화면이 흔들리고, 휙!은 잔상을 남기며 미끄러지고, 두근은 심장 박동에 맞춰 빛이 번집니다. 소리마다 움직임과 질감이 다릅니다.',
+ how:'쾅!은 scale 키프레임과 화면 흔들림, 휙!은 같은 글자를 시간차로 세 번 복제해 잔상을 만들고, 두근은 drop-shadow 빛을 박동 주기에 맞춥니다.',
+ params:[DUR(2200,800,4000),EASE('out'),R('big','쾅 시작 크기',2.4,1.5,4,0.1,'배'),R('glow','두근 빛 세기',14,4,30,1,'px')],
  build(st,p){const r=root2(st);
-   const bg=mk2(r,'',null,{position:'absolute',inset:'0',background:'#15121a'});
+   mk2(r,'',null,{position:'absolute',inset:'0',background:'#15121a'});
    const mkT=(txt,css,col)=>mk2(r,'',txt,{position:'absolute',fontWeight:'900',color:col,textShadow:'3px 3px 0 #111',whiteSpace:'nowrap',...css});
    const a=mkT('쾅!',{left:'8%',top:'14%',fontSize:'46px'},'#ffe14d');
+   const gh=[0,1,2].map(k=>mkT('휙!',{left:'40%',top:'44%',fontSize:'40px',opacity:'0'},'#7ad1ff'));
    const b=mkT('휙!',{left:'40%',top:'44%',fontSize:'40px'},'#7ad1ff');
    const c=mkT('두근',{left:'16%',top:'68%',fontSize:'40px'},'#ff8fa3');
    return()=>{kill2(r);const g=p.dur;
      a.style.opacity='0';b.style.opacity='0';c.style.opacity='0';
+     const gl=p.glow;
      return fin2([
-       AN2(a,[{transform:`scale(${p.big}) rotate(-8deg)`,opacity:0},{transform:'scale(1) rotate(-8deg)',opacity:1},{transform:'scale(1) rotate(-8deg)',opacity:1}],g*.3,'back',0),
-       AN2(b,[{transform:'translateX(-120px)',opacity:0},{transform:'translateX(0)',opacity:1},{transform:'translateX(30px)',opacity:0}],g*.5,'out',g*.35),
-       AN2(c,[{transform:'scale(1)',opacity:0},{transform:'scale(1.25)',opacity:1},{transform:'scale(1)',opacity:1},{transform:'scale(1.18)',opacity:1},{transform:'scale(1)',opacity:1}],g*.6,'inout',g*.6)]);};},
- code:p=>`/* 효과음 3종 */\n.sfx-slam  { animation: slam .3s ease-out both; }   /* 쾅!: 크게 → 1배 */\n.sfx-swoosh { animation: swoosh .4s ease-out both; }/* 휙!: 옆에서 미끄러짐 */\n.sfx-heart  { animation: beat .6s ease-in-out 2; }  /* 두근: 두 번 뜀 */\n@keyframes slam { from { transform: scale(${p.big}) rotate(-8deg); opacity: 0; } to { transform: scale(1) rotate(-8deg); opacity: 1; } }`,
- prompt:(p,t)=>`${t}용 효과음 텍스트 연출 세 가지를 만들어줘.\n- 쾅!: 시작 크기 ${p.big}배에서 1배로 내려앉으며 살짝 기울기(-8deg). 노란색, 검은 그림자 3px.\n- 휙!: 왼쪽에서 미끄러져 들어와 오른쪽으로 빠지며 사라짐. 하늘색.\n- 두근: 심장 박동처럼 1.25배, 1.18배로 두 번 뛰는 키프레임. 분홍색.\n- 효과음은 컷 위의 지정된 위치에 두고, 한 번 나온 뒤 다시 반복하지 않게 해줘.\n- 전체 길이는 ${p.dur}ms 안에서 끝내줘.`,
- note:'쾅은 내려앉고, 휙은 미끄러지며, 두근은 두 번 뜁니다.'});
+       AN2(a,[{transform:`scale(${p.big}) rotate(-8deg)`,opacity:0},{transform:'scale(.92) rotate(-8deg)',opacity:1,offset:.6},{transform:'scale(1.04) rotate(-8deg)',opacity:1,offset:.8},{transform:'scale(1) rotate(-8deg)',opacity:1}],g*.3,'linear',0),
+       ...gh.map((x,k)=>AN2(x,[{transform:'translateX(-130px)',opacity:0},{transform:'translateX(0)',opacity:.5-k*.15,offset:.4},{transform:'translateX(40px)',opacity:0}],g*.45,'out',g*.4+k*g*.04)),
+       AN2(b,[{transform:'translateX(-130px)',opacity:0},{transform:'translateX(0)',opacity:1,offset:.4},{transform:'translateX(40px)',opacity:0}],g*.45,'out',g*.4),
+       AN2(c,[{transform:'scale(1)',opacity:0,filter:`drop-shadow(0 0 0px #ff8fa3)`},{transform:'scale(1.25)',opacity:1,filter:`drop-shadow(0 0 ${gl}px #ff8fa3)`,offset:.2},{transform:'scale(1)',opacity:1,filter:'drop-shadow(0 0 2px #ff8fa3)',offset:.35},{transform:'scale(1.18)',opacity:1,filter:`drop-shadow(0 0 ${gl}px #ff8fa3)`,offset:.55},{transform:'scale(1)',opacity:1,filter:'drop-shadow(0 0 2px #ff8fa3)'}],g*.7,'inout',g*.6)]);};},
+ code:p=>`/* 효과음 3종 */\n.sfx-slam   { animation: slam .3s ease-out both; }      /* 쾅!: 내리꽂힘 + 흔들림 */\n.sfx-swoosh{ animation: swoosh .45s ease-out both; }   /* 휙!: 잔상 3개 시간차 */\n.sfx-heart { animation: beat .7s ease-in-out 2; filter: drop-shadow(0 0 ${p.glow}px #ff8fa3); }`,
+ prompt:(p,t)=>`${t}용 효과음 텍스트 연출 세 가지를 만들어줘.\n- 쾅!: ${p.big}배에서 내려앉으며 -8° 기울기, 끝에 살짝 튕김. 컷 흔들림과 함께.\n- 휙!: 왼쪽에서 미끄러져 들어오며 잔상 3개(시간차, 투명도 감소)를 남김.\n- 두근: 심장 박동 두 번, 박동 순간마다 분홍 빛(${p.glow}px)이 번짐.\n- 각 효과음은 컷 위의 지정된 위치에, 한 번 나온 뒤 반복하지 않음.`,
+ note:'쾅은 내리꽂히고, 휙은 잔상을 남기며 미끄러지고, 두근은 빛을 내며 두 번 뜁니다.'});
 
 AP('pr-wt-scroll','세로 스크롤 패럴랙스','Vertical Scroll Parallax',{mini:'slide',target:'웹툰 세로 스크롤',
  icon:'<rect x="6" y="3" width="12" height="18" rx="2"/><path d="M12 7v4M10 9l2 2 2-2"/>',
- desc:'하늘, 산, 인물 레이어가 스크롤 속도 차이만큼 다르게 움직입니다. 가까운 레이어일수록 더 빨리 지나가 입체감이 생깁니다.',
- how:'레이어마다 translateY 이동량을 다르게 주고, 스크롤 진행률 막대도 같은 시간축으로 채웁니다. 실제 스크롤 대신 진행률 0→1을 애니메이션으로 재생합니다.',
- params:[DUR(3000,1000,6000),EASE('inout'),R('depth','가까운 레이어 이동량',60,20,120,1,'px')],
+ desc:'하늘의 구름이 천천히 흘러가고, 산·인물 레이어는 스크롤 속도 차이만큼 다르게 움직입니다. 인물은 숨 쉬듯 위아래로 떠서 살아 있는 장면이 됩니다.',
+ how:'레이어마다 translateY 이동량을 0.2 : 0.5 : 1.0으로 주고, 구름은 translateX 루프, 인물은 사인 파형으로 숨쉬기 동작을 합니다. 진행률 막대는 같은 시간축으로 채웁니다.',
+ params:[DUR(3600,1000,6000),EASE('inout'),R('depth','가까운 레이어 이동량',60,20,120,1,'px'),R('cloud','구름 흐름 폭',90,30,200,5,'px')],
  build(st,p){const r=root2(st);
-   const far=mk2(r,'',null,{position:'absolute',left:'0',right:'0',top:'-10%',height:'120%',background:'linear-gradient(#f6c1cc,#ffd6c7)'});
-   const mid=mk2(r,'',SV('0 0 300 300','<path d="M0 200 L60 130 L110 180 L170 110 L230 170 L300 120 L300 300 L0 300z" fill="#8a5a6a"/>'),{position:'absolute',left:'0',right:'0',top:'-10%',height:'120%'});
-   const fore=mk2(r,'',SV('0 0 300 300','<path d="M0 250 Q80 200 150 240 T300 230 L300 300 L0 300z" fill="#2a1f24"/><circle cx="150" cy="176" r="22" fill="#ffd6c7" stroke="#111" stroke-width="3"/>'),{position:'absolute',left:'0',right:'0',top:'-10%',height:'120%'});
-   const bar=mk2(r,'',null,{position:'absolute',left:'0',top:'0',height:'3px',width:'100%',background:'#ff8fa3',transformOrigin:'0 50%'});
-   return()=>{kill2(r);const d=p.depth;
+   const sky=WBOX(r,'0','-10%','100%','120%',{background:'linear-gradient(#f6c1cc,#ffd6c7)'});
+   const cloud=mk2(r,'',SV('0 0 300 120','<g fill="#fff" opacity=".85"><ellipse cx="60" cy="40" rx="40" ry="14"/><ellipse cx="90" cy="34" rx="30" ry="18"/><ellipse cx="220" cy="70" rx="46" ry="14"/><ellipse cx="250" cy="62" rx="26" ry="16"/></g>'),{position:'absolute',left:'-20%',top:'8%',width:'140%',height:'30%'});
+   const far=WBOX(r,'0','-10%','100%','120%');far.innerHTML=SV('0 0 300 300','<path d="M0 200 L60 130 L110 180 L170 110 L230 170 L300 120 L300 300 L0 300z" fill="#8a5a6a"/>');
+   const mid=WBOX(r,'0','-10%','100%','120%');mid.innerHTML=SV('0 0 300 300','<path d="M0 250 Q80 200 150 240 T300 230 L300 300 L0 300z" fill="#2a1f24"/>');
+   const hero=mk2(r,'',SV('0 0 300 300','<circle cx="150" cy="176" r="22" fill="#ffd6c7" stroke="#111" stroke-width="3"/><path d="M128 206 Q150 190 172 206 L176 260 L124 260z" fill="#2a1f24"/>'),{position:'absolute',left:'0',right:'0',top:'-10%',height:'120%'});
+   const bar=WBOX(r,'0','0','100%','3px',{background:'#ff8fa3',transformOrigin:'0 50%'});
+   return()=>{kill2(r);const g=p.dur;const d=p.depth;
      return fin2([
-       AN2(far,[{transform:'translateY(0)'},{transform:`translateY(-${d*.2}px)`}],p.dur,'linear'),
-       AN2(mid,[{transform:'translateY(0)'},{transform:`translateY(-${d*.5}px)`}],p.dur,'linear'),
-       AN2(fore,[{transform:'translateY(0)'},{transform:`translateY(-${d}px)`}],p.dur,'linear'),
-       AN2(bar,[{transform:'scaleX(0)'},{transform:'scaleX(1)'}],p.dur,'linear')]);};},
- code:p=>`/* 세로 스크롤 패럴랙스 */\n.layer-far  { transform: translateY(calc(var(--p) * -${Math.round(p.depth*.2)}px)); }\n.layer-mid  { transform: translateY(calc(var(--p) * -${Math.round(p.depth*.5)}px)); }\n.layer-fore { transform: translateY(calc(var(--p) * -${p.depth}px)); }\n/* --p: 스크롤 진행률 0~1 (scroll 이벤트 또는 scroll-timeline) */`,
- prompt:(p,t)=>`${t}용 세로 스크롤 패럴랙스 웹툰 장면을 만들어줘.\n- 레이어 3개: 하늘(가장 느림), 산(중간), 인물·전경(가장 빠름). 이동량 비율은 0.2 : 0.5 : 1.0 (가까운 쪽 최대 ${p.depth}px).\n- 진행률 --p는 스크롤 위치(0~1)로 계산하고, 모바일에서도 같은 값으로 움직이게 해줘.\n- 상단에 얇은 진행률 막대(#ff8fa3)를 두고 스크롤과 함께 채워줘.\n- 레이어는 will-change: transform으로 GPU에 올리고, 화면 밖 레이어는 렌더링을 멈춰줘.`,
- note:'하늘, 산, 인물 레이어가 서로 다른 속도로 움직이며 입체감을 줍니다.'});
+       AN2(cloud,[{transform:'translateX(0)'},{transform:`translateX(${p.cloud}px)`},{transform:'translateX(0)'}],g,'inout'),
+       AN2(far,[{transform:'translateY(0)'},{transform:`translateY(-${d*.2}px)`}],g,'linear'),
+       AN2(mid,[{transform:'translateY(0)'},{transform:`translateY(-${d*.5}px)`}],g,'linear'),
+       AN2(hero,[{transform:'translateY(0) scaleY(1)'},{transform:`translateY(-${d*.5}px) scaleY(1.03)`,offset:.25},{transform:`translateY(-${d}px) scaleY(1)`,offset:.5},{transform:`translateY(-${d*.5}px) scaleY(1.03)`,offset:.75},{transform:`translateY(-${d}px) scaleY(1)`}],g,'linear'),
+       AN2(bar,[{transform:'scaleX(0)'},{transform:'scaleX(1)'}],g,'linear')]);};},
+ code:p=>`/* 세로 스크롤 패럴랙스 */\n.cloud { animation: drift ${p.dur}ms ease-in-out infinite alternate; }\n.far   { transform: translateY(calc(var(--p) * -${Math.round(p.depth*.2)}px)); }\n.mid   { transform: translateY(calc(var(--p) * -${Math.round(p.depth*.5)}px)); }\n.hero  { transform: translateY(calc(var(--p) * -${p.depth}px)); }  /* --p: 스크롤 0~1 */`,
+ prompt:(p,t)=>`${t}용 세로 스크롤 패럴랙스 장면을 만들어줘.\n- 레이어: 구름(좌우 흐름 ${p.cloud}px), 산(0.5배), 인물(1.0배, 최대 ${p.depth}px).\n- 인물은 숨 쉬듯 살짝 늘었다 줄어듦(1.03배).\n- 진행률 --p는 스크롤 위치(0~1). 상단 진행률 막대는 스크롤과 함께 채움.\n- will-change: transform, 화면 밖 레이어는 렌더링 중지.`,
+ note:'구름이 흐르고 산과 인물이 서로 다른 속도로 움직이며 입체감을 줍니다.'});
 
 
-/* 지도 생성 — 업그레이드 6종 */
+/* ═════ 지도 6종 (업그레이드): 빛나는 경로·탄성 병합·파문·3D 성장·호흡 히트맵·파동 색칠 ═════ */
 const MAPB='<rect width="300" height="300" fill="#1d181b"/><g fill="#2a2226"><rect x="14" y="14" width="78" height="62" rx="5"/><rect x="104" y="14" width="66" height="62" rx="5"/><rect x="182" y="14" width="104" height="62" rx="5"/><rect x="14" y="108" width="66" height="60" rx="5"/><rect x="92" y="108" width="84" height="60" rx="5"/><rect x="188" y="108" width="98" height="60" rx="5"/><rect x="14" y="200" width="120" height="86" rx="5"/><rect x="146" y="200" width="140" height="86" rx="5"/></g><g stroke="#3a3136" stroke-width="8" fill="none"><path d="M0 92H300M0 186H300M92 0V300M176 0V300"/></g>';
 const MSV=inner=>SV('0 0 300 300',MAPB+inner);
+const PIN=(x,y,col,w=16,css={})=>mk2(null,'',null,{position:'absolute',left:x,top:y,width:w+'px',height:w+'px',marginLeft:(-w/2)+'px',marginTop:(-w/2)+'px',borderRadius:'50% 50% 50% 0',background:col,transform:'rotate(-45deg)',...css});
 
 AP('pr-map-route','경로 + 카메라 따라가기','Route with Camera Fly-through',{mini:'slide',target:'내비게이션 지도',
  icon:'<circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M6 16C6 10 18 14 18 8"/>',
- desc:'출발지에서 도착지까지 경로선이 그려지고, 카메라 박스가 경로를 따라 이동하며 지도를 훑습니다. 도착하면 핀이 떨어집니다.',
- how:'경로는 stroke-dashoffset으로 그리고, 카메라 박스는 offset-path에 같은 경로를 주어 offsetDistance를 0%에서 100%까지 키웁니다.',
- params:[DUR(2600,800,6000),EASE('inout'),R('lw','선 굵기',5,2,12,1,'px')],
- build(st,p){const d='M40 230 C110 230 120 110 190 110 S260 60 262 56';
-   const r=root2(st);
-   const svg=mk2(r,'',MSV(`<path class="rt" d="${d}" fill="none" stroke="#ff8fa3" stroke-width="${p.lw}" stroke-linecap="round" stroke-dasharray="400" stroke-dashoffset="400"/>`),{position:'absolute',inset:'0'});
-   const rt=svg.querySelector('.rt');
-   const cam=mk2(r,'',null,{position:'absolute',left:'0',top:'0',width:'46px',height:'34px',border:'2px solid #ffe14d',borderRadius:'4px',background:'rgba(255,225,77,.12)',marginLeft:'-23px',marginTop:'-17px',offsetPath:`path("${d}")`,offsetDistance:'0%'});
-   const pin=mk2(r,'',null,{position:'absolute',left:'87%',top:'19%',width:'16px',height:'16px',marginLeft:'-8px',marginTop:'-8px',borderRadius:'50% 50% 50% 0',background:'#fff',transform:'rotate(-45deg)',opacity:'0'});
-   return()=>{kill2(r);rt.style.strokeDashoffset='400';
+ desc:'경로선이 네온처럼 빛나며 그려지고, 파란 점(현재 위치)이 경로를 따라 달리며 지도를 훑습니다. 도착하면 핀이 떨어지고 파문이 번집니다.',
+ how:'경로는 두 겹(넓고 흐린 글로우 + 얇은 본선)으로 그리고 stroke-dashoffset으로 그려 넣습니다. 현재 위치 점은 offset-path로 같은 경로를 따라가고, 도착 핀은 바운스 후 파문을 냅니다.',
+ params:[DUR(2800,800,6000),EASE('inout'),R('lw','선 굵기',5,2,12,1,'px'),R('ring','파문 반경',34,16,60,1,'px')],
+ build(st,p){const d='M40 230 C110 230 120 110 190 110 S260 60 262 56';const r=root2(st);
+   const svg=mk2(r,'',MSV(`<path class="glow" d="${d}" fill="none" stroke="#ff8fa3" stroke-width="${p.lw*3}" opacity=".35" stroke-dasharray="400" stroke-dashoffset="400" style="filter:blur(4px)"/><path class="rt" d="${d}" fill="none" stroke="#ffe14d" stroke-width="${p.lw}" stroke-dasharray="400" stroke-dashoffset="400"/>`),{position:'absolute',inset:'0'});
+   const rt=svg.querySelector('.rt'),gl=svg.querySelector('.glow');
+   const dot=mk2(r,'',null,{position:'absolute',left:'0',top:'0',width:'14px',height:'14px',marginLeft:'-7px',marginTop:'-7px',borderRadius:'50%',background:'#7ad1ff',boxShadow:'0 0 0 4px rgba(122,209,255,.3),0 0 14px #7ad1ff',offsetPath:`path("${d}")`,offsetDistance:'0%',opacity:'0'});
+   const pinA=PIN('13%','77%','#fff',16,{opacity:'0'});r.appendChild(pinA);
+   const pinB=PIN('87%','19%','#ff8fa3',18,{opacity:'0'});r.appendChild(pinB);
+   const rip=mk2(r,'',null,{position:'absolute',left:'87%',top:'19%',width:'10px',height:'10px',marginLeft:'-5px',marginTop:'-5px',borderRadius:'50%',border:'2px solid #ff8fa3',opacity:'0'});
+   return()=>{kill2(r);const g=p.dur;
      return fin2([
-       AN2(rt,[{strokeDashoffset:400},{strokeDashoffset:0}],p.dur*.7,p.ease),
-       AN2(cam,[{offsetDistance:'0%'},{offsetDistance:'100%'}],p.dur*.7,'inout',0),
-       AN2(pin,[{transform:'translateY(-24px) rotate(-45deg)',opacity:0},{transform:'translateY(0) rotate(-45deg)',opacity:1}],p.dur*.3,'back',p.dur*.7)]);};},
- code:p=>`/* MapLibre: 경로 + 카메라 fly-through */\nmap.addSource('route', { type: 'geojson', lineMetrics: true, data: route });\nmap.addLayer({ id: 'route', type: 'line', source: 'route',\n  paint: { 'line-color': '#ff8fa3', 'line-width': ${p.lw}, 'line-gradient': ['step', ['line-progress'], '#ff8fa3', 1, '#ffe14d'] } });\n// 카메라: 경로 위 점 n개를 따라 flyTo\nfor (const pt of sampled) await map.flyTo({ center: pt, zoom: 15, duration: ${Math.round(p.dur/8)} });`,
- prompt:(p,t)=>`${t}용 경로 안내 지도를 만들어줘.\n- 기술: MapLibre GL JS, 다크 테마(배경 #1d181b, 도로 #3a3136).\n- 경로는 ${p.dur}ms 동안 그려지고, 선 굵기 ${p.lw}px, 색은 출발(#ff8fa3)에서 도착(#ffe14d)으로 그라데이션.\n- 카메라 박스(또는 현재 위치 점)가 경로를 따라 flyTo로 이동하며 주변을 보여줘. 각 구간에서 zoom 15 유지.\n- 도착하면 핀이 위에서 떨어져 바운스.\n- 모바일: 경로 카드(거리·예상 시간)를 하단 시트로 보여주고, 시트를 올리면 지도가 같이 줄어들게.`,
- note:'경로선이 그려지고 카메라가 경로를 따라 이동한 뒤 핀이 떨어집니다.'});
+       AN2(rt,[{strokeDashoffset:400},{strokeDashoffset:0}],g*.7,p.ease),
+       AN2(gl,[{strokeDashoffset:400},{strokeDashoffset:0}],g*.7,p.ease),
+       AN2(dot,[{offsetDistance:'0%',opacity:0},{opacity:1,offset:.05},{offsetDistance:'100%',opacity:1}],g*.7,'inout',g*.7*.05),
+       AN2(pinA,[{transform:'translateY(-30px) rotate(-45deg)',opacity:0},{transform:'translateY(4px) rotate(-45deg)',opacity:1,offset:.7},{transform:'translateY(0) rotate(-45deg)',opacity:1}],g*.25,'linear',0),
+       AN2(pinB,[{transform:'translateY(-30px) rotate(-45deg)',opacity:0},{transform:'translateY(4px) rotate(-45deg)',opacity:1,offset:.7},{transform:'translateY(0) rotate(-45deg)',opacity:1}],g*.25,'linear',g*.72),
+       AN2(rip,[{transform:'scale(1)',opacity:.9},{transform:`scale(${(p.ring/5).toFixed(2)})`,opacity:0}],g*.45,'out',g*.85)]);};},
+ code:p=>`/* MapLibre: 경로 글로우 + 현재 위치 fly-through */\nmap.addLayer({ id:'route-glow', type:'line', paint:{'line-color':'#ff8fa3','line-width':${p.lw*3},'line-blur':4,'line-opacity':.35} });\nmap.addLayer({ id:'route', type:'line', paint:{'line-color':'#ffe14d','line-width':${p.lw},'line-gradient':['step',['line-progress'],'#ff8fa3',1,'#ffe14d']} });\nfor (const pt of sampled) await map.easeTo({ center:pt, zoom:15, duration:${Math.round(p.dur/10)} });`,
+ prompt:(p,t)=>`${t}용 경로 안내 지도를 만들어줘.\n- MapLibre GL JS, 다크 테마(배경 #1d181b, 도로 #3a3136).\n- 경로: 글로우 레이어(굵기 ${p.lw*3}px, 블러 4px)와 본선(${p.lw}px, 노랑)을 겹쳐 그리고 ${p.dur}ms 동안 그려 보여줘.\n- 현재 위치 점이 경로를 따라 이동하며, 지나간 구간은 색이 진해지게.\n- 도착 핀은 바운스로 떨어지고 파문(반경 ${p.ring}px)이 한 번 퍼짐.\n- 모바일: 경로 카드(거리·시간)를 하단 시트로, 시트를 올리면 지도 패딩 조정.`,
+ note:'빛나는 경로를 따라 파란 점이 달리고, 도착 핀이 떨어지며 파문이 번집니다.'});
 
 AP('pr-map-cluster','마커 클러스터 병합','Marker Cluster Merge',{mini:'pop',target:'지도 마커 묶음',
  icon:'<circle cx="8" cy="9" r="2"/><circle cx="16" cy="8" r="2"/><circle cx="12" cy="16" r="2"/><circle cx="12" cy="12" r="6" stroke-dasharray="2 3"/>',
- desc:'흩어진 마커 열두 개가 가운데로 모이며 하나의 원이 되고, 원 안에 개수 12가 나타납니다. 줌아웃할 때 지도가 쓰는 묶기 방식입니다.',
- how:'각 마커를 클러스터 중심으로 translate하며 opacity를 줄이고, 중심의 원은 scale 0에서 1로 키우며 숫자를 보여 줍니다.',
- params:[DUR(2000,800,4000),EASE('inout'),R('n','마커 개수',12,4,30,1,'개')],
+ desc:'흩어진 마커들이 탄성 있게 빨려 들어가 하나의 원이 되고, 원 안에 개수가 찍힙니다. 원에서 파문이 두 번 퍼져 묶음이 완성됐음을 알립니다.',
+ how:'마커는 back 이징으로 중심에 빨려 들어가며 사라지고, 클러스터는 scale 1.2 오버슈트 후 정착합니다. 파문 링은 scale 1→2.2로 두 번 반복합니다.',
+ params:[DUR(2400,800,4000),EASE('out'),R('n','마커 개수',12,4,30,1,'개')],
  build(st,p){const r=root2(st);
    const N=Math.min(30,Math.max(4,Math.round(p.n)));
    const pts=Array.from({length:N},(_,i)=>{const a=i*2.4,rr=18+((i*37)%60);return [50+Math.cos(a)*rr*.8+((i*13)%9-4),50+Math.sin(a)*rr*.6+((i*17)%9-4)];});
-   const ms=pts.map(([x,y])=>mk2(r,'',null,{position:'absolute',left:x+'%',top:y+'%',width:'14px',height:'14px',marginLeft:'-7px',marginTop:'-7px',borderRadius:'50% 50% 50% 0',background:'#ff8fa3',transform:'rotate(-45deg)'}));
+   const ms=pts.map(([x,y])=>PIN(x+'%',y+'%','#ff8fa3',14,{transform:'rotate(-45deg)'}));ms.forEach(m=>r.appendChild(m));
+   const rings=[0,1].map(()=>mk2(r,'',null,{position:'absolute',left:'50%',top:'50%',width:'64px',height:'64px',marginLeft:'-32px',marginTop:'-32px',borderRadius:'50%',border:'2px solid #ffe14d',opacity:'0'}));
    const cl=mk2(r,'',null,{position:'absolute',left:'50%',top:'50%',width:'64px',height:'64px',marginLeft:'-32px',marginTop:'-32px',borderRadius:'50%',background:'#ffe14d',color:'#111',fontWeight:'900',fontSize:'20px',display:'flex',alignItems:'center',justifyContent:'center',transform:'scale(0)',boxShadow:'0 0 0 8px rgba(255,225,77,.25)'});
    cl.textContent=String(N);
    return()=>{kill2(r);const g=p.dur;
      return fin2([
-       ...ms.map((m,i)=>{const [x,y]=pts[i];return AN2(m,[{transform:'translate(0,0) rotate(-45deg)',opacity:1},{transform:`translate(${(50-x)*2.4}px,${(50-y)*2.4}px) rotate(-45deg)`,opacity:0}],g*.5,p.ease,g*.2);}),
-       AN2(cl,[{transform:'scale(0)'},{transform:'scale(1.15)'},{transform:'scale(1)'}],g*.35,'back',g*.55)]);};},
- code:p=>`/* 클러스터: 줌아웃 시 마커 병합 */\nsource = { type:'geojson', cluster:true, clusterRadius:50 }\nlayer 'clusters' : circle, radius = step(point_count, 18, 22, 10, 28)\nlayer 'count'    : symbol, text-field = point_count_abbreviated\n/* 병합 연출: 마커 ${Math.round(p.n)} → 중심, ${p.dur}ms */`,
- prompt:(p,t)=>`${t}용 지도 마커 클러스터를 만들어줘.\n- 마커 ${Math.round(p.n)}개 이상은 원 하나로 묶고, 원 안에 개수를 표시. 개수가 10 이상이면 두 자리, 1000 이상이면 "1k"처럼 줄여.\n- 줌아웃하면 병합, 줌인하면 분리되는 애니메이션(${p.dur}ms, ${ez(p.ease)}).\n- 클러스터 크기는 개수에 따라 3단계(22px, 28px, 36px).\n- 클러스터를 누르면 그 안의 마커 범위로 fitBounds.\n- 마커가 수백 개 이상이면 GeoJSON 클러스터 인덱스(supercluster)를 쓰고 뷰포트 밖은 그리지 마.`,
- note:'흩어진 마커가 가운데로 모여 개수가 적힌 원이 됩니다.'});
+       ...ms.map((m,i)=>{const [x,y]=pts[i];return AN2(m,[{transform:'translate(0,0) rotate(-45deg)',opacity:1},{transform:`translate(${((50-x)*2.4).toFixed(1)}px,${((50-y)*2.4).toFixed(1)}px) rotate(-45deg) scale(.6)`,opacity:0,offset:.55},{transform:`translate(${((50-x)*2.4).toFixed(1)}px,${((50-y)*2.4).toFixed(1)}px) rotate(-45deg)`,opacity:0}],g*.6,'linear',i*g*.02);}),
+       AN2(cl,[{transform:'scale(0)'},{transform:'scale(1.25)',offset:.5},{transform:'scale(.92)',offset:.7},{transform:'scale(1)'}],g*.5,'linear',g*.35),
+       ...rings.map((ring,k)=>AN2(ring,[{transform:'scale(1)',opacity:.9},{transform:'scale(2.2)',opacity:0}],g*.45,'out',g*.6+k*g*.2))]);};},
+ code:p=>`/* 클러스터: 병합 → 파문 */\nsource = { type:'geojson', cluster:true, clusterRadius:50 }\nlayer 'clusters' : circle, radius = step(point_count, 18, 22, 10, 28)\n/* 병합 ${Math.round(p.n)}개: back 이징 흡수, 파문 2회 */`,
+ prompt:(p,t)=>`${t}용 지도 마커 클러스터를 만들어줘.\n- ${Math.round(p.n)}개 이상의 마커를 한 원으로 묶고 개수 표시(10 이상 두 자리, 1000 이상 "1k").\n- 줌아웃하면 back 이징으로 빨려 들어가 병합, 줌인하면 분리(${p.dur}ms).\n- 병합이 끝나면 파문 링이 두 번 퍼짐. 크기는 개수에 따라 22·28·36px 3단계.\n- 클러스터를 누르면 안의 마커 범위로 fitBounds.\n- 수백 개 이상이면 supercluster를 쓰고 뷰포트 밖은 그리지 마.`,
+ note:'흩어진 마커가 중심으로 빨려 들어가 개수가 적힌 원이 되고 파문이 번집니다.'});
 
 AP('pr-map-radius','반경 검색 확장','Radius Search Expansion',{mini:'pulse',target:'주변 검색',
  icon:'<circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/><circle cx="12" cy="12" r="2"/><circle cx="17" cy="8" r="1"/>',
- desc:'현재 위치에서 반경 원이 1km, 2km, 3km로 차례로 넓어지고, 원 안에 들어온 가게들이 거리순으로 켜집니다.',
- how:'반경 원 세 개를 scale로 확장하고, 가게 점은 중심으로부터의 거리에 따라 지연을 줘서 원이 지나갈 때 색이 바뀌게 합니다.',
- params:[DUR(2600,800,6000),EASE('out'),R('rings','반경 단계 수',3,2,4,1,'단계')],
+ desc:'현재 위치에서 파문처럼 반경 원이 차례로 넓어지고, 원에 닿은 가게들이 가까운 순서대로 켜집니다. 현재 위치 점은 숨 쉬듯 빛납니다.',
+ how:'반경 원 세 개는 scale을 0에서 1로 키우며 지연을 두고, 가게 점은 거리에 비례한 지연으로 켜지며 살짝 커졌다 돌아옵니다. 현재 위치는 halo를 호흡 루프로 줍니다.',
+ params:[DUR(2800,800,6000),EASE('out'),R('rings','반경 단계 수',3,2,4,1,'단계')],
  build(st,p){const r=root2(st);
-   const C=[50,50];
-   const rings=[1,2,3,4].slice(0,Math.round(p.rings)).map(k=>mk2(r,'',null,{position:'absolute',left:'50%',top:'50%',width:(k*36)+'%',height:(k*36)+'%',marginLeft:(-k*18)+'%',marginTop:(-k*18)+'%',borderRadius:'50%',border:'2px solid #ff8fa3',transform:'scale(0)',opacity:'0'}));
+   const C=[50,50];const N=Math.round(p.rings);
+   const rings=[1,2,3,4].slice(0,N).map(k=>mk2(r,'',null,{position:'absolute',left:'50%',top:'50%',width:(k*36)+'%',height:(k*36)+'%',marginLeft:(-k*18)+'%',marginTop:(-k*18)+'%',borderRadius:'50%',border:'2px solid #ff8fa3',background:'rgba(255,143,163,.05)',transform:'scale(0)',opacity:'0'}));
    const shops=Array.from({length:18},(_,i)=>{const a=i*1.3,rr=8+((i*29)%44);const x=C[0]+Math.cos(a)*rr*.9,y=C[1]+Math.sin(a)*rr*.9;const d=Math.hypot(x-50,y-50);return {d,el:mk2(r,'',null,{position:'absolute',left:x+'%',top:y+'%',width:'8px',height:'8px',marginLeft:'-4px',marginTop:'-4px',borderRadius:'50%',background:'#3a3136'})};});
+   const halo=mk2(r,'',null,{position:'absolute',left:'50%',top:'50%',width:'40px',height:'40px',marginLeft:'-20px',marginTop:'-20px',borderRadius:'50%',background:'radial-gradient(circle,rgba(255,225,77,.5),transparent 70%)'});
    const me=mk2(r,'',null,{position:'absolute',left:'50%',top:'50%',width:'14px',height:'14px',marginLeft:'-7px',marginTop:'-7px',borderRadius:'50%',background:'#ffe14d',boxShadow:'0 0 0 4px rgba(255,225,77,.3)'});
    return()=>{kill2(r);const g=p.dur;
      shops.forEach(s=>s.el.style.background='#3a3136');
      return fin2([
-       ...rings.map((el,i)=>AN2(el,[{transform:'scale(0)',opacity:.9},{transform:'scale(1)',opacity:.5}],g*.35,p.ease,i*g*.3)),
-       ...shops.map(s=>AN2(s.el,[{background:'#3a3136',transform:'scale(1)'},{background:'#ff8fa3',transform:'scale(1.4)'},{background:'#ff8fa3',transform:'scale(1)'}],g*.2,'out',g*(.12+s.d/120))),
-       AN2(me,[{transform:'scale(1)'},{transform:'scale(1.3)'},{transform:'scale(1)'}],g*.2,'inout',0)]);};},
- code:p=>`/* 반경 검색: 1km → 2km → 3km */\nfor (const r of [1000, 2000, 3000]) {\n  drawCircle(me, r);            // scale 0 → 1, ${Math.round(p.rings)}단계\n  shops.filter(s => dist(me, s) <= r).forEach(light);  // 거리순 점등\n}`,
- prompt:(p,t)=>`${t}용 주변 검색 반경 연출을 만들어줘.\n- 현재 위치 점(노란색) 주위로 반경 원 ${Math.round(p.rings)}단계를 차례로 확장(scale, ${ez(p.ease)}).\n- 반경 안에 들어온 장소 핀만 켜지고(분홍 #ff8fa3), 가까운 순서대로 시간차를 둬.\n- 반경 단위는 1km·2km·3km처럼 지도 축척에 맞춰 자동 계산.\n- 상단 칩으로 반경을 바꾸면 원이 다시 확장하며 결과 개수가 바뀌게.\n- 결과가 0개면 "이 반경에는 없어요" 빈 상태를 보여줘.`,
- note:'반경 원이 넓어지며 주변 가게가 가까운 순서대로 켜집니다.'});
+       ...rings.map((el,i)=>AN2(el,[{transform:'scale(0)',opacity:.9},{transform:'scale(1)',opacity:.45,offset:.8},{transform:'scale(1)',opacity:0}],g*.5,p.ease,i*g*.22)),
+       ...shops.map(s=>AN2(s.el,[{background:'#3a3136',transform:'scale(1)'},{background:'#ff8fa3',transform:'scale(1.6)',offset:.35},{background:'#ff8fa3',transform:'scale(1)'}],g*.2,'out',g*(.1+s.d/110))),
+       AN2(halo,[{transform:'scale(1)',opacity:.6},{transform:'scale(1.8)',opacity:.2},{transform:'scale(1)',opacity:.6}],g*.5,'inout',0),
+       AN2(me,[{transform:'scale(1)'},{transform:'scale(1.35)',offset:.5},{transform:'scale(1)'}],g*.5,'inout',0)]);};},
+ code:p=>`/* 반경 검색: 파문 확장 */\nfor (const r of [1000, 2000, 3000].slice(0, ${Math.round(p.rings)})) {\n  ring.expand(me, r, { ms: ${p.rings>0?'600':'0'}, ease: 'out' });\n  shops.filter(s => dist(me, s) <= r).sort(byDist).forEach((s, i) => s.pop(i * 40));\n}`,
+ prompt:(p,t)=>`${t}용 주변 검색 반경 연출을 만들어줘.\n- 현재 위치 점 주위로 반경 원 ${Math.round(p.rings)}단계를 파문처럼 차례로 확장.\n- 반경 안의 장소 핀이 가까운 순서대로 켜지며 1.6배로 튀었다 정착.\n- 현재 위치는 halo가 호흡(1.8배 루프)하듯 빛남.\n- 반경 칩을 바꾸면 원이 다시 퍼지고 결과 개수가 갱신. 결과 0개면 빈 상태 문구.`,
+ note:'반경 원이 파문처럼 넓어지고 가까운 가게부터 켜집니다.'});
 
 AP('pr-map-3d','3D 건물 높이 (기울인 지도)','3D Buildings (Tilted Map)',{mini:'swing',target:'3D 도시 지도',
  icon:'<path d="M3 20h18M6 20V10h4v10M12 20V5h4v15M18 20v-7h1"/>',
- desc:'지도를 위에서 기울이면 건물들이 기둥처럼 솟아오릅니다. 높이가 건물마다 달라 도시의 입체감이 살아납니다.',
- how:'건물 블록을 바닥에서 위로 scaleY 키프레임으로 키우고, 컨테이너를 rotateX로 기울여 원근감을 줍니다. 높이는 블록마다 다르게 줍니다.',
- params:[DUR(2400,800,5000),EASE('out'),R('tilt','기울기',58,30,75,1,'°')],
+ desc:'지도가 위에서 천천히 기울어지며 건물들이 바닥에서 튀어 오릅니다. 가까운 건물부터 솟아 도시가 입체로 드러납니다.',
+ how:'평면 전체는 rotateX를 20°에서 목표 기울기까지 키우고, 건물 블록은 중심에서의 거리에 따라 지연을 두고 scale 오버슈트로 솟습니다.',
+ params:[DUR(2800,800,5000),EASE('out'),R('tilt','최종 기울기',58,30,75,1,'°')],
  build(st,p){const r=root2(st);
    const stage=mk2(r,'',null,{position:'absolute',inset:'0',perspective:'520px',overflow:'hidden'});
-   const plane=mk2(stage,'',null,{position:'absolute',left:'-10%',top:'20%',width:'120%',height:'120%',transformStyle:'preserve-3d',transformOrigin:'50% 100%',transform:`rotateX(${p.tilt}deg)`,background:'#1d181b'});
-   const bs=[];for(let gy=0;gy<5;gy++)for(let gx=0;gx<6;gx++){const h=40+((gx*71+gy*53)%90);const x=gx*16.6+(gy%2)*5,y=gy*19;bs.push({h,el:mk2(plane,'',null,{position:'absolute',left:x+'%',top:y+'%',width:'11%',height:'15%',background:`linear-gradient(#ff8fa3,#7a4a58)`,transformOrigin:'50% 100%',transform:'scaleY(0)',boxShadow:'0 0 6px rgba(255,143,163,.35)'})});}
-   return()=>{kill2(r);
-     return fin2(bs.map((b,i)=>AN2(b.el,[{transform:'scaleY(0)'},{transform:`scaleY(${(b.h/40).toFixed(2)})`}],p.dur*.5,p.ease,(i%6)*p.dur*.05)));};},
- code:p=>`/* MapLibre: 3D 건물 extrusion */\nmap.setPitch(${p.tilt > 50 ? 60 : 45});\nmap.addLayer({ id: 'buildings', type: 'fill-extrusion', source: 'osm',\n  'source-layer': 'building',\n  paint: { 'fill-extrusion-height': ['get', 'height'],\n           'fill-extrusion-color': '#ff8fa3',\n           'fill-extrusion-opacity': .85 } });\n/* 높이 0 → height, 기울기 ${p.tilt}° */`,
- prompt:(p,t)=>`${t}용 3D 도시 지도를 만들어줘.\n- 기술: MapLibre GL JS의 fill-extrusion 레이어. 기울기(pitch) ${p.tilt}° 근처에서 시작해 사용자가 조절할 수 있게.\n- 건물 높이는 OSM의 height 속성을 쓰고, 없으면 층수 × 3m로 추정.\n- 로드 시 건물이 바닥에서 솟아오르는 애니메이션(${p.dur}ms, ${ez(p.ease)}), 색은 #ff8fa3 계열 그라데이션.\n- 모바일에서는 건물 수를 줄이고 그림자를 끄기.\n- 두 손가락 회전·기울기 제스처를 지원하고, 나침반 버튼으로 북쪽 정렬.`,
- note:'건물들이 바닥에서 솟아올라 기울어진 도시가 입체로 보입니다.'});
+   const plane=mk2(stage,'',null,{position:'absolute',left:'-10%',top:'20%',width:'120%',height:'120%',transformStyle:'preserve-3d',transformOrigin:'50% 100%',background:'#1d181b'});
+   const bs=[];for(let gy=0;gy<5;gy++)for(let gx=0;gx<6;gx++){const h=40+((gx*71+gy*53)%90);const x=gx*16.6+(gy%2)*5,y=gy*19;const dist=Math.hypot(gx-2.5,gy-2);bs.push({h,dist,el:mk2(plane,'',null,{position:'absolute',left:x+'%',top:y+'%',width:'11%',height:'15%',background:'linear-gradient(#ff8fa3,#7a4a58)',transformOrigin:'50% 100%',transform:'scaleY(0)',boxShadow:'0 0 6px rgba(255,143,163,.35)'})});}
+   const maxD=Math.max(...bs.map(b=>b.dist));
+   return()=>{kill2(r);const g=p.dur;
+     return fin2([
+       AN2(plane,[{transform:'rotateX(20deg)'},{transform:`rotateX(${p.tilt}deg)`}],g,'out'),
+       ...bs.map(b=>{const s=b.h/40;return AN2(b.el,[{transform:'scaleY(0)'},{transform:`scaleY(${(s*1.12).toFixed(2)})`,offset:.7},{transform:`scaleY(${s.toFixed(2)})`}],g*.55,'out',g*.25*(b.dist/maxD));})]);};},
+ code:p=>`/* MapLibre: 3D 건물 extrusion */\nmap.easeTo({ pitch: ${p.tilt > 50 ? 60 : 45}, duration: ${p.dur} });\nmap.addLayer({ id:'buildings', type:'fill-extrusion', source:'osm', 'source-layer':'building',\n  paint: { 'fill-extrusion-height': ['*', ['get','height'], ['var','grow']], 'fill-extrusion-color': '#ff8fa3' } });\n/* grow: 0 → 1 (거리순 지연), 최종 기울기 ${p.tilt}° */`,
+ prompt:(p,t)=>`${t}용 3D 도시 지도를 만들어줘.\n- MapLibre fill-extrusion. 시작 기울기 20°에서 최종 ${p.tilt}°까지 부드럽게(${p.dur}ms).\n- 건물은 도심(중심)에서 가까운 순서로 솟아오르고, 끝에서 살짝 오버슈트(1.12배)하고 정착.\n- 높이는 OSM height, 없으면 층수×3m. 색은 #ff8fa3 계열 그라데이션.\n- 모바일에서는 건물 수와 그림자를 줄이고, 두 손가락 기울기·회전 지원.`,
+ note:'지도가 기울어지며 가까운 건물부터 솟아올라 도시가 입체로 드러납니다.'});
 
 AP('pr-map-heat','히트맵 (밀집도)','Heatmap (Density)',{mini:'pulse',target:'밀집도 지도',
  icon:'<circle cx="8" cy="9" r="4" fill="currentColor" opacity=".3"/><circle cx="15" cy="14" r="6" fill="currentColor" opacity=".2"/>',
- desc:'사람이 많이 모인 곳은 붉은색에서 노란색으로 빛나고, 적은 곳은 어둡게 남습니다. 시간대별로 밀집 지역이 옮겨가는 모습을 보여 줍니다.',
- how:'지점마다 radial-gradient 원을 두고 scale과 opacity를 키워 겹치게 합니다. 겹친 부분은 mix-blend-mode screen으로 더 밝게 보입니다.',
- params:[DUR(2800,800,6000),EASE('inout'),R('spots','지점 수',7,3,12,1,'곳')],
+ desc:'밀집 지역이 붉은색에서 노란색으로 번지며 호흡합니다. 스캔 라인이 지도를 훑으며 시간대가 바뀌는 느낌을 줍니다.',
+ how:'지점마다 radial-gradient 원을 두고 scale과 opacity를 호흡 주기로 흔듭니다. 가중치가 큰 지점일수록 진폭이 큽니다. 스캔 라인은 좌→우로 translateX 이동하며 밝기를 높입니다.',
+ params:[DUR(3200,1000,6000),EASE('inout'),R('spots','지점 수',7,3,12,1,'곳')],
  build(st,p){const r=root2(st);
    const L=[[24,36,1],[62,30,.8],[46,62,1],[78,70,.6],[30,78,.5],[66,50,.9],[14,58,.4],[88,40,.3],[52,22,.7],[38,48,.6],[72,84,.4],[20,20,.3]];
    const N=Math.min(L.length,Math.round(p.spots));
-   const bl=L.slice(0,N).map(([x,y,w])=>({w,el:mk2(r,'',null,{position:'absolute',left:x+'%',top:y+'%',width:'90px',height:'90px',marginLeft:'-45px',marginTop:'-45px',borderRadius:'50%',background:'radial-gradient(circle,rgba(255,225,77,.95),rgba(255,143,163,.7) 40%,rgba(255,143,163,0) 70%)',mixBlendMode:'screen',transform:'scale(0)',opacity:'0'})}));
-   return()=>{kill2(r);
-     return fin2(bl.map(({w,el},i)=>AN2(el,[{transform:'scale(0)',opacity:0},{transform:`scale(${(0.6+w*.8).toFixed(2)})`,opacity:w},{transform:'scale(.9)',opacity:w*.7}],p.dur*.6,p.ease,(i*p.dur*.05)%(p.dur*.5))));};},
- code:p=>`/* 히트맵 레이어 */\nmap.addLayer({ id: 'heat', type: 'heatmap', source: 'visits',\n  paint: {\n    'heatmap-weight': ['get', 'weight'],\n    'heatmap-radius': 30,\n    'heatmap-color': ['interpolate', ['linear'], ['heatmap-density'],\n      0, 'rgba(0,0,0,0)', .4, '#ff8fa3', 1, '#ffe14d'] } });\n/* 지점 ${Math.round(p.spots)}곳 */`,
- prompt:(p,t)=>`${t}용 밀집도 히트맵을 만들어줘.\n- 기술: MapLibre heatmap 레이어, 색 램프는 투명 → #ff8fa3 → #ffe14d.\n- 지점 ${Math.round(p.spots)}곳 이상의 가중치(weight)를 받고, 줌에 따라 반경(heatmap-radius)을 키우고 줄여.\n- 시간대 슬라이더(0~24시)를 두고 밀집 지역이 옮겨가는 애니메이션을 ${p.dur}ms로 보여줘.\n- 데이터가 없으면 빈 지도 대신 "데이터 없음" 안내.`,
- note:'밀집도가 높은 곳이 노란색으로 빛나며 시간에 따라 옮겨 갑니다.'});
+   const bl=L.slice(0,N).map(([x,y,w])=>({w,el:mk2(r,'',null,{position:'absolute',left:x+'%',top:y+'%',width:'90px',height:'90px',marginLeft:'-45px',marginTop:'-45px',borderRadius:'50%',background:'radial-gradient(circle,rgba(255,225,77,.95),rgba(255,143,163,.7) 40%,rgba(255,143,163,0) 70%)',mixBlendMode:'screen',opacity:'0'})}));
+   const scan=mk2(r,'',null,{position:'absolute',top:'0',bottom:'0',left:'0',width:'18%',background:'linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent)'});
+   return()=>{kill2(r);const g=p.dur;
+     return fin2([
+       ...bl.map(({w,el},i)=>AN2(el,[{transform:'scale(.2)',opacity:0},{transform:`scale(${(0.7+w*.6).toFixed(2)})`,opacity:w,offset:.3},{transform:`scale(${(0.6+w*.5).toFixed(2)})`,opacity:w*.7,offset:.6},{transform:`scale(${(0.7+w*.6).toFixed(2)})`,opacity:w}],g,'inout',i*g*.04)),
+       AN2(scan,[{transform:'translateX(-20%)'},{transform:'translateX(560%)'}],g,'linear')]);};},
+ code:p=>`/* 히트맵 레이어 */\nmap.addLayer({ id:'heat', type:'heatmap', source:'visits',\n  paint: { 'heatmap-weight': ['get','weight'], 'heatmap-radius': 30,\n    'heatmap-color': ['interpolate',['linear'],['heatmap-density'], 0,'rgba(0,0,0,0)', .4,'#ff8fa3', 1,'#ffe14d'] } });\n/* 지점 ${Math.round(p.spots)}곳, 호흡 주기 ${p.dur}ms */`,
+ prompt:(p,t)=>`${t}용 밀집도 히트맵을 만들어줘.\n- MapLibre heatmap 레이어, 색 램프는 투명 → #ff8fa3 → #ffe14d.\n- 지점 ${Math.round(p.spots)}곳 이상, 가중치 크기에 따라 호흡 진폭 차이.\n- 스캔 라인이 좌→우로 ${p.dur}ms 동안 지나가며 시간대 슬라이더 값을 반영.\n- 줌에 따라 반경(heatmap-radius)을 키우고 줄이기.\n- 데이터가 없으면 "데이터 없음" 안내.`,
+ note:'밀집 지역이 노랗게 호흡하고 스캔 라인이 지도를 훑습니다.'});
 
 AP('pr-map-choro','단계구분도 (지역 색칠)','Choropleth (Region Shading)',{mini:'fade',target:'지역별 지도',
  icon:'<path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/>',
- desc:'행정구역이 값의 크기에 따라 옅은 분홍에서 진한 분홍으로 차례로 칠해집니다. 지역별 수치를 한눈에 비교하는 지도입니다.',
- how:'구역마다 값을 정해 단계별 색을 주고, fill 색을 회색에서 목표 색으로 transition처럼 키프레임 전환합니다. 지연은 값 순서로 줍니다.',
- params:[DUR(2400,800,5000),EASE('out'),R('steps','색 단계 수',5,3,7,1,'단계')],
+ desc:'가운데 지역에서 파동이 퍼지듯 행정구역이 값에 맞춰 차례로 칠해집니다. 칠해진 뒤에는 선택 지역 테두리가 호흡합니다.',
+ how:'각 구역의 지연은 중심에서의 거리로 정하고, 색은 회색에서 값 단계 색으로 키프레임 전환합니다. 범례 바는 마지막에 늘어나고, 선택 구역은 box-shadow 루프로 빛납니다.',
+ params:[DUR(2800,800,5000),EASE('out'),R('steps','색 단계 수',5,3,7,1,'단계')],
  build(st,p){const r=root2(st);
    const RG=[[16,16,70,60,.1],[92,14,80,58,.4],[178,18,76,56,.7],[262,20,28,54,.3],[20,92,64,70,.9],[90,96,84,68,.5],[180,96,86,66,.2],[272,96,20,64,.6],[24,170,96,72,.8],[126,170,90,74,.35],[222,170,64,72,1]];
-   const steps=Math.round(p.steps);
    const pal=['#3a3136','#5a3d48','#8a5a6a','#c2708a','#ff8fa3','#ffd6c7','#ffe14d'];
-   const sh=RG.map(([x,y,w,h,v])=>{const el=mk2(r,'',null,{position:'absolute',left:(x/3)+'%',top:(y/3)+'%',width:(w/3)+'%',height:(h/3)+'%',borderRadius:'6px',background:'#2a2226',border:'2px solid #1d181b'});return {el,v};});
-   const leg=mk2(r,'',null,{position:'absolute',left:'8%',bottom:'6%',right:'8%',height:'8px',borderRadius:'4px',background:'linear-gradient(90deg,#3a3136,#ff8fa3,#ffe14d)',opacity:'0'});
-   return()=>{kill2(r);
+   const sh=RG.map(([x,y,w,h,v])=>{const cx=(x+w/2)/300,cy=(y+h/2)/300;return {v,dist:Math.hypot(cx-.5,cy-.5),el:mk2(r,'',null,{position:'absolute',left:(x/3)+'%',top:(y/3)+'%',width:(w/3)+'%',height:(h/3)+'%',borderRadius:'6px',background:'#2a2226',border:'2px solid #1d181b'})};});
+   const maxD=Math.max(...sh.map(s=>s.dist));
+   const leg=mk2(r,'',null,{position:'absolute',left:'8%',bottom:'6%',right:'8%',height:'8px',borderRadius:'4px',background:'linear-gradient(90deg,#3a3136,#ff8fa3,#ffe14d)',transformOrigin:'0 50%',transform:'scaleX(0)'});
+   const sel=sh[10].el;
+   return()=>{kill2(r);const g=p.dur;
      sh.forEach(s=>s.el.style.background='#2a2226');
      return fin2([
-       ...sh.map(({el,v})=>{const idx=Math.min(pal.length-1,Math.floor(v*(pal.length-1)));return AN2(el,[{background:'#2a2226'},{background:pal[idx]}],p.dur*.45,p.ease,v*p.dur*.5);}),
-       AN2(leg,[{opacity:0},{opacity:1}],p.dur*.3,'linear',p.dur*.6)]);};},
- code:p=>`/* 단계구분도: 값 → 색 구간 ${Math.round(p.steps)}단계 */\nmap.addLayer({ id: 'regions', type: 'fill', source: 'admin',\n  paint: { 'fill-color': ['step', ['get', 'value'],\n    '#3a3136', 10, '#8a5a6a', 30, '#c2708a', 60, '#ff8fa3', 90, '#ffe14d'] } });`,
- prompt:(p,t)=>`${t}용 지역별 단계구분도를 만들어줘.\n- 기술: GeoJSON 행정구역 + fill 레이어, 값 구간 ${Math.round(p.steps)}단계(#3a3136 → #ff8fa3 → #ffe14d).\n- 로드 시 값이 작은 지역부터 색이 차례로 채워지고(${p.dur}ms), 범례 바가 아래에서 나타나.\n- 지역에 마우스/터치하면 이름·값 툴팁 표시, 선택 지역은 테두리 강조.\n- 구간 경계는 분위(quantile) 또는 자연 구간(Jenks) 중 고를 수 있게 해줘.`,
- note:'지역이 값 크기에 따라 어두운 색에서 밝은 노란색까지 차례로 칠해집니다.'});
+       ...sh.map(({el,v,dist})=>{const idx=Math.min(pal.length-1,Math.floor(v*(pal.length-1)));return AN2(el,[{background:'#2a2226',transform:'scale(1)'},{background:pal[idx],transform:'scale(1.06)',offset:.5},{background:pal[idx],transform:'scale(1)'}],g*.45,p.ease,g*.5*(dist/maxD));}),
+       AN2(leg,[{transform:'scaleX(0)'},{transform:'scaleX(1)'}],g*.4,'out',g*.6),
+       AN2(sel,[{boxShadow:'0 0 0 #ffe14d'},{boxShadow:'0 0 12px #ffe14d'},{boxShadow:'0 0 0 #ffe14d'}],g*.8,'inout',g*.2)]);};},
+ code:p=>`/* 단계구분도: 값 → 색 구간 ${Math.round(p.steps)}단계 */\nmap.addLayer({ id:'regions', type:'fill', source:'admin',\n  paint:{'fill-color':['step',['get','value'],'#3a3136',10,'#8a5a6a',30,'#c2708a',60,'#ff8fa3',90,'#ffe14d']} });\n/* 칠하기: 중심에서 바깥으로 파동, ${p.dur}ms */`,
+ prompt:(p,t)=>`${t}용 지역별 단계구분도를 만들어줘.\n- GeoJSON 행정구역 + fill, 값 구간 ${Math.round(p.steps)}단계(#3a3136 → #ff8fa3 → #ffe14d).\n- 로드 시 가운데 지역부터 바깥으로 파동처럼 칠해지고(${p.dur}ms), 범례 바가 마지막에 늘어남.\n- 지역 호버 시 테두리 빛, 선택 지역은 box-shadow가 호흡.\n- 구간 경계는 분위(quantile) 또는 자연 구간(Jenks) 선택 가능.`,
+ note:'가운데 지역부터 색이 파동처럼 퍼지며 칠해지고 범례가 늘어납니다.'});
 
 
-/* 메타버스 — 종류별 6종 */
+/* ═════ 메타버스 6종 (업그레이드): 걸음 리듬·카메라 호흡·파티클·포물선 투척·타자·낮밤 전환 ═════ */
 const MVPL=(par,x,y,col,css={})=>mk2(par,'',`<svg viewBox="0 0 24 30" style="width:100%;height:100%"><circle cx="12" cy="8" r="6" fill="#ffd6c7"/><rect x="5" y="15" width="14" height="13" rx="6" fill="${col}"/></svg>`,{position:'absolute',left:x+'%',top:y+'%',width:'22px',height:'28px',marginLeft:'-11px',marginTop:'-14px',...css});
+const STEP=(n,amp)=>Array.from({length:n+1},(_,i)=>({offset:i/n,transform:`translateY(${(i%2?-amp:0)}px)`}));
+const MVW=(el,dur,amp=2,n=8)=>AN2(el.firstElementChild,STEP(n,amp),dur/n,'linear',0,{iterations:n});
 
 AP('pr-mv-office','가상 오피스 (회의·책상)','Virtual Office (Desks & Meeting)',{mini:'bounce',target:'가상 오피스',
  icon:'<rect x="3" y="4" width="18" height="11" rx="1"/><path d="M8 19h8M12 15v4"/>',
- desc:'책상마다 모니터가 빛나고, 아바타가 회의실로 걸어 들어가 "회의 시작" 말풍선을 띄웁니다. 자리 상태가 한눈에 보이는 사무실입니다.',
- how:'책상 격자는 CSS로 깔고, 모니터 빛은 opacity를 맥박처럼 바꿉니다. 아바타 한 명은 translateX로 회의실까지 걸어가고, 말풍선은 back 이징으로 나타납니다.',
- params:[DUR(2800,1000,6000),EASE('inout'),R('walk','이동 거리',40,10,70,1,'%')],
+ desc:'모니터가 제각각 깜빡이고, 아바타가 걸음 리듬에 맞춰 회의실로 걸어갑니다. 도착하면 "회의 시작" 말풍선이 튀고 옆자리 동료는 생각 중 점 세 개를 띄웁니다.',
+ how:'모니터 빛은 주기가 다른 키프레임으로 깜빡이고, 아바타는 바깥 요소로 경로를 이동하고 안쪽 svg로 걸음 바운스를 줍니다. 말풍선은 squash 후 정착, 생각 점은 순차 펄스입니다.',
+ params:[DUR(3200,1000,6000),EASE('inout'),R('walk','이동 거리',40,10,70,1,'%')],
  build(st,p){const r=root2(st);
-   const room=mk2(r,'',null,{position:'absolute',inset:'0',background:'#1d181b'});
-   const meet=mk2(r,'',null,{position:'absolute',right:'6%',top:'14%',width:'34%',height:'46%',border:'2px solid #ff8fa3',borderRadius:'6px',background:'rgba(255,143,163,.08)'});
+   mk2(r,'',null,{position:'absolute',inset:'0',background:'#1d181b'});
+   const meet=mk2(r,'',null,{position:'absolute',right:'6%',top:'14%',width:'34%',height:'46%',border:'2px solid #ff8fa3',borderRadius:'6px',background:'rgba(255,143,163,.08)',boxShadow:'0 0 18px rgba(255,143,163,.25)'});
    const bub=mk2(meet,'',null,{position:'absolute',left:'50%',top:'-18px',transform:'translateX(-50%) scale(0)',padding:'3px 8px',background:'#fff',color:'#111',borderRadius:'10px',fontSize:'11px',fontWeight:'900',whiteSpace:'nowrap'});bub.textContent='회의 시작';
    const mons=[];for(let i=0;i<8;i++){const x=6+(i%4)*18,y=50+Math.floor(i/4)*26;mk2(r,'',null,{position:'absolute',left:x+'%',top:y+'%',width:'10%',height:'8%',background:'#2a2226',borderRadius:'3px'});mons.push(mk2(r,'',null,{position:'absolute',left:(x+.8)+'%',top:(y+.8)+'%',width:'8%',height:'4%',borderRadius:'2px',background:'#7ad1ff',opacity:'.5'}));}
    const walker=MVPL(r,8,80,'#ff8fa3');
+   const dots=mk2(r,'',null,{position:'absolute',left:'22%',top:'38%',fontSize:'12px',fontWeight:'900',color:'#fff',opacity:'0'});dots.textContent='···';
    const others=[[30,40,'#ffe14d'],[60,68,'#7ad1ff']].map(([x,y,c])=>MVPL(r,x,y,c));
    return()=>{kill2(r);const g=p.dur;
      bub.style.transform='translateX(-50%) scale(0)';
+     const mStart=g*.1;
      return fin2([
-       ...mons.map((m,i)=>AN2(m,[{opacity:.2},{opacity:1},{opacity:.2}],g*.8,'linear',i*g*.1)),
-       AN2(walker,[{left:'8%',top:'80%'},{left:(8+p.walk*.9)+'%',top:'80%'}],g*.6,'inout',0),
-       AN2(bub,[{transform:'translateX(-50%) scale(0)'},{transform:'translateX(-50%) scale(1)'}],g*.25,'back',g*.6),
-       ...others.map((o,i)=>AN2(o,[{transform:'translateY(0)'},{transform:'translateY(-3px)'},{transform:'translateY(0)'}],g*.4,'inout',i*120))]);};},
- code:p=>`/* 가상 오피스 */\nconst desks = grid(4, 2);           // 책상 8개, 모니터 빛 = 접속 상태\nmeetingRoom.on('enter', (u) => showBubble(u, '회의 시작'));\nwalkTo(avatar, meetingRoom.seat, ${p.walk}% of path); // 경로 찾기 + 보간 이동`,
- prompt:(p,t)=>`${t}용 가상 오피스 월드를 만들어줘.\n- 책상 8개, 각 책상에 모니터. 모니터 빛은 접속 상태(온라인=하늘색, 자리비움=회색).\n- 회의실 1개: 입장하면 "회의 시작" 말풍선이 뜨고 같은 방 사람끼리 음성 채널 자동 연결.\n- 아바타 이동: 경로 찾기(A*)로 책상 사이를 걷고, 이동 거리 ${p.walk}% 구간은 보간으로 부드럽게.\n- 멀티플레이: 위치와 상태를 WebSocket으로 동기화, 자리를 떠나면 말풍선 "잠시 자리비움".\n- 모바일은 2D 탑뷰, PC는 3인칭 카메라로 전환할 수 있게.`,
- note:'모니터가 빛나고 아바타가 회의실로 걸어가 "회의 시작" 말풍선을 띄웁니다.'});
+       ...mons.map((m,i)=>AN2(m,[{opacity:.2},{opacity:1,offset:.5},{opacity:.2}],g*.9,'linear',i*g*.07,{iterations:Infinity})),
+       AN2(walker,[{left:'8%',top:'80%'},{left:(8+p.walk*.9)+'%',top:'80%'}],g*.55,'inout',mStart),
+       MVW(walker,g*.55,2,12),
+       AN2(bub,[{transform:'translateX(-50%) scale(0)'},{transform:'translateX(-50%) scale(1.2)',offset:.6},{transform:'translateX(-50%) scale(1)'}],g*.25,'linear',g*.65),
+       AN2(dots,[{opacity:0},{opacity:1,offset:.1},{opacity:1,offset:.6},{opacity:0}],g*.6,'linear',g*.3),
+       ...others.map((o,i)=>AN2(o.firstElementChild,[{transform:'translateY(0)'},{transform:'translateY(-3px)'},{transform:'translateY(0)'}],g*.4,'inout',i*120,{iterations:Infinity}))]);};},
+ code:p=>`/* 가상 오피스 */\nconst desks = grid(4, 2);            // 모니터 빛 = 접속 상태\nmeetingRoom.on('enter', u => showBubble(u, '회의 시작', { pop: 1.2 }));\nwalkTo(avatar, meetingRoom.seat, { pct: ${p.walk}, bob: 2px, steps: 12 });`,
+ prompt:(p,t)=>`${t}용 가상 오피스 월드를 만들어줘.\n- 책상 8개, 모니터 빛은 접속 상태(온라인 하늘색, 자리비움 회색)에 따라 다른 리듬으로 깜빡.\n- 회의실 입장 시 "회의 시작" 말풍선이 1.2배로 튀고, 옆자리 동료에게 생각 중 점 세 개.\n- 아바타 이동: 경로 찾기(A*)로 책상 사이를 걷고, 걸음마다 2px 바운스. 이동 거리 ${p.walk}%.\n- 멀티플레이: 위치·상태를 WebSocket으로 동기화, 자리를 떠나면 "잠시 자리비움".\n- 모바일은 2D 탑뷰, PC는 3인칭 카메라로 전환.`,
+ note:'모니터가 제각각 깜빡이고 아바타가 걸어가 회의실에서 말풍선을 띄웁니다.'});
 
 AP('pr-mv-gallery','가상 전시관','Virtual Gallery',{mini:'slide',target:'전시관',
  icon:'<rect x="3" y="5" width="18" height="14" rx="1"/><rect x="7" y="9" width="6" height="5"/><path d="M15 9h2M15 12h2"/>',
- desc:'벽에 걸린 작품들이 한 점씩 조명을 받고, 관람객 시점 카메라가 작품 앞으로 천천히 다가갑니다. 전시 동선이 자연스럽게 흐르는 갤러리입니다.',
- how:'벽 액자는 정해진 순서로 스포트라이트 radial-gradient를 옮기고, 전시 바닥 전체는 translateX로 밀어 카메라 이동을 흉내 냅니다.',
- params:[DUR(3200,1200,6000),EASE('inout'),R('pieces','작품 수',4,2,6,1,'점')],
+ desc:'관람 카메라가 작품 앞으로 부드럽게 미끄러지고, 스포트라이트가 그 작품만 밝힙니다. 떠다니는 먼지 입자와 작품 설명 라벨이 전시의 분위기를 더합니다.',
+ how:'벽 전체는 translateX로 한 칸씩 이동하고, 카메라 호흡은 ±2px 사인으로 줍니다. 작품 액자는 밝기가 올라갔다 내려가고, 먼지 입자는 무한 루프로 떠오릅니다.',
+ params:[DUR(3600,1200,6000),EASE('inout'),R('pieces','작품 수',4,2,6,1,'점')],
  build(st,p){const r=root2(st);
    const N=Math.round(p.pieces);
    const wall=mk2(r,'',null,{position:'absolute',left:'0',top:'0',width:(N*100)+'%',height:'100%',background:'linear-gradient(#2a2226 0 62%,#3a2c31 62% 100%)'});
-   const frames=[];for(let i=0;i<N;i++){frames.push(mk2(wall,'',null,{position:'absolute',left:((i+.25)*100/N)+'%',top:'22%',width:(50/N)+'%',height:'32%',border:'6px solid #c9a86a',background:['linear-gradient(160deg,#ff8fa3,#7a4a58)','linear-gradient(200deg,#7ad1ff,#2a3c5a)','linear-gradient(140deg,#ffe14d,#8a6a1a)','linear-gradient(180deg,#d6c7ff,#4a3a7a)','linear-gradient(120deg,#9fe3b1,#2a5a3a)','linear-gradient(220deg,#ffd6c7,#7a3a3a)'][i%6]}));}
+   const cols=['linear-gradient(160deg,#ff8fa3,#7a4a58)','linear-gradient(200deg,#7ad1ff,#2a3c5a)','linear-gradient(140deg,#ffe14d,#8a6a1a)','linear-gradient(180deg,#d6c7ff,#4a3a7a)','linear-gradient(120deg,#9fe3b1,#2a5a3a)','linear-gradient(220deg,#ffd6c7,#7a3a3a)'];
+   const frames=[],labels=[];
+   for(let i=0;i<N;i++){frames.push(mk2(wall,'',null,{position:'absolute',left:((i+.25)*100/N)+'%',top:'22%',width:(50/N)+'%',height:'32%',border:'6px solid #c9a86a',background:cols[i%6],boxShadow:'0 10px 24px rgba(0,0,0,.5)'}));
+     labels.push(mk2(wall,'',null,{position:'absolute',left:((i+.25)*100/N)+'%',top:'60%',width:(50/N)+'%',fontSize:'10px',color:'#d9c9a0',letterSpacing:'.05em',opacity:'0',textAlign:'center'}));labels[i].textContent='작품 '+(i+1);}
    const spot=mk2(r,'',null,{position:'absolute',inset:'0',background:'radial-gradient(ellipse 14% 26% at 50% 36%,rgba(255,255,255,.22),transparent 70%)',opacity:'0'});
-   return()=>{kill2(r);const g=p.dur;
-     const seg=g/N;
+   const dust=Array.from({length:10},(_,i)=>mk2(r,'',null,{position:'absolute',left:(5+i*9)+'%',top:(20+((i*37)%50))+'%',width:'3px',height:'3px',borderRadius:'50%',background:'#fff',opacity:'.4'}));
+   return()=>{kill2(r);const g=p.dur;const seg=g/N;
      return fin2([
        AN2(wall,[{transform:'translateX(0)'},{transform:`translateX(-${((N-1)*100/N).toFixed(2)}%)`}],g,'inout'),
-       AN2(spot,[{opacity:0},{opacity:1},{opacity:0}],seg*.9,'inout',0),
-       ...frames.map((f,i)=>AN2(f,[{filter:'brightness(.5)'},{filter:'brightness(1.15)'},{filter:'brightness(.5)'}],seg,'inout',i*seg*.3))]);};},
- code:p=>`/* 가상 전시관 */\nconst pieces = await loadArtworks();   // ${Math.round(p.pieces)}점\npieces.forEach((art, i) => spotlight.at(art.wall, i * ${Math.round(p.dur/Math.max(1,p.pieces))}ms));\ncamera.glideTo(art.frontPoint, { ease: 'inout', ms: ${p.dur} });`,
- prompt:(p,t)=>`${t}용 가상 전시관을 만들어줘.\n- 벽 2면 이상의 긴 갤러리, 작품 ${Math.round(p.pieces)}점 이상을 액자로 걸고, 액자 이미지는 교체 가능하게(이미지 URL 배열).\n- 관람 흐름: 카메라가 작품 앞에 부드럽게 멈추고(${p.dur}ms, inout), 스포트라이트가 그 작품만 밝혀.\n- 작품을 누르면 설명 카드와 작가 정보가 열려.\n- 1인칭(PC: 마우스 드래그, 모바일: 손가락 드래그)과 관람 경로 자동 재생 두 모드.`,
- note:'작품이 하나씩 조명을 받으며 카메라가 전시관을 따라 이동합니다.'});
+       AN2(spot,[{opacity:0,transform:'translateX(-30%)'},{opacity:1,offset:.5},{opacity:0,transform:'translateX(30%)'}],g,'linear'),
+       ...frames.map((f,i)=>AN2(f,[{filter:'brightness(.45)'},{filter:'brightness(1.2)',offset:.4},{filter:'brightness(.45)'}],seg*1.2,'inout',i*seg*.5)),
+       ...labels.map((l,i)=>AN2(l,[{opacity:0,transform:'translateY(4px)'},{opacity:1,transform:'translateY(0)'}],seg*.6,'out',i*seg*.5+seg*.3)),
+       ...dust.map((d,i)=>AN2(d,[{transform:'translateY(0)',opacity:.1},{transform:'translateY(-40px)',opacity:.6,offset:.5},{transform:'translateY(-80px)',opacity:.1}],g*(.5+(i%3)*.2),'linear',i*120,{iterations:Infinity}))]);};},
+ code:p=>`/* 가상 전시관 */\nconst pieces = await loadArtworks();     // ${Math.round(p.pieces)}점\npieces.forEach((art, i) => spot.at(art.wall, i * ${Math.round(p.dur/Math.max(1,p.pieces))}ms, { fadeMs: 400 }));\ncamera.glideTo(art.frontPoint, { ms: ${p.dur}, ease: 'inout', breathe: 2 });`,
+ prompt:(p,t)=>`${t}용 가상 전시관을 만들어줘.\n- 긴 갤러리 벽 2면 이상, 작품 ${Math.round(p.pieces)}점 이상을 액자로(이미지 URL 배열로 교체 가능).\n- 카메라가 작품 앞에 미끄러지듯 멈추고(${p.dur}ms, inout), 호흡 흔들림 2px.\n- 스포트라이트는 그 작품만 밝히고, 작품 라벨은 0.3초 뒤 페이드 인.\n- 떠다니는 먼지 입자 10개를 무한 루프로.\n- 1인칭(드래그)과 관람 경로 자동 재생 두 모드.`,
+ note:'카메라가 작품 앞에 미끄러지듯 멈추고 스포트라이트가 작품을 비춥니다.'});
 
 AP('pr-mv-concert','가상 콘서트','Virtual Concert',{mini:'pulse',target:'콘서트장',
  icon:'<path d="M9 18V5l10-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/>',
- desc:'무대 위 조명 빔이 회전하며 관중을 훑고, 관객 아바타들이 음악 박자에 맞춰 뜁니다. 함께 들어온 사람들의 공연 현장 분위기를 보여 줍니다.',
- how:'조명 빔은 conic-gradient를 회전시키고, 관객 아바타는 지연을 달리해 위아래로 뜁니다. 비트는 BPM으로 계산해 주기를 맞춥니다.',
- params:[DUR(1600,800,3000),EASE('inout'),R('bpm','BPM(박자)',120,60,180,1,'')],
+ desc:'조명 빔이 엇갈려 돌며 관중을 훑고, 관객 웨이브가 무대 왼쪽에서 오른쪽으로 흘러갑니다. 색종이가 위에서 떨어지며 공연의 절정을 만듭니다.',
+ how:'빔 두 개는 반대 방향으로 회전하고 밝기가 박자에 맞춰 맥동합니다. 관객은 같은 파형을 x 위치에 따라 지연시켜 웨이브를 만들고, 색종이는 회전하며 낙하합니다.',
+ params:[DUR(2000,800,4000),EASE('inout'),R('bpm','BPM(박자)',120,60,180,1,'')],
  build(st,p){const r=root2(st);
-   const stage=mk2(r,'',null,{position:'absolute',left:'0',right:'0',top:'0',height:'40%',background:'linear-gradient(#2a1f24,#15121a)'});
-   const beam=mk2(r,'',null,{position:'absolute',left:'-30%',right:'-30%',top:'-40%',height:'140%',background:'conic-gradient(from 0deg at 50% 0%,transparent 0deg 20deg,rgba(255,143,163,.35) 25deg 35deg,transparent 40deg 150deg,rgba(255,225,77,.3) 160deg 170deg,transparent 175deg)',opacity:'.9'});
+   mk2(r,'',null,{position:'absolute',left:'0',right:'0',top:'0',height:'40%',background:'linear-gradient(#2a1f24,#15121a)'});
+   const beamA=mk2(r,'',null,{position:'absolute',left:'-30%',right:'-30%',top:'-40%',height:'140%',background:'conic-gradient(from 0deg at 50% 0%,transparent 0deg 20deg,rgba(255,143,163,.35) 25deg 35deg,transparent 40deg 150deg,rgba(255,225,77,.3) 160deg 170deg,transparent 175deg)'});
+   const beamB=mk2(r,'',null,{position:'absolute',left:'-30%',right:'-30%',top:'-40%',height:'140%',background:'conic-gradient(from 180deg at 50% 0%,transparent 0deg 20deg,rgba(122,209,255,.3) 25deg 32deg,transparent 40deg 150deg,rgba(255,143,163,.3) 160deg 168deg,transparent 175deg)'});
    const crowd=[];for(let i=0;i<10;i++){crowd.push(MVPL(r,6+i*9,62+((i*7)%4)*6,['#ff8fa3','#7ad1ff','#ffe14d'][i%3]));}
+   const conf=Array.from({length:14},(_,i)=>mk2(r,'',null,{position:'absolute',left:(4+i*6.6)+'%',top:'-6%',width:'6px',height:'10px',borderRadius:'1px',background:['#ff8fa3','#ffe14d','#7ad1ff','#fff'][i%4],opacity:'0'}));
    const beat=60000/p.bpm;
-   return()=>{kill2(r);
+   return()=>{kill2(r);const g=p.dur;
      return fin2([
-       AN2(beam,[{transform:'rotate(0deg)'},{transform:'rotate(360deg)'}],p.dur*2,'linear'),
-       ...crowd.map((c,i)=>AN2(c,[{transform:'translateY(0)'},{transform:'translateY(-14px)'},{transform:'translateY(0)'}],beat,'out',i*(beat/10)))]);};},
- code:p=>`/* 콘서트: 비트 동기화 */\nconst beatMs = 60000 / ${p.bpm};          // ${p.bpm} BPM → ${Math.round(60000/p.bpm)}ms\nlights.forEach(l => l.rotate(360, { duration: beatMs * 16, loop: true }));\naudience.forEach((a, i) => a.hop(14, { delay: i * beatMs / 10, every: beatMs }));`,
- prompt:(p,t)=>`${t}용 가상 콘서트장을 만들어줘.\n- 무대 전면 대형 LED 스크린 + 조명 빔 4~6개(회전, 색은 #ff8fa3·#ffe14d·#7ad1ff).\n- 관객 아바타 수백 명을 인스턴스 렌더링으로 그리고, 박자 ${p.bpm} BPM에 맞춰 뜀.\n- 음악 파일이나 스트림 연결 시 실제 음량(analyser)으로 조명 세기를 바꿔.\n- 채팅 말풍선·이모지 반응은 무대 쪽으로 떠오르게.\n- 입장 인원이 많으면 먼 관객은 정지 스프라이트로 바꿔 성능 유지.`,
- note:'조명 빔이 돌고 관객들이 박자에 맞춰 뜁니다.'});
+       AN2(beamA,[{transform:'rotate(0deg)'},{transform:'rotate(360deg)'}],g*2,'linear',0,{iterations:1}),
+       AN2(beamB,[{transform:'rotate(0deg)'},{transform:'rotate(-360deg)'}],g*2,'linear',0,{iterations:1}),
+       AN2(beamA,[{opacity:.5},{opacity:1,offset:.5},{opacity:.5}],beat*2,'linear',0,{iterations:Infinity}),
+       ...crowd.map((c,i)=>AN2(c.firstElementChild,[{transform:'translateY(0)'},{transform:'translateY(-14px)',offset:.4},{transform:'translateY(0)'}],beat*2,'out',(i/crowd.length)*beat*2,{iterations:Infinity})),
+       ...conf.map((c,i)=>AN2(c,[{transform:'translateY(0) rotate(0deg)',opacity:0},{opacity:1,offset:.1},{transform:`translateY(${170+(i%4)*20}px) rotate(${260+i*40}deg)`,opacity:0}],g*(.8+(i%3)*.15),'linear',g*.05*i))]);};},
+ code:p=>`/* 콘서트: 비트 동기화 */\nconst beatMs = 60000 / ${p.bpm};       // ${Math.round(60000/p.bpm)}ms\nlights.spin({ dir: [1,-1], ms: beatMs * 16 });\naudience.forEach((a, i) => a.hop(14, { delay: i * beatMs / ${p.bpm>0?10:1}, every: beatMs * 2 }));  // 웨이브\nconfetti.emit({ count: 14, fall: 170, spin: 260 });`,
+ prompt:(p,t)=>`${t}용 가상 콘서트장을 만들어줘.\n- 무대 대형 LED + 조명 빔 4~6개(회전, 색 #ff8fa3·#ffe14d·#7ad1ff), 엇갈린 방향으로.\n- 관객 웨이브: 무대 왼쪽에서 오른쪽으로 흘러가며 박자 ${p.bpm} BPM에 맞춰 뜀.\n- 색종이 14장이 낙하하며 회전, 박자마다 추가 발사.\n- 음악 스트림이 있으면 analyser로 조명 세기와 웨이브 높이를 연동.\n- 관객이 많으면 먼 관객은 정지 스프라이트로 교체.`,
+ note:'조명 빔이 엇갈려 돌고 관객 웨이브와 색종이가 흘러갑니다.'});
 
 AP('pr-mv-mall','가상 쇼핑몰 (담기)','Virtual Mall (Add to Cart)',{mini:'pop',target:'쇼핑몰',
  icon:'<circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/><path d="M3 4h2l2.5 11h10L20 7H7"/>',
- desc:'진열대의 상품을 누르면 상품 카드가 포물선을 그리며 장바구니 아이콘으로 날아가고, 개수가 1 올라갑니다.',
- how:'상품 카드를 장바구니 좌표까지 translate하며 scale을 줄이고, 도착하면 카운터 숫자를 바꿉니다. 경로는 포물선이 되도록 두 단계 키프레임을 씁니다.',
- params:[DUR(1400,600,3000),EASE('out'),R('items','담을 상품 수',3,1,6,1,'개')],
+ desc:'상품을 누르면 복제된 이미지가 포물선을 그리며 장바구니로 날아가고, 도착할 때마다 장바구니가 튀고 숫자가 올라갑니다.',
+ how:'각 상품 복제본은 x는 직선, y는 포물선(중간이 위로 솟음)으로 키프레임을 만듭니다. 숫자는 도착 시각에 맞춰 바꾸고, 장바구니는 squash 바운스합니다.',
+ params:[DUR(2000,800,3500),EASE('out'),R('items','담을 상품 수',3,1,6,1,'개'),R('arc','포물선 높이',90,30,160,1,'px')],
  build(st,p){const r=root2(st);
+   mk2(r,'',null,{position:'absolute',inset:'0',background:'#1d181b'});
    const shelf=mk2(r,'',null,{position:'absolute',left:'0',right:'0',top:'12%',height:'60%',background:'repeating-linear-gradient(#3a3136 0 4px,transparent 4px 52px),#1d181b'});
-   const prods=[];for(let i=0;i<6;i++){prods.push(mk2(shelf,'',null,{position:'absolute',left:(8+(i%3)*30)+'%',top:(10+Math.floor(i/3)*42)+'%',width:'22%',height:'32%',borderRadius:'8px',background:['#ff8fa3','#7ad1ff','#ffe14d','#d6c7ff','#9fe3b1','#ffd6c7'][i]}));}
+   const prods=[];for(let i=0;i<6;i++){prods.push(mk2(shelf,'',null,{position:'absolute',left:(8+(i%3)*30)+'%',top:(10+Math.floor(i/3)*42)+'%',width:'22%',height:'32%',borderRadius:'8px',background:['#ff8fa3','#7ad1ff','#ffe14d','#d6c7ff','#9fe3b1','#ffd6c7'][i],boxShadow:'0 6px 14px rgba(0,0,0,.4)'}));}
    const cart=mk2(r,'',null,{position:'absolute',right:'8%',bottom:'10%',width:'52px',height:'52px',borderRadius:'50%',background:'#fff',color:'#111',fontWeight:'900',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'18px'});cart.textContent='0';
-   const fly=mk2(r,'',null,{position:'absolute',left:'0',top:'0',width:'26px',height:'26px',borderRadius:'6px',background:'#ff8fa3',opacity:'0'});
-   return()=>{kill2(r);const N=Math.min(prods.length,Math.round(p.items));const g=p.dur;cart.textContent='0';
+   const flies=prods.map(()=>mk2(r,'',null,{position:'absolute',left:'0',top:'0',width:'26px',height:'26px',borderRadius:'6px',background:'#ff8fa3',opacity:'0',boxShadow:'0 0 10px rgba(255,143,163,.7)'}));
+   let timers=[];
+   return()=>{kill2(r);timers.forEach(clearTimeout);timers=[];const g=p.dur;const N=Math.min(prods.length,Math.round(p.items));
      const box=el=>{const a=el.getBoundingClientRect(),b=r.getBoundingClientRect();return {x:a.left-b.left+a.width/2,y:a.top-b.top+a.height/2};};
-     const cx=box(cart);
-     const seq=prods.slice(0,N).map((pr,i)=>{const s=box(pr);const d=i*g/N;
-       const mx=(s.x+cx.x)/2,my=Math.min(s.y,cx.y)-70;
-       return AN2(fly,[{transform:`translate(${s.x-13}px,${s.y-13}px) scale(1)`,opacity:1},{transform:`translate(${mx-13}px,${my-13}px) scale(.8)`,opacity:1,offset:.5},{transform:`translate(${cx.x-13}px,${cx.y-13}px) scale(.3)`,opacity:0}],g/N*.9,'inout',d);});
-     return fin2([...seq,AN2(cart,[{transform:'scale(1)'},{transform:'scale(1.2)'},{transform:'scale(1)'}],g*.2,'back',g*.8)]);};},
- code:p=>`/* 쇼핑몰: 담기 애니메이션 */\nfunction addToCart(el) {\n  const fly = clone(el).animate([\n    { transform: pos(el), opacity: 1 },\n    { transform: arcTo(cart) , opacity: 1 },   // 포물선 중간점\n    { transform: pos(cart), opacity: 0 }\n  ], { duration: ${p.dur}, easing: 'ease-in-out' });\n  fly.finished.then(() => counter.set(n => n + 1));\n}`,
- prompt:(p,t)=>`${t}용 가상 쇼핑몰을 만들어줘.\n- 진열대(선반) 여러 개, 상품 카드에 이름·가격·3D 미리보기.\n- 담기: 상품 이미지가 장바구니까지 포물선으로 날아가고(${p.dur}ms), 장바구니 숫자가 1 올라가며 살짝 튀어.\n- 장바구니 패널에서 수량 변경·삭제, 합계 자동 계산.\n- 결제는 실제 결제 연동 대신 주문 확인 화면까지만(실결제 키는 넣지 않음).\n- 상품이 많으면 무한 스크롤, 재고 0은 흐림 처리.`,
- note:'상품이 장바구니로 날아가고 숫자가 올라갑니다.'});
+     const c=box(cart);cart.textContent='0';
+     const anims=[];
+     for(let i=0;i<N;i++){const s=box(prods[i]);const d=i*g/N*.9,dur=g/N*1.1;const H=p.arc;
+       const kf=Array.from({length:13},(_,k)=>{const t=k/12;const x=s.x+(c.x-s.x)*t-13,y=s.y+(c.y-s.y)*t-4*H*t*(1-t)-13;return {offset:t,transform:`translate(${x.toFixed(1)}px,${y.toFixed(1)}px) scale(${(1-.6*t).toFixed(2)})`,opacity:t>.92?(1-(t-.92)/.08):1};});
+       anims.push(AN2(flies[i],kf,dur,'linear',d));
+       timers.push(setTimeout(()=>{cart.textContent=String(i+1);},d+dur));
+       anims.push(AN2(cart,[{transform:'scale(1,1)'},{transform:'scale(1.25,.8)',offset:.4},{transform:'scale(.95,1.08)',offset:.7},{transform:'scale(1,1)'}],g*.12,'linear',d+dur));}
+     return fin2(anims);};},
+ code:p=>`/* 쇼핑몰: 포물선 투척 + 카운터 */\nfunction addToCart(el) {\n  const fly = clone(el);\n  // x 직선, y = lerp - 4·H·t(1-t)  (H = ${p.arc}px)\n  fly.animate(parabola(el, cart, ${p.arc}), { duration: ${p.dur}, easing: 'linear' });\n  fly.finished.then(() => { counter.set(n => n + 1); cart.bump(); });\n}`,
+ prompt:(p,t)=>`${t}용 가상 쇼핑몰을 만들어줘.\n- 진열대 여러 개, 상품 카드에 이름·가격·3D 미리보기.\n- 담기: 상품 복제본이 포물선(높이 ${p.arc}px)으로 장바구니까지 날아가며 작아짐(${p.dur}ms 안에서).\n- 도착마다 장바구니가 squash 바운스하고 숫자가 1씩 올라감.\n- 장바구니 패널: 수량 변경·삭제, 합계 자동 계산.\n- 결제는 주문 확인 화면까지만(실결제 연동 키는 넣지 않음). 재고 0은 흐림 처리.`,
+ note:'상품이 포물선을 그리며 장바구니로 날아가고 도착할 때마다 숫자가 올라갑니다.'});
 
 AP('pr-mv-class','가상 교실 (발표·손들기)','Virtual Classroom (Board & Hands)',{mini:'swing',target:'교실',
  icon:'<rect x="3" y="4" width="18" height="11" rx="1"/><path d="M8 19h8M12 15v4M7 9h6M7 11h4"/>',
- desc:'칠판에 글씨가 왼쪽부터 써지고, 학생 아바타 한 명이 손을 번쩍 듭니다. 수업 중 발표와 질문이 오가는 장면입니다.',
- how:'칠판 글씨는 clip-path 폭을 0%에서 100%로 키워 쓰는 것처럼 보이게 하고, 손든 팔은 어깨를 축으로 rotate합니다.',
- params:[DUR(2600,1000,5000),EASE('inout'),R('raise','손 드는 각도',70,30,110,1,'°')],
+ desc:'칠판에 글씨가 커서와 함께 써지고, 학생들은 고개를 끄덕이다 한 명이 손을 번쩍 듭니다. 선생님이 이름을 부르면 발표가 시작됩니다.',
+ how:'칠판 글씨는 clip-path 폭을 단계적으로(steps) 늘리고 커서가 그 끝을 따라갑니다. 학생은 PULSE 고개 끄덕임을 주고, 손든 팔은 살짝 흔들리며 정착합니다.',
+ params:[DUR(3000,1000,5000),EASE('inout'),R('raise','손 드는 각도',70,30,110,1,'°')],
  build(st,p){const r=root2(st);
-   const board=mk2(r,'',null,{position:'absolute',left:'10%',right:'10%',top:'8%',height:'40%',background:'#1f3a32',border:'6px solid #7a5a3a',borderRadius:'4px'});
+   const board=mk2(r,'',null,{position:'absolute',left:'10%',right:'10%',top:'8%',height:'40%',background:'#1f3a32',border:'6px solid #7a5a3a',borderRadius:'4px',boxShadow:'inset 0 0 20px rgba(0,0,0,.35)'});
    const txt=mk2(board,'',null,{position:'absolute',left:'8%',top:'30%',color:'#fff',fontSize:'20px',fontWeight:'900',whiteSpace:'nowrap',clipPath:'inset(0 100% 0 0)'});txt.textContent='오늘의 질문: 왜?';
-   const desks=[];for(let i=0;i<4;i++){desks.push(mk2(r,'',null,{position:'absolute',left:(12+i*22)+'%',top:'62%',width:'16%',height:'8%',background:'#7a5a3a',borderRadius:'3px'}));}
+   const caret=mk2(board,'',null,{position:'absolute',left:'8%',top:'32%',width:'3px',height:'26px',background:'#fff',opacity:'0'});
+   for(let i=0;i<4;i++)mk2(r,'',null,{position:'absolute',left:(12+i*22)+'%',top:'62%',width:'16%',height:'8%',background:'#7a5a3a',borderRadius:'3px'});
+   const heads=[[16,74],[38,70],[66,74]].map(([x,y],i)=>MVPL(r,x,y,['#7ad1ff','#ffd6c7','#d6c7ff'][i]));
    const stu=MVPL(r,28,80,'#ffe14d');
    const arm=mk2(stu,'',null,{position:'absolute',left:'-6px',top:'4px',width:'5px',height:'14px',borderRadius:'3px',background:'#ffd6c7',transformOrigin:'50% 100%',transform:'rotate(0deg)'});
+   const tch=MVPL(r,80,72,'#8a5a6a');
    return()=>{kill2(r);const g=p.dur;
+     const cw=[];for(let k=0;k<=8;k++)cw.push({offset:k/8,clipPath:`inset(0 ${(100-k*12.5).toFixed(1)}% 0 0)`});
      return fin2([
-       AN2(txt,[{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0 0 0)'}],g*.6,'linear',0),
-       AN2(arm,[{transform:'rotate(0deg)'},{transform:`rotate(-${p.raise}deg)`},{transform:`rotate(-${p.raise*.85}deg)`}],g*.5,'out',g*.4)]);};},
- code:p=>`/* 교실: 판서 + 손들기 */\nboard.write(text, { mode: 'typewriter', ms: ${p.dur} });   // clip-path 확장\nstudent.raiseHand({ angle: ${p.raise}, from: 'shoulder' }); // 어깨 축 회전\nteacher.callOn(student);`,
- prompt:(p,t)=>`${t}용 가상 교실을 만들어줘.\n- 칠판 + 책상 여러 개, 학생 아바타, 선생님 아바타.\n- 판서: 선생님이 쓰면 글자가 왼쪽부터 ${p.dur}ms 동안 써지듯 나타남(타자 효과).\n- 손들기: 학생이 손을 ${p.raise}°까지 들면 선생님이 이름을 부르면 발표 모드로 전환.\n- 채팅 질문은 칠판 옆 패널에 쌓이고, 선생님이 고르면 화면에 크게 띄워.\n- 발표 중에는 다른 학생 마이크 음소거, 자리 배치는 교사가 바꿀 수 있게.`,
- note:'칠판에 글씨가 써지고 학생이 손을 번쩍 듭니다.'});
+       AN2(txt,cw,g*.6,'steps(1, end)',g*.1),
+       AN2(caret,[{opacity:1,transform:'translateX(0)'},{opacity:0,offset:.5},{opacity:1,offset:.5}],g*.4,'linear',g*.1,{iterations:Infinity}),
+       ...heads.map((h,i)=>AN2(h.firstElementChild,[{transform:'translateY(0)'},{transform:'translateY(-2px)'},{transform:'translateY(0)'}],g*.5,'inout',i*150,{iterations:Infinity})),
+       AN2(arm,[{transform:'rotate(0deg)'},{transform:`rotate(-${p.raise}deg)`,offset:.35},{transform:`rotate(-${p.raise*.85}deg)`,offset:.5},{transform:`rotate(-${p.raise}deg)`,offset:.65},{transform:`rotate(-${p.raise*.92}deg)`}],g*.8,'linear',g*.4)]);};},
+ code:p=>`/* 교실: 판서 + 손들기 */\nboard.write(text, { mode: 'steps', ms: ${p.dur} }); // 글자 단계 노출 + 커서\nstudent.raiseHand({ angle: ${p.raise}, wobble: 0.15 });\nteacher.callOn(student);`,
+ prompt:(p,t)=>`${t}용 가상 교실을 만들어줘.\n- 칠판, 책상 여러 개, 학생 아바타, 선생님 아바타.\n- 판서: 글자가 단계적으로(8단계) 써지고 깜빡이는 커서가 끝을 따라감. 전체 ${p.dur}ms.\n- 학생들은 고개를 가볍게 끄덕이고, 한 명이 ${p.raise}°까지 손을 들며 살짝 흔들린 뒤 정착.\n- 선생님이 부르면 발표 모드(다른 학생 음소거, 발표자 확대).\n- 질문 패널에 채팅 질문이 쌓이고 선생님이 고르면 칠판에 띄움.`,
+ note:'칠판에 글씨가 써지고 학생 한 명이 손을 번쩍 듭니다.'});
 
 AP('pr-mv-city','가상 도시 탐험 (낮·밤)','Virtual City Exploration (Day·Night)',{mini:'slide',target:'도시 월드',
  icon:'<path d="M3 20V9l4-2v13M7 20V4h5v16M12 20V11h5v9M17 20V7l4 2v11"/>',
- desc:'건물 레이어가 옆으로 흐르고, 하늘이 낮에서 밤으로 바뀌며 창문에 불이 켜집니다. 포털과 NPC 표지가 깜빡여 탐험할 곳을 알려 줍니다.',
- how:'건물 레이어를 깊이별 속도로 translateX하고, 하늘 배경은 gradient 키프레임으로 낮에서 밤으로 바꿉니다. 창문 불빛은 지연을 달리해 켜지게 합니다.',
- params:[DUR(3400,1200,6000),EASE('inout'),R('depth','건물 이동 폭',30,10,60,1,'%')],
+ desc:'낮의 하늘이 밤으로 천천히 물들고, 별이 깜빡이며, 창문에 하나씩 불이 켜집니다. 깊이가 다른 건물 레이어가 서로 다른 속도로 흐릅니다.',
+ how:'하늘 그라디언트를 키프레임으로 바꾸고, 별은 주기가 다른 깜빡임을 줍니다. 건물 레이어는 깊이별 속도로 이동하고 창문은 지연을 달리해 켜집니다. NPC 표지는 호흡합니다.',
+ params:[DUR(3600,1200,6000),EASE('inout'),R('depth','건물 이동 폭',30,10,60,1,'%')],
  build(st,p){const r=root2(st);
    const sky=mk2(r,'',null,{position:'absolute',inset:'0',background:'linear-gradient(#7ad1ff,#ffd6c7)'});
+   const stars=Array.from({length:12},(_,i)=>mk2(r,'',null,{position:'absolute',left:(6+(i*23)%88)+'%',top:(4+(i*17)%30)+'%',width:'2px',height:'2px',borderRadius:'50%',background:'#fff',opacity:'0'}));
    const mkL=(top,h,col,n)=>{const L=mk2(r,'',null,{position:'absolute',left:'0',width:'200%',top:top+'%',height:h+'%',background:col});const ws=[];for(let i=0;i<n;i++){ws.push(mk2(L,'',null,{position:'absolute',left:(3+i*(94/n))+'%',top:'30%',width:'4%',height:'28%',background:'#ffe14d',opacity:'0',borderRadius:'1px'}));}return {L,ws};};
    const far=mkL(38,30,'#8a5a6a',10),near=mkL(56,44,'#2a1f24',8);
    const npc=MVPL(r,70,70,'#ff8fa3');
+   const portal=mk2(r,'',null,{position:'absolute',left:'40%',top:'60%',width:'22px',height:'22px',marginLeft:'-11px',marginTop:'-11px',borderRadius:'50%',border:'3px solid #ff8fa3',borderTopColor:'transparent'});
    return()=>{kill2(r);const g=p.dur;const d=p.depth;
      return fin2([
-       AN2(sky,[{background:'linear-gradient(#7ad1ff,#ffd6c7)'},{background:'linear-gradient(#15121a,#2a2a4a)'}],g,'inout'),
-       AN2(far.L,[{transform:'translateX(0)'},{transform:`translateX(-${d*.4}%)`}],g,'linear'),
+       AN2(sky,[{background:'linear-gradient(#7ad1ff,#ffd6c7)'},{background:'linear-gradient(#15121a,#2a2a4a)',offset:.6},{background:'linear-gradient(#15121a,#2a2a4a)'}],g,'inout'),
+       ...stars.map((s,i)=>AN2(s,[{opacity:0},{opacity:1,offset:.5},{opacity:0}],g*(.4+(i%3)*.1),'linear',g*.5+i*g*.02,{iterations:Infinity})),
+       AN2(far.L,[{transform:'translateX(0)'},{transform:`translateX(-${(d*.4).toFixed(1)}%)`}],g,'linear'),
        AN2(near.L,[{transform:'translateX(0)'},{transform:`translateX(-${d}%)`}],g,'linear'),
-       ...[...far.ws,...near.ws].map((w,i)=>AN2(w,[{opacity:0},{opacity:1}],g*.3,'linear',g*.6+(i%5)*g*.05)),
-       AN2(npc,[{transform:'scale(1)'},{transform:'scale(1.2)'},{transform:'scale(1)'}],g*.4,'inout',g*.2)]);};},
- code:p=>`/* 도시: 깊이별 패럴랙스 + 낮·밤 */\nlayers.far.speed  = 0.4;  layers.near.speed = 1.0;   // 가까울수록 빠름\nsky.setTime(t) -> gradient(day, night) lerp\nwindows.forEach((w, i) => w.lightOn({ at: ${p.dur}*0.6 + (i%5)*${Math.round(p.dur*.05)} }));`,
- prompt:(p,t)=>`${t}용 도시 탐험 월드를 만들어줘.\n- 건물 레이어 3개(깊이별 속도 비율 0.4 : 0.7 : 1.0). 가까운 층이 최대 ${p.depth}%까지 이동.\n- 시간 흐름: 하늘이 낮(하늘색)에서 밤(남색)으로 바뀌고, 창문 불빛이 하나씩 켜짐.\n- NPC·포털 표지는 맥박처럼 깜빡여서 "여기 가면 뭔가 있다"를 알려줘.\n- 이동은 가로 스와이프/화살표 키, 포털에 닿으면 다른 구역으로 전환.\n- 밤이 되면 채팅 밀도가 높은 지역을 밝게 표시.`,
- note:'건물 레이어가 깊이별로 흐르고 하늘이 밤으로 바뀌며 창문이 켜집니다.'});
+       ...[...far.ws,...near.ws].map((w,i)=>AN2(w,[{opacity:0},{opacity:1,offset:.1},{opacity:.6,offset:.2},{opacity:1}],g*.4,'linear',g*.5+(i%5)*g*.06)),
+       AN2(npc.firstElementChild,[{transform:'translateY(0)'},{transform:'translateY(-4px)'},{transform:'translateY(0)'}],g*.5,'inout',0,{iterations:Infinity}),
+       AN2(portal,[{transform:'rotate(0deg)'},{transform:'rotate(360deg)'}],g*.8,'linear',0,{iterations:Infinity})]);};},
+ code:p=>`/* 도시: 깊이별 패럴랙스 + 낮·밤 + 포털 */\nlayers.far.speed = 0.4; layers.near.speed = 1.0;\nsky.lerp(day, night, t);            // 0 → 1\nstars.twinkle({ period: ${p.dur} });\nwindows.forEach((w, i) => w.lightOn({ at: ${p.dur}*0.5 + (i%5)*${Math.round(p.dur*.06)} }));`,
+ prompt:(p,t)=>`${t}용 도시 탐험 월드를 만들어줘.\n- 건물 레이어 3개(깊이별 속도 0.4 : 0.7 : 1.0). 가까운 층 최대 ${p.depth}% 이동.\n- 하늘: 낮(하늘색)→밤(남색) 전환, 별 12개가 주기를 달리해 깜빡임.\n- 창문은 밤이 될수록 하나씩 켜지고, NPC는 숨쉬듯 4px 바운스, 포털은 무한 회전.\n- 이동은 좌우 스와이프/화살표, 포털에 닿으면 다른 구역으로 전환.\n- 밤에는 채팅 밀도가 높은 지역의 창문을 더 밝게.`,
+ note:'하늘이 밤으로 물들고 별과 창문이 켜지며 건물 레이어가 깊이별로 흐릅니다.'});
+
+
+/* ═════ 영상 편집: 브이로그 자막 + 한국 릴스 자막 5종 (줄노트 배경·NEW 뱃지·라벨 칩·도트 스티커) ═════ */
+const RPAPER=(r)=>{mk2(r,'',null,{position:'absolute',inset:'0',background:'linear-gradient(#a3a4ab,#8e909a)'});
+  mk2(r,'',null,{position:'absolute',inset:'0',backgroundImage:'repeating-linear-gradient(180deg,transparent 0 25px,rgba(120,150,210,.38) 25px 26px)'});
+  mk2(r,'',null,{position:'absolute',top:'0',bottom:'0',left:'11%',width:'1px',background:'rgba(220,90,110,.45)'});};
+const RUI=(r,handle='@your.nickname')=>{
+  const nw=mk2(r,'',null,{position:'absolute',left:'6%',top:'4%',padding:'5px 14px',background:'#111',color:'#fff',borderRadius:'14px',fontWeight:'900',fontSize:'13px',letterSpacing:'.04em'});nw.textContent='NEW';
+  const cr=mk2(r,'',SV('0 0 24 24','<path d="M3 8l4.5 4L12 6l4.5 6L21 8l-2 11H5z" fill="#111"/>'),{position:'absolute',right:'6%',top:'4%',width:'34px',height:'34px',borderRadius:'50%',background:'rgba(255,255,255,.85)',padding:'7px',boxSizing:'border-box'});
+  const hd=mk2(r,'',null,{position:'absolute',left:'0',right:'0',top:'5%',textAlign:'center',fontSize:'10px',color:'#f4f4f4',textShadow:'0 1px 2px rgba(0,0,0,.4)'});hd.textContent=handle;
+  return {nw,cr,hd};};
+const RLINE=(r,txt,css,col='#fff')=>{const d=mk2(r,'',null,{position:'absolute',left:'0',right:'0',textAlign:'center',whiteSpace:'nowrap',fontWeight:'900',lineHeight:'1.15',color:col,...css});d.textContent=txt;return d;};
+const RPOP=(el,g,d,dl)=>AN2(el,[{opacity:0,transform:'translateY(26px) scale(.9)'},{opacity:1,transform:'translateY(-4px) scale(1.05)',offset:.6},{opacity:1,transform:'none'}],g*d,'out',dl);
+const RCHIP=(r,txt,css)=>{const c=mk2(r,'',null,{position:'absolute',padding:'4px 10px',fontWeight:'700',fontSize:'13px',letterSpacing:'.12em',whiteSpace:'nowrap',...css});c.textContent=txt;return c;};
+const RSTAR=(x,y,col,s=26)=>mk2(null,'',SV('0 0 24 24',`<path d="M12 2l2.6 6.9L22 9.5l-5.5 4.6L18.2 22 12 18l-6.2 4 1.7-7.9L2 9.5l7.4-.6z" fill="${col}" stroke="#fff" stroke-width="1"/>`),{position:'absolute',left:x,top:y,width:s+'px',height:s+'px'});
+const RCHEV=(r,x,y,n=2)=>{const el=mk2(r,'',null,{position:'absolute',left:x,top:y,width:'80px',height:'50px'});el.innerHTML=SV('0 0 80 50',Array.from({length:n},(_,i)=>`<polyline points="${4+i*26},6 ${28+i*26},25 ${4+i*26},44" fill="none" stroke="#fff" stroke-width="5" stroke-dasharray="60" stroke-dashoffset="60"/>`).join(''));return el;};
+
+/* 1. 브이로그 자막 (기존 항목 업그레이드: 블러 인 + 단어별 회전 정착 + 밑줄 스윕) */
+AP('ed-vlog','브이로그 자막','Vlog Caption',{cat:'edit',mini:'slide',target:'브이로그 자막',
+ icon:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 15h5M7 11h10"/>',
+ desc:'날짜·장소 스탬프가 타자처럼 찍히고, 본문은 단어마다 블러가 걷히며 올라옵니다. 단어가 살짝 기울었다 바로 서고, 분홍 밑줄이 한 번 스윕합니다.',
+ how:'스탬프는 글자를 steps로 노출하고, 단어는 blur와 translateY를 함께 풀며 지연을 줍니다. 단어마다 -3°~3° 기울기에서 0°로 정착합니다.',
+ params:[DUR(2800,800,6000),EASE('out'),R('ds','자막 올라오는 거리',14,0,40,1,'px'),R('bl','블러 세기',6,0,12,1,'px')],
+ build(st,p){const r=root2(st);
+   const stamp=mk2(r,'ed-mono','',{position:'absolute',left:'14px',top:'14px',fontSize:'12px',color:'#fff',letterSpacing:'.08em',textShadow:'0 1px 2px rgba(0,0,0,.6)',whiteSpace:'nowrap'});stamp.textContent='2026.11.06  ·  JEJU';
+   const cap=mk2(r,'ed-cap',null,{top:'66%'});
+   const W=['오늘은','제주','바다','브이로그'];const rot=[-2,2,-3,1];
+   const sp=W.map((w,i)=>mk2(cap,'ed-w',w,{margin:'0 4px',color:'#fff',display:'inline-block'}));
+   const ul=mk2(r,'',null,{position:'absolute',left:'30%',right:'30%',top:'calc(66% + 44px)',height:'4px',borderRadius:'2px',background:'#ff8fa3'});
+   return()=>{kill2(r);const gap=p.dur/(W.length+2);
+     return fin2([
+       AN2(stamp,[{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0 0 0)'}],gap*2.5,'steps(14, end)'),
+       ...sp.map((s,i)=>AN2(s,[{opacity:0,filter:`blur(${p.bl}px)`,transform:`translateY(${p.ds}px) rotate(${rot[i]}deg)`},{opacity:1,filter:'blur(0px)',transform:'translateY(0) rotate(0deg)'}],gap*2.2,p.ease,gap*.8+i*gap)),
+       AN2(ul,[{transform:'scaleX(0)'},{transform:'scaleX(1)'}],gap*2,'out',gap*(W.length+.4))]);};},
+ code:p=>`.stamp { font-family: ui-monospace, monospace; animation: type ${Math.round(p.dur*.3)}ms steps(14, end) both; }\n.word  { display: inline-block; animation: rise ${Math.round(p.dur/6)}ms ${ez(p.ease)} both; animation-delay: calc(var(--i) * ${Math.round(p.dur/12)}ms); }\n@keyframes rise { from { opacity:0; filter: blur(${p.bl}px); transform: translateY(${p.ds}px) rotate(var(--r)); } to { opacity:1; filter: blur(0); transform: none; } }`,
+ prompt:(p,t)=>`${t}에 브이로그 스타일 자막을 넣어줘.\n- 상단 왼쪽 날짜·장소 스탬프: 모노스페이스, 타자처럼 14단계로 노출.\n- 본문: 단어마다 블러 ${p.bl}px에서 선명하게, ${p.ds}px 아래에서 올라오며 -3°~3° 기울었다 정착. 전체 ${p.dur}ms.\n- 분홍(#ff8fa3) 밑줄이 가운데에서 좌우로 한 번 스윕.\n- 자막 위치는 화면 세로 66%, text-shadow 0 2px 0 rgba(0,0,0,.6).`,
+ note:'날짜 스탬프가 타자처럼 찍히고 단어가 블러가 걷히며 올라옵니다.'});
+
+/* 2. 한국 릴스: 검정 라벨 칩 + 큰 타이틀 (외곽선 글씨 + 화살표) */
+AP('ed-rl-label','라벨 칩 + 큰 타이틀 (릴스)','Label Chip + Big Title (Reels)',{cat:'edit',mini:'pop',target:'릴스 타이틀',
+ icon:'<rect x="4" y="5" width="16" height="5" rx="1"/><path d="M5 15h10M5 19h7"/>',
+ desc:'검정 라벨 칩이 펼쳐진 뒤 노랑·흰색 큰 타이틀이 한 줄씩 튀어 오릅니다. 아래 화살표가 흐르며 "저장해두고 꺼내보세요" 안내가 뜹니다. 줄노트 배경과 NEW·크라운 UI를 함께 씁니다.',
+ how:'라벨은 clip-path로 가로가 펼쳐지고, 타이틀 줄은 translateY와 scale 오버슈트로 튑니다. 화살표는 stroke-dashoffset으로 그려지고 살짝 반복합니다.',
+ params:[DUR(2600,800,5000),EASE('out'),R('fs','타이틀 크기',44,24,64,1,'px')],
+ build(st,p){const r=root2(st);RPAPER(r);const ui=RUI(r);
+   const chip=RCHIP(r,'5년차 마케터의',{left:'50%',top:'22%',transform:'translateX(-50%)',background:'#111',color:'#fff',clipPath:'inset(0 100% 0 0)'});
+   const t1=RLINE(r,'터지는 릴스',{top:'31%',fontSize:p.fs+'px',color:'#ffe14d',WebkitTextStroke:'2px #111',paintOrder:'stroke fill',textShadow:'0 4px 0 rgba(0,0,0,.25)'});
+   const t2=RLINE(r,'만드는 법 4',{top:'45%',fontSize:p.fs+'px',color:'#fff',WebkitTextStroke:'2px #111',paintOrder:'stroke fill',textShadow:'0 4px 0 rgba(0,0,0,.25)'});
+   const sub=RLINE(r,'저장해두고 꺼내보세요!',{top:'62%',fontSize:'13px',color:'#fff',opacity:'0'});
+   const chev=RCHEV(r,'42%','70%',2);
+   return()=>{kill2(r);const g=p.dur;
+     return fin2([
+       AN2(chip,[{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0 0 0)'}],g*.22,'out',0),
+       RPOP(t1,g,.22,g*.2),RPOP(t2,g,.22,g*.36),
+       AN2(sub,[{opacity:0},{opacity:1}],g*.2,'linear',g*.6),
+       AN2(chev.firstElementChild.querySelectorAll('polyline')[0],[{strokeDashoffset:60},{strokeDashoffset:0}],g*.25,'out',g*.6),
+       AN2(chev.firstElementChild.querySelectorAll('polyline')[1],[{strokeDashoffset:60},{strokeDashoffset:0}],g*.25,'out',g*.7),
+       AN2(chev,[{opacity:1},{opacity:.3,offset:.5},{opacity:1}],g*.5,'linear',g*.8)]);};},
+ code:p=>`/* 한국 릴스 라벨 칩 + 타이틀 */\n.chip  { background:#111; color:#fff; letter-spacing:.12em; clip-path: inset(0 100% 0 0); animation: open .5s ease-out forwards; }\n.title { font-size:${p.fs}px; font-weight:900; -webkit-text-stroke:2px #111; paint-order: stroke fill; animation: pop .5s cubic-bezier(.2,1.3,.4,1) both; }\n.chev  { stroke-dasharray:60; animation: draw .3s ease-out both; }`,
+ prompt:(p,t)=>`${t}용 한국 릴스 자막 화면을 만들어줘.\n- 배경: 회색 줄노트(파란 줄 + 빨간 세로 여백선), 상단 NEW 뱃지(검정 둥근 사각)와 크라운 원형 아이콘, 가운데 @닉네임.\n- 라벨 칩: 검정 배경 흰 글씨, 자간 넓게. 0.5초에 걸쳐 가로로 펼쳐짐.\n- 타이틀 두 줄: 첫 줄 노랑, 둘째 줄 흰색, 굵은 검정 외곽선 2px, 크기 ${p.fs}px. 한 줄씩 튀어 오름(오버슈트).\n- 하단 화살표 ›› 가 그려졌다가 살짝 반복. 보조 문구는 마지막에 페이드인.\n- 모바일 폭에서도 줄바꿈이 없도록 글자 크기는 vw 단위로 제한.`,
+ note:'검정 라벨이 펼쳐지고 노랑·흰색 타이틀이 튀어 오르며 화살표가 그려집니다.'});
+
+/* 3. 한국 릴스: 파스텔 형광펜 + 아웃라인 타이틀 */
+AP('ed-rl-highlight','파스텔 형광펜 타이틀 (릴스)','Pastel Highlight Title (Reels)',{cat:'edit',mini:'slide',target:'릴스 형광펜',
+ icon:'<path d="M4 17h16M7 13l5-6 5 6"/><rect x="4" y="16" width="16" height="4" rx="1"/>',
+ desc:'글자 뒤에 파스텔 형광펜이 왼쪽부터 쓱 칠해지고, 라벨 칩은 살짝 기울어 붙습니다. 타이틀은 분홍 외곽선과 흰 글씨로 교차합니다.',
+ how:'형광펜은 scaleX를 0에서 1로 키우며 글자 뒤에 깔고, 칩은 rotate와 translateY로 붙습니다. 두 줄은 시차를 두고 blur 없이 페이드·이동합니다.',
+ params:[DUR(2600,800,5000),EASE('out'),R('fs','타이틀 크기',40,22,60,1,'px')],
+ build(st,p){const r=root2(st);RPAPER(r);RUI(r);
+   const chip=RCHIP(r,'필테 5년차 유지어터',{left:'18%',top:'20%',background:'#ffd6e4',color:'#111',fontWeight:'900',letterSpacing:'.02em',fontSize:'13px',transform:'rotate(-2deg)'});
+   const hl1=mk2(r,'',null,{position:'absolute',left:'14%',top:'36%',width:'72%',height:'0.9em',background:'#ffe14d',opacity:'.9',transformOrigin:'0 50%',transform:'scaleX(0)'});
+   const t1=RLINE(r,'필라테스로',{top:'32%',fontSize:p.fs+'px',color:'#111',textAlign:'center'});
+   const hl2=mk2(r,'',null,{position:'absolute',left:'22%',top:'52%',width:'56%',height:'0.9em',background:'#ffd6e4',transformOrigin:'0 50%',transform:'scaleX(0)'});
+   const t2=RLINE(r,'바뀐 점 3가지',{top:'48%',fontSize:p.fs+'px',color:'#111',WebkitTextStroke:'2px #ff8fa3',paintOrder:'stroke fill'});
+   const sub=RLINE(r,'하나씩 체크해봐요',{top:'68%',fontSize:'14px',color:'#fff',textShadow:'0 1px 2px rgba(0,0,0,.35)'});
+   return()=>{kill2(r);const g=p.dur;
+     return fin2([
+       AN2(chip,[{opacity:0,transform:'rotate(-2deg) translateY(-10px)'},{opacity:1,transform:'rotate(-2deg) translateY(0)'}],g*.2,'back',0),
+       AN2(hl1,[{transform:'scaleX(0)'},{transform:'scaleX(1)'}],g*.3,'out',g*.2),
+       RPOP(t1,g,.22,g*.25),
+       AN2(hl2,[{transform:'scaleX(0)'},{transform:'scaleX(1)'}],g*.3,'out',g*.5),
+       RPOP(t2,g,.22,g*.55),
+       AN2(sub,[{opacity:0},{opacity:1}],g*.2,'linear',g*.8)]);};},
+ code:p=>`/* 파스텔 형광펜 */\n.hl { background:#ffe14d; transform-origin:0 50%; animation: wipe .3s ease-out both; }\n@keyframes wipe { from { transform: scaleX(0); } to { transform: scaleX(1); } }\n.title { color:#fff; -webkit-text-stroke:2px #ff8fa3; paint-order: stroke fill; font-size:${p.fs}px; }`,
+ prompt:(p,t)=>`${t}용 한국 릴스 형광펜 자막을 만들어줘.\n- 라벨 칩: 파스텔 분홍 배경, 검정 굵은 글씨, -2° 기울어 붙음.\n- 형광펜: 노랑(#ffe14d) 또는 분홍(#ffd6e4)이 글자 뒤에서 왼쪽부터 쓱 칠해짐(scaleX 0→1).\n- 타이틀: 크기 ${p.fs}px, 흰 글씨 + 분홍 외곽선 2px, 한 줄씩 시차 등장.\n- 배경은 회색 줄노트, 상단에 NEW 뱃지와 크라운 아이콘.`,
+ note:'파스텔 형광펜이 글자 뒤를 쓱 칠하고 타이틀이 한 줄씩 등장합니다.'});
+
+/* 4. 한국 릴스: 도트(픽셀) 스티커 + 웨딩 브이로그 */
+const DOTMAP=['.##...##.','#########','#########','.#######.','..#####..','...###...','....#....'];
+AP('ed-rl-dots','도트 스티커 + 브이로그 타이틀 (릴스)','Dot Sticker + Vlog Title (Reels)',{cat:'edit',mini:'pulse',target:'릴스 도트 스티커',
+ icon:'<circle cx="6" cy="6" r="1.5"/><circle cx="12" cy="6" r="1.5"/><circle cx="18" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/>',
+ desc:'하트 모양 도트 스티커가 점 하나씩 찍히며 완성되고, 라벨과 타이틀이 이어서 등장합니다. 반지 이모지가 살짝 통통 튑니다.',
+ how:'도트 격자 비트맵을 원형 점으로 찍고, 점마다 대각선 웨이브 순서로 scale 0에서 1로 지연을 줍니다. 타이틀은 외곽선 글씨를 한 줄씩 올립니다.',
+ params:[DUR(2800,800,5000),EASE('out'),R('fs','타이틀 크기',40,22,60,1,'px')],
+ build(st,p){const r=root2(st);RPAPER(r);RUI(r);
+   const dots=[];const cell=10;
+   DOTMAP.forEach((row,y)=>[...row].forEach((c,x)=>{if(c!=='#')return;const d=mk2(r,'',null,{position:'absolute',left:(8+x*cell*.52)+'%',top:(14+y*cell*.55)+'%',width:'8px',height:'8px',marginLeft:'-4px',marginTop:'-4px',borderRadius:'50%',background:'#ffd6e4',boxShadow:'0 0 6px rgba(255,214,228,.7)',transform:'scale(0)'});dots.push({d,x,y});}));
+   const ring=RLINE(r,'💍',{top:'78%',fontSize:'28px'});
+   const chip=RCHIP(r,'My Wedding Day',{left:'50%',top:'40%',transform:'translateX(-50%)',background:'#bfe6ff',color:'#111',fontWeight:'700',fontSize:'13px'});
+   const t1=RLINE(r,'신부의',{top:'50%',fontSize:p.fs+'px',color:'#fff',WebkitTextStroke:'2px #3a4a5a',paintOrder:'stroke fill'});
+   const t2=RLINE(r,'결혼식 당일',{top:'62%',fontSize:(p.fs*.9)+'px',color:'#bfe6ff',WebkitTextStroke:'2px #fff',paintOrder:'stroke fill'});
+   return()=>{kill2(r);const g=p.dur;
+     return fin2([
+       ...dots.map(({d,x,y})=>AN2(d,[{transform:'scale(0)',opacity:0},{transform:'scale(1.3)',opacity:1,offset:.6},{transform:'scale(1)',opacity:1}],g*.2,'out',g*.04*(x+y))),
+       AN2(chip,[{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0 0 0)'}],g*.2,'out',g*.4),
+       RPOP(t1,g,.2,g*.55),RPOP(t2,g,.2,g*.7),
+       AN2(ring,[{transform:'translateY(0)'},{transform:'translateY(-8px) rotate(-8deg)',offset:.5},{transform:'translateY(0)'}],g*.6,'inout',g*.4,{iterations:Infinity})]);};},
+ code:p=>`/* 도트 스티커: 비트맵 → 점 */\nconst HEART = ['.##...##.','#########', ...];\nHEART.forEach((row,y)=>[...row].forEach((c,x)=>{ if(c==='#') dot(x,y).pop({ delay: (x+y)*40 }); }));\n/* 타이틀 ${p.fs}px, 이모지 통통 */`,
+ prompt:(p,t)=>`${t}용 도트 스티커 브이로그 자막을 만들어줘.\n- 도트 스티커: 9×7 비트맵(하트·나비·장미 등)을 점으로 찍고, 대각선 순서로 한 점씩 팝 등장.\n- 점 색 #ffd6e4, 살짝 글로우.\n- 라벨 칩(하늘색 배경) 펼쳐짐 → 타이틀 두 줄(외곽선 글씨, ${p.fs}px) 순서로 등장.\n- 반지 이모지는 제자리에서 통통 튀는 루프.\n- 줄노트 배경, 상단 NEW·크라운 UI.`,
+ note:'하트 도트 스티커가 점 하나씩 찍히고 브이로그 타이틀이 이어서 등장합니다.'});
+
+/* 5. 한국 릴스: 손글씨 타이틀 + 별 스티커 + 밑줄 드로잉 */
+AP('ed-rl-hand','손글씨 타이틀 + 별 스티커 (릴스)','Handwritten Title + Star Stickers (Reels)',{cat:'edit',mini:'swing',target:'릴스 손글씨',
+ icon:'<path d="M12 3l2.5 6 6.5.5-5 4.3 1.6 6.4L12 17l-5.6 3.2 1.6-6.4-5-4.3 6.5-.5z"/>',
+ desc:'흰 손글씨 타이틀이 한 줄씩 떠오르고, 밑줄이 그려지며, 별 스티커 두 개가 반짝 튀었다 돌아옵니다. 연두색 칩과 분홍 스티커 메모가 생활감을 줍니다.',
+ how:'타이틀은 scale·rotate 지터로 손글씨 느낌을 내고, 밑줄은 stroke-dashoffset으로 그립니다. 별은 scale 오버슈트 후 천천히 회전하는 루프입니다.',
+ params:[DUR(2800,800,5000),EASE('out'),R('fs','타이틀 크기',38,22,58,1,'px')],
+ build(st,p){const r=root2(st);RPAPER(r);RUI(r);
+   const chip=RCHIP(r,'벌써 직장인 9년차',{left:'12%',top:'22%',background:'#e4f5c8',color:'#111',fontWeight:'700',fontSize:'13px',transform:'rotate(-2deg)'});
+   const t1=RLINE(r,'30대 여자',{top:'32%',fontSize:p.fs+'px',color:'#fff',textShadow:'0 3px 0 rgba(0,0,0,.25)',transform:'rotate(-1deg)'});
+   const t2=RLINE(r,'하루 일기',{top:'45%',fontSize:p.fs+'px',color:'#fff',textShadow:'0 3px 0 rgba(0,0,0,.25)',transform:'rotate(1deg)'});
+   const ul=mk2(r,'',SV('0 0 200 20','<path d="M10 12 Q60 4 100 12 T190 10" stroke="#fff" stroke-width="4" fill="none" stroke-dasharray="220" stroke-dashoffset="220"/>'),{position:'absolute',left:'22%',top:'58%',width:'56%',height:'10%'});
+   const memo=RCHIP(r,'근데 관리에 진심인..',{right:'8%',top:'68%',background:'#ffd6e4',color:'#111',fontWeight:'700',fontSize:'12px',transform:'rotate(3deg)'});
+   const s1=RSTAR('12%','40%','#e4f5c8',30);const s2=RSTAR('78%','62%','#ffd6e4',24);r.appendChild(s1);r.appendChild(s2);
+   return()=>{kill2(r);const g=p.dur;
+     return fin2([
+       AN2(chip,[{opacity:0,transform:'rotate(-2deg) scale(.8)'},{opacity:1,transform:'rotate(-2deg) scale(1.06)',offset:.6},{opacity:1,transform:'rotate(-2deg) scale(1)'}],g*.2,'out',0),
+       AN2(t1,[{opacity:0,transform:'translateY(20px) rotate(-6deg)'},{opacity:1,transform:'translateY(-3px) rotate(-1deg)',offset:.6},{opacity:1,transform:'rotate(-1deg)'}],g*.25,'out',g*.2),
+       AN2(t2,[{opacity:0,transform:'translateY(20px) rotate(6deg)'},{opacity:1,transform:'translateY(-3px) rotate(1deg)',offset:.6},{opacity:1,transform:'rotate(1deg)'}],g*.25,'out',g*.35),
+       AN2(ul.querySelector('path'),[{strokeDashoffset:220},{strokeDashoffset:0}],g*.3,'linear',g*.55),
+       AN2(s1,[{transform:'scale(0) rotate(0deg)'},{transform:'scale(1.3) rotate(40deg)',offset:.5},{transform:'scale(1) rotate(90deg)'}],g*.4,'out',g*.4),
+       AN2(s2,[{transform:'scale(0) rotate(0deg)'},{transform:'scale(1.3) rotate(-30deg)',offset:.5},{transform:'scale(1) rotate(-60deg)'}],g*.4,'out',g*.6),
+       AN2(memo,[{opacity:0,transform:'rotate(3deg) translateY(12px)'},{opacity:1,transform:'rotate(3deg) translateY(0)'}],g*.2,'back',g*.7)]);};},
+ code:p=>`/* 손글씨 타이틀 + 별 스티커 */\n.title { font-size:${p.fs}px; color:#fff; text-shadow: 0 3px 0 rgba(0,0,0,.25); animation: pop .5s cubic-bezier(.2,1.3,.4,1) both; }\n.underline path { stroke-dasharray: 220; animation: draw .6s ease-out both; }\n.star { animation: spinPop .5s cubic-bezier(.2,1.6,.4,1) both; }`,
+ prompt:(p,t)=>`${t}용 손글씨 감성 릴스 자막을 만들어줘.\n- 연두색 라벨 칩(-2° 기울기), 흰 타이틀 두 줄(${p.fs}px, 줄마다 -1°/+1° 지터).\n- 타이틀 밑 흰 손글씨 밑줄이 그려지고, 별 스티커(연두·분홍) 두 개가 반짝 튀어 회전.\n- 분홍 메모 칩(+3°)이 마지막에 가볍게 올라옴.\n- 줄노트 배경, NEW·크라운·@닉네임 UI.`,
+ note:'흰 손글씨 타이틀이 떠오르고 밑줄이 그려지며 별 스티커가 반짝 튑니다.'});
+
+/* 6. 한국 릴스: 목록형 (추천템 3) + 형광 외곽선 + 화살표 CTA */
+AP('ed-rl-cta','추천 목록 자막 + 화살표 (릴스)','Recommendation List + Arrows (Reels)',{cat:'edit',mini:'bounce',target:'릴스 추천 목록',
+ icon:'<path d="M5 5l6 7-6 7M13 5l6 7-6 7"/>',
+ desc:'"3년차 견주 Pick" 노란 칩이 먼저 붙고, "나가면 꼭 묻는" 흰 글씨와 파란 외곽선 타이틀이 튑니다. 화살표 두 개가 흐르고 마지막에 저장 안내 타자가 찍힙니다.',
+ how:'칩은 translateY로 붙고, 타이틀은 두 줄 시차 등장, 화살표는 dashoffset으로 그린 뒤 좌우로 흐르는 루프입니다. 저장 문구는 steps로 한 글자씩 노출합니다.',
+ params:[DUR(3000,1000,5000),EASE('out'),R('fs','타이틀 크기',36,22,56,1,'px')],
+ build(st,p){const r=root2(st);RPAPER(r);RUI(r);
+   const chip=RCHIP(r,'🐶 3년차 견주 Pick 🐾',{left:'50%',top:'30%',transform:'translateX(-50%)',background:'#ffe14d',color:'#111',fontWeight:'900',fontSize:'13px',letterSpacing:'0'});
+   const t1=RLINE(r,'나가면 꼭 묻는',{top:'40%',fontSize:p.fs+'px',color:'#fff',WebkitTextStroke:'2px #111',paintOrder:'stroke fill'});
+   const t2=RLINE(r,'산책 추천템 3',{top:'52%',fontSize:p.fs+'px',color:'#bfe6ff',WebkitTextStroke:'2px #fff',paintOrder:'stroke fill'});
+   const chev=RCHEV(r,'10%','74%',2);
+   const cta=RLINE(r,'저장해두고 꺼내보세요',{top:'85%',fontSize:'12px',color:'#fff',textAlign:'center'});
+   return()=>{kill2(r);const g=p.dur;
+     const chevs=[...chev.querySelectorAll('polyline')];
+     return fin2([
+       AN2(chip,[{opacity:0,transform:'translate(-50%,-14px)'},{opacity:1,transform:'translate(-50%,0)'}],g*.2,'back',0),
+       RPOP(t1,g,.22,g*.2),RPOP(t2,g,.22,g*.36),
+       ...chevs.map((c,i)=>AN2(c,[{strokeDashoffset:60},{strokeDashoffset:0}],g*.25,'out',g*.6+i*g*.05)),
+       AN2(chev,[{transform:'translateX(0)'},{transform:'translateX(14px)',offset:.5},{transform:'translateX(0)'}],g*.9,'inout',g*.4,{iterations:Infinity}),
+       AN2(cta,[{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0 0 0)'}],g*.25,'steps(11, end)',g*.7)]);};},
+ code:p=>`/* 추천 목록 자막 */\n.chip  { background:#ffe14d; font-weight:900; animation: drop .3s ease-out both; }\n.title { font-size:${p.fs}px; -webkit-text-stroke:2px #111; paint-order: stroke fill; }\n.chev  { animation: nudge .9s ease-in-out infinite; }\n.cta   { animation: type .25s steps(11, end) both; }`,
+ prompt:(p,t)=>`${t}용 추천 목록 릴스 자막을 만들어줘.\n- 노랑 칩 "3년차 견주 Pick"이 위에서 붙고, 타이틀 두 줄(${p.fs}px, 흰 글씨 검정 외곽선 / 하늘색 글씨 흰 외곽선)이 시차 등장.\n- 하단 화살표 ›› 두 개가 그려진 뒤 좌우로 14px 흐르는 루프.\n- "저장해두고 꺼내보세요"를 한 글자씩 타자 효과로.\n- 줄노트 배경, NEW·크라운·@닉네임 UI, 모바일에서 줄바꿈 없이.`,
+ note:'노랑 칩이 붙고 추천 타이틀이 튀며 화살표가 흐르고 저장 안내가 타자로 찍힙니다.'});
 
 })();
 
@@ -11872,7 +12116,7 @@ const USE=[
  [['웹툰','webtoon','만화','comic','말풍선','효과음','집중선','sfx'],['pr-webtoon','pr-wt-bubble','pr-wt-speed','pr-wt-sfx','pr-wt-scroll'],'prompt'],
  [['지도','map','지도생성','경로','heatmap','히트맵','클러스터','cluster','3D','단계구분도'],['pr-map-route','pr-map-cluster','pr-map-radius','pr-map-3d','pr-map-heat','pr-map-choro'],'prompt'],
  [['메타버스','metaverse','가상','virtual','월드','오피스','전시','콘서트','쇼핑몰','교실','도시'],['pr-mv-office','pr-mv-gallery','pr-mv-concert','pr-mv-mall','pr-mv-class','pr-mv-city'],'prompt'],
- [['브이로그','vlog'],['ed-vlog'],'edit']
+ [['브이로그','vlog','릴스','reels','쇼츠 자막'],['ed-vlog','ed-rl-label','ed-rl-highlight','ed-rl-dots','ed-rl-hand','ed-rl-cta'],'edit']
 ];
 const STOP=new Set('은 는 이 가 을 를 에 에서 의 로 으로 와 과 도 만 좀 요 해줘 해 주세요 줘 추천 추천해줘 알려줘 만들 만들고 만들때 만들 때 싶어 싶은데 쓸 쓰면 쓰기 좋은 어떤 무슨 뭐 뭘 거 것 애니메이션 효과 animation animations effect effects for the a an to i want make making use good which what some me my please recommend suggest with of in on'.split(' '));
 const stripJ=w=>w.replace(/(에서는|에서|으로|에는|에게|이랑|랑|하고|까지|부터|처럼|같은|같이|할때|할 때|을|를|은|는|이|가|에|의|로|와|과|도|만|요)$/,'');
