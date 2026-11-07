@@ -6615,7 +6615,7 @@ function autoScroll(box,ms,c){
   });
 }
 
-const CATS=[['all','전체'],['in','등장','Entrance'],['em','강조','Attention'],['ia','인터랙션','Interaction'],['cp','컴포넌트','Components'],['ld','로딩','Loading'],['ts','텍스트·스크롤','Text & Scroll'],['icon','아이콘','Animated Icons'],['edit','영상 편집','Video Editing'],['prompt','프롬프트','Prompts'],['ai','AI·이펙트','AI & Effects'],['fx','이펙트','Effects'],['ch','차트','Charts'],['game','3D 게임 이펙트','3D Game Effects'],['motion','3D 캐릭터 동작','3D Character Motion'],['beast','3D 동물 동작','3D Animal Motion'],['bg','커서·배경','Cursor & Background'],['mat','재질','Materials'],['sim','물리 시뮬레이션','Physics'],['hl','헤어라인','Hairline Figures'],['pixel','픽셀 아트 이펙트','Pixel Art Effects']];
+const CATS=[['all','전체'],['in','등장','Entrance'],['em','강조','Attention'],['ia','인터랙션','Interaction'],['cp','컴포넌트','Components'],['ld','로딩','Loading'],['ts','텍스트·스크롤','Text & Scroll'],['icon','아이콘','Animated Icons'],['edit','영상 편집','Video Editing'],['prompt','프롬프트','Prompts'],['ai','AI·이펙트','AI & Effects'],['fx','이펙트','Effects'],['ch','차트','Charts'],['game','3D 게임 이펙트','3D Game Effects'],['motion','3D 캐릭터 동작','3D Character Motion'],['beast','3D 동물 동작','3D Animal Motion'],['bg','커서·배경','Cursor & Background'],['mat','재질','Materials'],['sim','물리 시뮬레이션','Physics'],['hl','헤어라인','Hairline Figures'],['pixel','픽셀 아트 이펙트','Pixel Art Effects'],['liquid','액체 효과','Liquid Effects']];
 
 const MINI={
   fade:[[{opacity:.1},{opacity:1}],600,'ease-out'],
@@ -11333,6 +11333,110 @@ PXA('px-confetti','픽셀 색종이 (축하)','Pixel Confetti (Celebration)',{mi
  code:p=>`// 색종이 조각: 폭 = w × |cos(t × 뒤집힘 속도)|, 좌우 흔들림\nconst w = Math.max(1, Math.round(piece.w * Math.abs(Math.cos(t * piece.fl * 20 + piece.ph))));`,
  prompt:(p,t)=>`${t} 완료 알림에 쓰는 픽셀 색종이를 canvas로 만들어줘 (pixelfx confetti 느낌).\n- 색종이 ${p.n}개, 분홍·노랑·하늘·크림 색\n- 각 조각은 뒤집히며 폭이 cos에 따라 줄었다 늘어남, 좌우로 사인 흔들림\n- 낙하 속도 ${p.spd}배, 화면 아래를 벗어나면 위에서 다시 떨어짐, 픽셀 ${p.grain}px`,
  note:'여러 색 조각이 뒤집히며 떨어지는 축하 효과입니다.'});
+
+/* ── 액체 효과 (직접 제작 · 캔버스) ── */
+const SRC_LQ='직접 제작 · 캔버스 (액체 효과)';
+const LQA=(id,ko,en,o)=>ITEMS.push({id,cat:'liquid',isNew:1,src:SRC_LQ,ko,en,mini:o.mini||'pulse',target:o.target,hint:o.hint,icon:o.icon,desc:o.desc,how:o.how,params:o.params,build:o.build,code:o.code,prompt:o.prompt,note:o.note});
+const lqFill=(g,y0,y1)=>{const gr=g.createLinearGradient(0,y0,0,y1);gr.addColorStop(0,'#eaf6ff');gr.addColorStop(.55,'#8fcbff');gr.addColorStop(1,'#2a6fb0');return gr;};
+
+LQA('liq-ripple','수면 잔물결 (Ripple)','Ripple (Water Surface)',{mini:'pulse',target:'호수 수면',
+ icon:'<ellipse cx="12" cy="13" rx="9" ry="4"/><ellipse cx="12" cy="13" rx="5" ry="2"/>',
+ desc:'수면 위 무작위 지점에 물방울이 떨어진 것처럼 동그란 잔물결이 여러 겹으로 퍼져 나갑니다. 바깥 물결일수록 옅고 가늘어집니다.',
+ how:'물결마다 여러 개의 타원을 조금씩 늦게 시작시켜 겹쳐 그립니다. 타원은 세로를 0.4배로 눌러 수면의 원근감을 줍니다. 선 굵기와 투명도는 반지름에 따라 줄어듭니다.',
+ params:[R('gap','물결 간격',900,300,2500,50,'ms'),R('rings','겹쳐진 물결 수',3,1,5,1,'겹'),R('grow','퍼지는 크기',.45,.15,.8,.01,'배'),R('life','퍼지는 시간',2.2,.6,5,.1,'초')],
+ build(st,p,c){const {g,W,H}=canvas(st);const rnd=pxRng(19),D=[],S=Math.min(W,H);let last=-1;
+   loop(c,t=>{g.clearRect(0,0,W,H);
+     if(t-last>=p.gap/1000){last=t;D.push({x:W*(.2+rnd()*.6),y:H*(.25+rnd()*.5),t0:t});}
+     for(let i=D.length-1;i>=0;i--){const d=D[i],age=t-d.t0;if(age>p.life+p.rings*.25){D.splice(i,1);continue;}
+       for(let k=0;k<p.rings;k++){const a2=age-k*.25;if(a2<0)continue;const pr=Math.min(1,a2/p.life);if(pr>=1)continue;
+         const r=Math.max(.5,pr*S*p.grow),al=(1-pr)*(1-k*.18);if(al<=0)continue;
+         g.beginPath();g.ellipse(d.x,d.y,r,r*.4,0,0,Math.PI*2);g.strokeStyle=`rgba(207,233,255,${al.toFixed(3)})`;g.lineWidth=1.6*(1-pr)+.4;g.stroke();}
+       if(age<.3){g.beginPath();g.arc(d.x,d.y,2.5*(1-age/.3)+.5,0,Math.PI*2);g.fillStyle='rgba(234,246,255,.9)';g.fill();}
+     }
+   });
+   return pxIdle(1400);},
+ code:p=>`// ${p.gap}ms마다 떨어지는 점 생성, 겹쳐진 타원 ${p.rings}겹\nfor (const r of ripples) {\n  const pr = age / ${p.life};\n  ctx.ellipse(x, y, pr * S * ${p.grow}, pr * S * ${p.grow} * .4, 0, 0, 2 * Math.PI);\n  ctx.lineWidth = 1.6 * (1 - pr) + .4;\n}`,
+ prompt:(p,t)=>`${t} 수면에 빗방울이 떨어졌을 때의 잔물결을 canvas로 만들어줘.\n- ${p.gap}ms마다 무작위 위치에서 동그란 물결 시작\n- 물결은 ${p.rings}겹이 조금씩 늦게 겹쳐 퍼지고, 세로는 0.4배로 눌러 수면 원근감\n- 반지름은 화면 짧은 변의 ${p.grow}배까지, ${p.life}초에 사라짐, 바깥일수록 옅고 가늘어짐\n- 색은 연한 하늘색 #cfe9ff`,
+ note:'수면에 동그란 잔물결이 겹쳐 퍼지는 효과입니다.'});
+
+LQA('liq-crown','왕관 물 튀김 (Crown Splash)','Crown Splash',{mini:'pop',target:'물웅덩이 충돌',
+ icon:'<path d="M3 17l2-9 4 4 3-6 3 6 4-4 2 9z"/>',
+ desc:'물방울이 웅덩이에 떨어지면 가장자리에서 여러 개의 뾰족한 물기둥이 왕관 모양으로 솟아오르고, 끝에서 물방울이 튀어 나갑니다.',
+ how:'웅덩이 가장자리를 따라 같은 간격으로 물기둥 꼭짓점을 배치하고, 높이를 시간에 따라 솟았다가 가라앉게 합니다. 꼭짓점 위치에서 중력을 받는 작은 물방울을 튕겨 냅니다.',
+ params:[DUR(1600,600,3000),R('spikes','물기둥 수',8,4,14,1,'개'),R('hgt','솟는 높이',.42,.15,.7,.01,'배')],
+ build(st,p,c){const {g,W,H}=canvas(st);const cx=W/2,cy=H*.62,rx=W*.2,ry=rx*.32,N=p.spikes;const rnd=pxRng(29);
+   const seeds=Array.from({length:N},()=>.7+rnd()*.6);
+   return()=>pxPlay(c,p.dur,u=>{g.clearRect(0,0,W,H);
+     const pool=1-Math.max(0,(u-.7)/.3);
+     g.beginPath();g.ellipse(cx,cy,rx*(1+u*.25),ry*(1+u*.25),0,0,Math.PI*2);g.strokeStyle=`rgba(207,233,255,${(.5*pool*(1-u*.5)).toFixed(2)})`;g.lineWidth=1.5;g.stroke();
+     const env=Math.sin(Math.min(1,u*1.4)*Math.PI/2)*(1-Math.max(0,(u-.55)/.45));
+     const H0=H*p.hgt*env;
+     const tips=[];
+     for(let i=0;i<N;i++){const a=i/N*Math.PI*2,am=a+Math.PI/N;
+       tips.push({x:cx+rx*Math.cos(a)*1.02,y:cy+ry*Math.sin(a)-H0*seeds[i],a});}
+     g.beginPath();
+     const v0x=cx+rx*Math.cos(Math.PI/N*-1),v0y=cy+ry*Math.sin(Math.PI/N*-1);
+     g.moveTo(v0x,v0y);
+     for(let i=0;i<N;i++){const tp=tips[i];const am=tp.a+Math.PI/N;const vx=cx+rx*Math.cos(am),vy=cy+ry*Math.sin(am)-H0*.12;
+       g.lineTo(tp.x,tp.y);
+       g.lineTo(vx,vy);}
+     g.closePath();
+     if(env>.01){g.fillStyle=lqFill(g,cy-H0,cy+ry);g.globalAlpha=.9;g.fill();g.globalAlpha=1;g.strokeStyle='rgba(234,246,255,.8)';g.lineWidth=1;g.stroke();}
+     if(u>.3&&u<1){const dd=(u-.3)/.7;tips.forEach(tp=>{const x=tp.x+Math.cos(tp.a)*rx*.35*dd,y=tp.y-H*.2*dd*(1-dd)*2+H*.6*dd*dd*.2*0+H*.25*dd*dd;
+       g.beginPath();g.arc(x,y,Math.max(.8,3.2*(1-dd)),0,Math.PI*2);g.fillStyle='rgba(234,246,255,.95)';g.fill();});}
+   });},
+ code:p=>`// 웅덩이 가장자리 ${p.spikes}개 꼭짓점: 높이 = H × ${p.hgt} × 솟음 곡선\nconst tipY = baseY - H0 * seed[i];\nctx.quadraticCurveTo(ctrlX, tipY + H0 * .35, tipX, tipY);\n// 꼭짓점에서 중력 받는 물방울 튕김`,
+ prompt:(p,t)=>`${t}에 물방울이 웅덩이에 떨어져 왕관처럼 솟는 물 튀김을 canvas로 만들어줘.\n- 웅덩이 타원 가장자리를 따라 ${p.spikes}개 물기둥이 솟았다가 가라앉음, 최대 높이 화면의 ${p.hgt}배\n- 물기둥 사이는 곡선으로 이어지고, 가장자리 연한 파란 흰 하이라이트\n- 물기둥 끝에서 중력을 받는 작은 물방울이 튕겨 나감, 총 ${p.dur}ms, 한 번 재생 후 멈춤`,
+ note:'웅덩이에 떨어진 물이 왕관 모양으로 솟구치는 효과입니다.'});
+
+LQA('liq-viscous','점성 액체 (Viscous Fluid)','Viscous Fluid (Honey & Syrup)',{mini:'slide',target:'꿀 · 시럽',
+ icon:'<path d="M12 3v7M9 10h6v3a3 3 0 0 1-6 0z"/><path d="M12 19c1 0 2 1 2 2"/>',
+ desc:'꿀이나 시럽처럼 끈적한 액체가 가늘게 늘어지며 떨어지고, 바닥에서 천천히 퍼져 둥근 덩어리가 됩니다. 떨어진 뒤에도 출렁임이 천천히 남습니다.',
+ how:'원을 여러 개 겹쳐 그린 뒤 CSS 블러와 대비(contrast)를 걸어 액체처럼 서로 달라붙게 합니다. 떨어질 때는 얇은 원을 연속으로, 바닥에서는 시간이 지나며 넓고 납작해지는 덩어리를 그립니다.',
+ params:[R('cycle','한 주기',3.2,1.5,6,.1,'초'),R('thick','두께',.035,.015,.07,.001,'배'),R('blur','부드러움',1.5,0,4,.1,'px')],
+ build(st,p,c){const cv=canvas(st);const {g,W,H}=cv;cv.cv.style.filter=`blur(${p.blur}px)`;
+   const cx=W/2,top=H*.1,pool=H*.8,R0=Math.min(W,H)*p.thick;
+   loop(c,t=>{g.clearRect(0,0,W,H);
+     const k=(t%p.cycle)/p.cycle;
+     g.fillStyle='#d08a2a';
+     if(k<.5){const f=k/.5,y=top+(pool-top)*f*f;
+       for(let s=0;s<=10;s++){const yy=top+(y-top)*s/10;g.beginPath();g.arc(cx,yy,R0*.5,0,Math.PI*2);g.fill();}
+       g.beginPath();g.arc(cx,y,R0*1.6,0,Math.PI*2);g.fill();}
+     else{const f=(k-.5)/.5,sp=1-Math.pow(1-f,3),wob=Math.sin(f*Math.PI*5)*(1-f)*W*.012;
+       const w=W*(.04+.2*sp),hh=H*(.1-.06*sp);
+       for(let s=0;s<=18;s++){const xx=-w+2*w*s/18,hg=hh*Math.sqrt(Math.max(0,1-(xx/w)*(xx/w)));g.beginPath();g.arc(cx+xx,pool-hg*.5,R0*(1.1+.5*hg/hh),0,Math.PI*2);g.fill();}
+       g.fillStyle='rgba(255,226,150,.7)';g.beginPath();g.ellipse(cx-w*.3,pool-hh*.6,w*.25,hh*.12,0,0,Math.PI*2);g.fill();
+     }
+   });
+   return pxIdle(1200);},
+ code:p=>`// 떨어지는 구간: 원 여러 개를 줄지어 얇은 줄기\n// 바닥 구간: 넓고 납작한 덩어리 + 출렁임\ncv.style.filter = 'blur(${p.blur}px)';   // 겹친 원이 부드럽게 이어지는 액체\nconst cycle = ${p.cycle};`,
+ prompt:(p,t)=>`${t}에 꿀이나 시럽이 떨어지는 점성 액체 효과를 canvas로 만들어줘.\n- ${p.cycle}초 주기: 얇은 줄기가 떨어지다 바닥에서 덩어리로 퍼짐\n- 원들을 겹쳐 그린 뒤 CSS filter: blur(${p.blur}px)로 겹친 원이 부드럽게 이어지게\n- 색은 호박색 #d08a2a, 하이라이트는 밝은 노랑, 두께 ${p.thick}배`,
+ note:'꿀이나 시럽처럼 끈적하게 떨어져 퍼지는 액체입니다.'});
+
+LQA('liq-tension','표면장력 (Surface Tension)','Surface Tension (Beading)',{mini:'pulse',target:'물방울 뭉침',
+ icon:'<circle cx="12" cy="12" r="6"/><path d="M9 9.5a4 4 0 0 1 3-2"/>',
+ desc:'흘러 퍼진 액체가 표면장력 때문에 다시 뭉쳐 둥근 물방울이 됩니다. 뭉칠 때 살짝 튕기고, 잠시 흔들린 뒤 다시 퍼집니다.',
+ how:'액체 윤곽을 여러 각도의 반지름으로 표현하고, 원형에 가까워질수록 표면장력이 크다고 보고 각 반지름을 원 반지름 쪽으로 이동시킵니다. 이동이 끝나면 감쇠 진동을 줍니다.',
+ params:[R('cycle','한 주기',3.6,1.5,6,.1,'초'),R('wobble','튕김 세기',.08,0,.2,.005,'배'),R('irr','퍼진 모양의 울퉁불퉁함',.35,.1,.6,.01,'배')],
+ build(st,p,c){const {g,W,H}=canvas(st);const rnd=pxRng(37),cx=W/2,cy=H/2,S=Math.min(W,H),N=28;
+   const R0=S*.22,seeds=Array.from({length:N},()=>1+(rnd()-.5)*2*p.irr);
+   const shape=(m,wob)=>{const pts=[];for(let i=0;i<N;i++){const a=i/N*Math.PI*2;const irr=seeds[i];const r=R0*(irr+(1-irr)*m)*(1+wob*Math.sin(a*2));pts.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r*(1-.15*(1-m))]);}return pts;};
+   const smooth=(pts)=>{g.beginPath();const n=pts.length;const mid=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2];let m0=mid(pts[n-1],pts[0]);g.moveTo(m0[0],m0[1]);
+     for(let i=0;i<n;i++){const pnt=pts[i],nx=pts[(i+1)%n],mm=mid(pnt,nx);g.quadraticCurveTo(pnt[0],pnt[1],mm[0],mm[1]);}g.closePath();};
+   loop(c,t=>{g.clearRect(0,0,W,H);
+     const k=(t%p.cycle)/p.cycle;
+     const m=k<.3?0:k<.6?Math.pow((k-.3)/.3,2):1;
+     const wob=k>.6?Math.sin((k-.6)/.4*Math.PI*4)*(1-(k-.6)/.4)*p.wobble:0;
+     const pts=shape(m,wob);smooth(pts);
+     g.fillStyle=lqFill(g,cy-R0,cy+R0);g.globalAlpha=.92;g.fill();g.globalAlpha=1;
+     g.strokeStyle='rgba(234,246,255,.6)';g.lineWidth=1;g.stroke();
+     if(m>.5){g.beginPath();g.ellipse(cx-R0*.35,cy-R0*.4,R0*.22,R0*.12,-.6,0,Math.PI*2);g.fillStyle='rgba(255,255,255,.85)';g.fill();}
+   });
+   return pxIdle(1200);},
+ code:p=>`// 윤곽 점 ${28}개를 원 쪽으로 이동 (m: 0 → 1), 끝에서 감쇠 진동 ±${p.wobble}\nconst r = R0 * (irr + (1 - irr) * m) * (1 + wobble * Math.sin(2a));\n// 이차 곡선으로 점들을 이어 부드러운 윤곽`,
+ prompt:(p,t)=>`${t}에 흘러 퍼진 액체가 표면장력으로 둥근 물방울이 되는 효과를 canvas로 만들어줘.\n- ${p.cycle}초 주기: 울퉁불퉁한 웅덩이 → 둥근 물방울로 수축 → 살짝 튕기며 흔들림 → 다시 퍼짐\n- 윤곽 점 28개를 원 반지름 쪽으로 이동, 울퉁불퉁함 ${p.irr}, 튕김 세기 ${p.wobble}\n- 물색 그라데이션, 물방울이 둥글 때 좌상단에 흰 하이라이트`,
+ note:'흘러 퍼진 액체가 표면장력으로 다시 둥글게 뭉치는 효과입니다.'});
+
 /* 파형 도우미: 모든 f(t)는 t∈[0,1]에서 정의, 반복 항목은 정수 주기로 끝과 처음이 이어짐 */
 const wrap1=x=>((x%1)+1)%1;
 const SIN=(c,ph=0)=>t=>Math.sin(2*Math.PI*c*t+ph);
