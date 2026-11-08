@@ -1,0 +1,21 @@
+{
+  "name": "motion-atlas-tools",
+  "version": "0.1.0",
+  "description": "반응형 애니메이션 도감(motion atlas)의 항목을 CLI · HTTP API · MCP 서버로 제공",
+  "type": "module",
+  "bin": {
+    "motion-atlas": "src/cli.js",
+    "motion-atlas-mcp": "src/mcp.js"
+  },
+  "scripts": {
+    "extract": "node scripts/extract.mjs",
+    "api": "node src/server.js",
+    "mcp": "node src/mcp.js"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "zod": "^3.25.76"
+  }
+}
