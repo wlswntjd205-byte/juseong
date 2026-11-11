@@ -44,6 +44,74 @@ node src/cli.js prompt fade --target 카드
 ```
 자세한 사용법은 [`tools/motion-atlas-tools/README.md`](tools/motion-atlas-tools/README.md)를 보세요.
 
+## 스킬 사용법
+
+`animation-html` 스킬은 이 도감처럼 **단일 HTML 파일로 된 반응형 애니메이션 도감**을 만드는 규칙과 시작 파일을 Claude에게 알려줍니다. 요청할 때 스킬 이름(`animation-html`)을 언급하면 됩니다.
+
+### 스킬이 따르는 작업 순서
+1. **참고 자료 분석** — 참고 사이트나 GIF에서 움직임과 조절할 값을 정리합니다.
+2. **시작 파일** — `templates/atlas-starter.html`을 복사해 새 도감을 시작합니다.
+3. **항목 작성** — 항목마다 한글·영문 이름, 설명, 원리, 조절값, 재생 코드, AI 프롬프트를 채웁니다.
+4. **출처 추가** — 참고한 사이트를 `SOURCES`에 넣으면 ? 도움말에 링크로 표시됩니다.
+5. **검증** — 아래 `check.js`로 오류와 가로 넘침이 0인지 확인하고 스크린샷을 봅니다.
+6. **배포** — 아티팩트로 게시하거나 GitHub에 올린 뒤 jsDelivr 또는 Vercel로 공개합니다.
+
+### 항목 하나의 구조
+```js
+{ id:'fx-glow', cat:'fx', ko:'한글 이름', en:'English Name',
+  target:'기본 적용 대상', desc:'무엇이 보이는지', how:'원리 설명',
+  params:[R('dur','지속시간',700,100,2000,10,'ms')],
+  build(st,p,c){ /* 무대 st, 조절값 p, 수명 c 로 DOM과 루프를 만든다 */ },
+  code:p=>`조절값이 들어간 핵심 코드`,
+  prompt:(p,t)=>`${t}에 ...를 만들어줘.\n- 지속시간: ${p.dur}ms` }
+```
+
+### 검증 (선택)
+스킬 폴더에서 Playwright가 설치된 상태로 실행합니다.
+```bash
+cd skills/animation-html
+NODE_PATH=$(npm root -g) node scripts/check.js 파일.html 출력폴더
+```
+출력 폴더의 스크린샷에서 어색한 항목을 확인하세요.
+
+### 사용 예시
+**예시 1 · 새 도감 만들기 (Claude Code)**
+```text
+animation-html 스킬로 반응형 애니메이션 도감을 새로 만들어줘.
+주제는 "버튼 마이크로 인터랙션"이고 항목은 8개 정도.
+각 항목에 한글·영문 이름, 설명, 원리, 조절값 2~3개, AI 프롬프트를 채워줘.
+```
+
+**예시 2 · 참고 사이트의 효과 하나 추가 (Claude Code · Claude.ai)**
+```text
+animation-html 스킬 규칙대로 https://example.com 의 카드 호버 효과를 분석해서
+도감에 항목 1개(id: card-glow)로 추가해줘.
+원본 코드는 복사하지 말고 원리를 다시 구현해줘.
+```
+
+**예시 3 · 기존 항목을 본떠서 만들기**
+```text
+reference/motion-atlas.html 에서 id:'fade' 항목을 찾아,
+같은 구조로 '슬라이드 인' 항목을 하나 더 만들어줘.
+```
+
+**예시 4 · 조절값 바꾸고 검증하기**
+```text
+도감 파일의 'fx-glow' 항목에서 지속시간 범위를 100~3000ms로 바꾸고,
+check.js로 검증한 뒤 어색한 항목이 있으면 알려줘.
+```
+
+**예시 5 · ChatGPT에서 zip으로 만들기**
+```text
+첨부한 animation-html.zip의 스킬 규칙으로, 로딩 스피너 항목 3개가 들어간 작은 도감 HTML을 만들어줘.
+```
+
+**예시 6 · 도감의 AI 프롬프트 바로 쓰기 (스킬 없이)**
+도감에서 항목을 열고 **AI 명령 프롬프트**를 복사해 Claude·ChatGPT에 붙여넣으면, 조절값이 반영된 구현 요청이 됩니다. CLI로도 가능합니다.
+```bash
+node tools/motion-atlas-tools/src/cli.js prompt fade --target 카드
+```
+
 ## 카테고리 · Categories
 
 | 카테고리 | 항목 수 | 카테고리 | 항목 수 |
@@ -121,6 +189,74 @@ node src/cli.js search 픽셀 폭발
 node src/cli.js prompt fade --target 카드
 ```
 See [`tools/motion-atlas-tools/README.md`](tools/motion-atlas-tools/README.md) for details.
+
+## Skill usage
+
+The `animation-html` skill tells Claude the rules and the starter file for building a **single-file responsive animation atlas** like this one. Mention the skill name (`animation-html`) in your request.
+
+### Steps the skill follows
+1. **Study the reference** — note the motion and the values to control, from a reference site or GIF.
+2. **Start from the template** — copy `templates/atlas-starter.html` for a new atlas.
+3. **Write each item** — English and Korean names, description, how it works, parameters, play code, and an AI prompt.
+4. **Add sources** — list the referenced sites in `SOURCES`; they appear as links in the ? help panel.
+5. **Verify** — run `check.js` below and confirm zero errors and zero horizontal overflow, then look at the screenshots.
+6. **Publish** — publish as an artifact, or push to GitHub and serve via jsDelivr or Vercel.
+
+### Structure of one item
+```js
+{ id:'fx-glow', cat:'fx', ko:'한글 이름', en:'English Name',
+  target:'default target', desc:'what you see', how:'how it works',
+  params:[R('dur','Duration',700,100,2000,10,'ms')],
+  build(st,p,c){ /* builds DOM and loops on stage st, params p, lifetime c */ },
+  code:p=>`core code with parameter values`,
+  prompt:(p,t)=>`Make ${t} ...\n- Duration: ${p.dur}ms` }
+```
+
+### Verify (optional)
+Run from the skill folder with Playwright installed.
+```bash
+cd skills/animation-html
+NODE_PATH=$(npm root -g) node scripts/check.js file.html output-folder
+```
+Check the screenshots in the output folder for anything that looks wrong.
+
+### Usage examples
+**Example 1 · New atlas (Claude Code)**
+```text
+Using the animation-html skill, build a new responsive animation atlas.
+Topic: "button micro-interactions", about 8 items.
+Each item needs English and Korean names, a description, how it works, 2–3 parameters, and an AI prompt.
+```
+
+**Example 2 · Add one effect from a reference site (Claude Code · Claude.ai)**
+```text
+Following the animation-html skill rules, analyze the card hover effect at https://example.com
+and add it to the atlas as one item (id: card-glow).
+Do not copy the original code; re-implement the principle.
+```
+
+**Example 3 · Model a new item on an existing one**
+```text
+In reference/motion-atlas.html, find the item with id:'fade',
+and make one more item with the same structure called "slide in".
+```
+
+**Example 4 · Change parameters and verify**
+```text
+In the atlas file, change the duration range of the 'fx-glow' item to 100–3000ms,
+verify with check.js, and tell me about any item that looks wrong.
+```
+
+**Example 5 · ChatGPT with the zip**
+```text
+Using the rules in the attached animation-html.zip, build a small atlas HTML with 3 loading-spinner items.
+```
+
+**Example 6 · Use an atlas prompt directly (no skill needed)**
+Open an item in the atlas and copy its **AI prompt**, then paste it into Claude or ChatGPT. The prompt already includes your parameter values. From the CLI:
+```bash
+node tools/motion-atlas-tools/src/cli.js prompt fade --target card
+```
 
 ## Categories
 
