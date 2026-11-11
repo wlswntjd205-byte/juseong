@@ -9,7 +9,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const pw = await import(process.env.PLAYWRIGHT_PATH || 'playwright');
 const chromium = pw.chromium || pw.default.chromium;
 const src = path.resolve(process.argv[2] || path.join(here, '../../../index.html'));
-const out = path.join(here, '../data/atlas.json');
+const out = path.join(here, '../../../skills/motion-atlas/data/atlas.json');
 
 const browser = await chromium.launch();
 const page = await browser.newPage();

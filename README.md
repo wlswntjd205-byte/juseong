@@ -14,25 +14,29 @@
 ### 1. 페이지 보기
 브라우저에서 https://motion-atlas-one.vercel.app 을 열면 됩니다. 설치할 것은 없습니다.
 
-### 2. Claude Code에 스킬 설치 (터미널에서 한 번 실행)
+### 2. Claude Code에 스킬 설치 (npx, 한 줄)
+Node.js가 있으면 아래 명령 한 줄로 설치됩니다. `~/.claude/skills/motion-atlas`에 들어가서 Claude Code가 바로 인식합니다.
 ```bash
-mkdir -p ~/.claude/skills/animation-html && curl -sSL https://github.com/wlswntjd205-byte/juseong/archive/refs/heads/motion-atlas.tar.gz | tar -xz --wildcards --strip-components=3 -C ~/.claude/skills/animation-html 'juseong-motion-atlas/skills/animation-html/*'
+npx motion-atlas-skill
 ```
-설치 후 Claude Code에서 "animation-html 스킬로 반응형 애니메이션 도감 만들어줘"라고 요청하면 됩니다.
-
-### 3. Claude.ai에 스킬 설치 (zip 업로드)
-1. 아래 링크로 스킬 zip을 받습니다.
-   https://github.com/wlswntjd205-byte/juseong/raw/motion-atlas/skills/animation-html.zip
-2. Claude.ai에서 **설정 → 기능 → Skills**를 열고 zip 파일을 업로드합니다.
-
-### 4. ChatGPT에 스킬 만들기
-ChatGPT는 터미널 명령으로 스킬을 설치하지 않습니다. 대신 위 zip을 받은 뒤 채팅에 첨부하고 아래 프롬프트를 복사해 붙여넣으세요.
-
+설치 후 Claude Code에서 이렇게 요청하면 됩니다.
 ```text
-첨부한 animation-html.zip 안의 SKILL.md와 templates, reference, scripts 파일을 읽고,
-이 내용을 기준으로 "반응형 애니메이션 도감" 스킬을 만들어줘.
+motion-atlas 스킬로 버튼 클릭 물결 애니메이션 가져와줘
+```
+
+### 3. Claude.ai · ChatGPT에 스킬 설치 (zip 업로드)
+1. 스킬 zip을 받습니다.
+   https://github.com/wlswntjd205-byte/juseong/raw/motion-atlas/skills/motion-atlas.zip
+2. Claude.ai는 **설정 → 기능 → Skills**에서 zip을 업로드합니다.
+3. ChatGPT는 zip을 채팅에 첨부하고 아래 프롬프트를 붙여넣습니다. ChatGPT는 명령어로 스킬을 설치하지 않습니다.
+```text
+첨부한 motion-atlas.zip의 SKILL.md와 scripts, data 파일을 읽고,
+이 내용을 기준으로 "motion-atlas" 스킬을 만들어줘.
 만든 뒤에는 Install을 눌러 워크스페이스에 설치할 수 있게 해줘.
 ```
+
+### 4. 도감 스킬 자체를 새로 만들기 (animation-html, 선택)
+도감 같은 HTML 페이지를 새로 만들고 싶다면 `animation-html` 스킬을 씁니다. 설치는 `skills/animation-html/` 폴더를 `~/.claude/skills/animation-html/`에 복사하면 됩니다.
 
 ### 5. 저장소를 로컬에서 쓰기 (CLI · API · MCP)
 ```bash
@@ -47,6 +51,8 @@ node src/cli.js prompt fade --target 카드
 ## 스킬 사용법
 
 `animation-html` 스킬은 이 도감처럼 **단일 HTML 파일로 된 반응형 애니메이션 도감**을 만드는 규칙과 시작 파일을 Claude에게 알려줍니다. 요청할 때 스킬 이름(`animation-html`)을 언급하면 됩니다.
+
+> **도감에서 애니메이션 가져오기:** `motion-atlas` 스킬을 쓰면 384개 항목을 검색하고 코드·프롬프트를 바로 받을 수 있습니다. 설치는 `npx motion-atlas-skill`입니다.
 
 ### 스킬이 따르는 작업 순서
 1. **참고 자료 분석** — 참고 사이트나 GIF에서 움직임과 조절할 값을 정리합니다.
@@ -101,9 +107,10 @@ reference/motion-atlas.html 에서 id:'fade' 항목을 찾아,
 check.js로 검증한 뒤 어색한 항목이 있으면 알려줘.
 ```
 
-**예시 5 · ChatGPT에서 zip으로 만들기**
+**예시 5 · ChatGPT에서 motion-atlas 스킬로 찾기 (zip 첨부)**
 ```text
-첨부한 animation-html.zip의 스킬 규칙으로, 로딩 스피너 항목 3개가 들어간 작은 도감 HTML을 만들어줘.
+첨부한 motion-atlas 스킬로 로딩 스피너 애니메이션 3개를 찾아서,
+각각 설명과 핵심 코드를 보여줘.
 ```
 
 **예시 6 · 도감의 AI 프롬프트 바로 쓰기 (스킬 없이)**
@@ -132,8 +139,9 @@ node tools/motion-atlas-tools/src/cli.js prompt fade --target 카드
 | 경로 | 내용 |
 |---|---|
 | `index.html` | 도감 전체 (단일 파일) |
-| `skills/animation-html/` | 이 도감을 만드는 Claude 스킬 (SKILL.md, 템플릿, 검증 스크립트) |
-| `skills/animation-html.zip` | 스킬 zip (Claude.ai·ChatGPT 업로드용) |
+| `skills/animation-html/` | 도감 같은 페이지를 만드는 Claude 스킬 (SKILL.md, 템플릿, 검증 스크립트) |
+| `skills/motion-atlas/` | 도감 스킬 (SKILL.md, 검색 CLI, 데이터). `npx motion-atlas-skill`로 설치 |
+| `skills/motion-atlas.zip` | 도감 스킬 zip (Claude.ai·ChatGPT 업로드용) |
 | `tools/motion-atlas-tools/` | 항목을 꺼내 쓰는 CLI · HTTP API · MCP 서버 |
 
 ## 출처 · License
@@ -160,25 +168,29 @@ Every item comes with a live preview, a control bar, an explanation of how it wo
 ### 1. View the page
 Open https://motion-atlas-one.vercel.app in a browser. There is nothing to install.
 
-### 2. Install the skill in Claude Code (run once in a terminal)
+### 2. Install the skill in Claude Code (npx, one line)
+With Node.js installed, run this one line. It installs to `~/.claude/skills/motion-atlas`, where Claude Code picks it up.
 ```bash
-mkdir -p ~/.claude/skills/animation-html && curl -sSL https://github.com/wlswntjd205-byte/juseong/archive/refs/heads/motion-atlas.tar.gz | tar -xz --wildcards --strip-components=3 -C ~/.claude/skills/animation-html 'juseong-motion-atlas/skills/animation-html/*'
+npx motion-atlas-skill
 ```
-After installing, ask Claude Code: "Make a responsive animation atlas with the animation-html skill."
-
-### 3. Install the skill in Claude.ai (zip upload)
-1. Download the skill zip:
-   https://github.com/wlswntjd205-byte/juseong/raw/motion-atlas/skills/animation-html.zip
-2. In Claude.ai, open **Settings → Capabilities → Skills** and upload the zip.
-
-### 4. Make the skill in ChatGPT
-ChatGPT does not install skills from terminal commands. Download the zip above, attach it to a chat, and paste this prompt:
-
+Then ask Claude Code something like:
 ```text
-Read SKILL.md and the templates, reference, and scripts files in the attached animation-html.zip,
-and build a "responsive animation atlas" skill based on them.
+Use the motion-atlas skill to get a button click ripple animation
+```
+
+### 3. Install the skill in Claude.ai or ChatGPT (zip upload)
+1. Download the skill zip:
+   https://github.com/wlswntjd205-byte/juseong/raw/motion-atlas/skills/motion-atlas.zip
+2. Claude.ai: open **Settings → Capabilities → Skills** and upload the zip.
+3. ChatGPT: attach the zip to a chat and paste this prompt. ChatGPT does not install skills from terminal commands.
+```text
+Read SKILL.md and the scripts and data files in the attached motion-atlas.zip,
+and build a "motion-atlas" skill based on them.
 When it is ready, let me press Install so it is added to my workspace.
 ```
+
+### 4. Build your own atlas-style page with the animation-html skill (optional)
+To build a new atlas-style HTML page, use the `animation-html` skill. Copy `skills/animation-html/` to `~/.claude/skills/animation-html/`.
 
 ### 5. Use the repository locally (CLI · API · MCP)
 ```bash
@@ -186,13 +198,15 @@ git clone -b motion-atlas https://github.com/wlswntjd205-byte/juseong
 cd juseong/tools/motion-atlas-tools
 npm install
 node src/cli.js search 픽셀 폭발
-node src/cli.js prompt fade --target 카드
+node src/cli.js prompt fade --target card
 ```
 See [`tools/motion-atlas-tools/README.md`](tools/motion-atlas-tools/README.md) for details.
 
 ## Skill usage
 
 The `animation-html` skill tells Claude the rules and the starter file for building a **single-file responsive animation atlas** like this one. Mention the skill name (`animation-html`) in your request.
+
+> **Fetch animations from the atlas:** the `motion-atlas` skill searches all 384 items and returns the code and prompts directly. Install with `npx motion-atlas-skill`.
 
 ### Steps the skill follows
 1. **Study the reference** — note the motion and the values to control, from a reference site or GIF.
@@ -247,9 +261,10 @@ In the atlas file, change the duration range of the 'fx-glow' item to 100–3000
 verify with check.js, and tell me about any item that looks wrong.
 ```
 
-**Example 5 · ChatGPT with the zip**
+**Example 5 · Find items with the motion-atlas skill in ChatGPT (zip attached)**
 ```text
-Using the rules in the attached animation-html.zip, build a small atlas HTML with 3 loading-spinner items.
+Using the attached motion-atlas skill, find 3 loading-spinner animations
+and show the description and core code for each.
 ```
 
 **Example 6 · Use an atlas prompt directly (no skill needed)**
@@ -278,8 +293,9 @@ node tools/motion-atlas-tools/src/cli.js prompt fade --target card
 | Path | Contents |
 |---|---|
 | `index.html` | The whole atlas (single file) |
-| `skills/animation-html/` | The Claude skill that builds this atlas (SKILL.md, templates, checker) |
-| `skills/animation-html.zip` | Skill zip for uploading to Claude.ai or ChatGPT |
+| `skills/animation-html/` | The Claude skill that builds atlas-style pages (SKILL.md, templates, checker) |
+| `skills/motion-atlas/` | The atlas skill (SKILL.md, search CLI, data). Install with `npx motion-atlas-skill` |
+| `skills/motion-atlas.zip` | Atlas skill zip for uploading to Claude.ai or ChatGPT |
 | `tools/motion-atlas-tools/` | CLI, HTTP API and MCP server for reading the items |
 
 ## Credits & License

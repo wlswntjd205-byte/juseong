@@ -1,0 +1,11 @@
+{
+  "name": "motion-atlas-skill",
+  "version": "0.1.0",
+  "description": "반응형 애니메이션 도감 스킬 — 384개 애니메이션의 코드·프롬프트를 Claude Code 스킬로 설치해 바로 검색·사용 (Responsive Animation Atlas skill)",
+  "type": "module",
+  "bin": { "motion-atlas-skill": "bin/install.mjs" },
+  "files": ["bin", "scripts", "data", "SKILL.md"],
+  "keywords": ["claude", "claude-code", "skill", "animation", "css", "motion"],
+  "repository": { "type": "git", "url": "git+https://github.com/wlswntjd205-byte/juseong.git", "directory": "skills/motion-atlas" },
+  "license": "UNLICENSED"
+}

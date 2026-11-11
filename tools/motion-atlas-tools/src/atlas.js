@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
-const DATA = path.join(path.dirname(fileURLToPath(import.meta.url)), '../data/atlas.json');
+const DATA = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../../skills/motion-atlas/data/atlas.json');
 const raw = JSON.parse(readFileSync(DATA, 'utf8'));
 
 export const categories = raw.cats.map(c => ({ id: c.id, ko: c.ko, en: c.en || null }));

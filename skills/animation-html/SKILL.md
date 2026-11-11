@@ -11,7 +11,7 @@ description: 반응형 애니메이션·인터랙션·차트·재질 효과를 �
 
 ## 파일 구성
 - `templates/atlas-starter.html` — 바로 쓰는 최소 도감(카드 미리보기·상세 시트·조절바·프롬프트·? 도움말·출처). **새 도감은 여기서 시작.**
-- `reference/motion-atlas.html` — 214종이 들어 있는 완성본. 비슷한 효과가 있으면 해당 항목의 build 코드를 찾아 참고(`id:'항목id'`로 검색).
+- 완성 도감 원본: 저장소 루트의 `index.html`. 비슷한 효과가 있으면 해당 항목의 build 코드를 찾아 참고(`id:'항목id'`로 검색).
 - `scripts/check.js` — Playwright 검증(데스크톱 + iPhone 13, 모든 항목 열기, 오류·가로 넘침 검사, 스크린샷).
 
 ## 작업 순서
