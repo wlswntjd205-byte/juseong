@@ -14,11 +14,24 @@
 ### 1. 페이지 보기
 브라우저에서 https://motion-atlas-one.vercel.app 을 열면 됩니다. 설치할 것은 없습니다.
 
-### 2. Claude Code에 스킬 설치 (npx, 한 줄)
-Node.js가 있으면 아래 명령 한 줄로 설치됩니다. `~/.claude/skills/motion-atlas`에 들어가서 Claude Code가 바로 인식합니다.
+### 2. Claude Code에 스킬 설치
+아래 방법 중 하나를 고르세요. 모두 `~/.claude/skills/motion-atlas`에 설치되며, Claude Code가 바로 인식합니다.
+
+**A. npx (Node.js 필요, 한 줄)**
 ```bash
 npx motion-atlas-skill
 ```
+
+**B. curl (npm 없이, macOS·Linux)**
+```bash
+mkdir -p ~/.claude/skills/motion-atlas && curl -sSL https://github.com/wlswntjd205-byte/juseong/archive/refs/heads/motion-atlas.tar.gz | tar -xz --wildcards --strip-components=3 -C ~/.claude/skills/motion-atlas 'juseong-motion-atlas/skills/motion-atlas/*'
+```
+
+**C. git (저장소 일부만 받기)**
+```bash
+git clone -q --depth 1 --filter=blob:none --sparse -b motion-atlas https://github.com/wlswntjd205-byte/juseong.git atlas-tmp && git -C atlas-tmp sparse-checkout set skills/motion-atlas && mkdir -p ~/.claude/skills && cp -r atlas-tmp/skills/motion-atlas ~/.claude/skills/ && rm -rf atlas-tmp
+```
+
 설치 후 Claude Code에서 이렇게 요청하면 됩니다.
 ```text
 motion-atlas 스킬로 버튼 클릭 물결 애니메이션 가져와줘
@@ -35,10 +48,7 @@ motion-atlas 스킬로 버튼 클릭 물결 애니메이션 가져와줘
 만든 뒤에는 Install을 눌러 워크스페이스에 설치할 수 있게 해줘.
 ```
 
-### 4. 도감 스킬 자체를 새로 만들기 (animation-html, 선택)
-도감 같은 HTML 페이지를 새로 만들고 싶다면 `animation-html` 스킬을 씁니다. 설치는 `skills/animation-html/` 폴더를 `~/.claude/skills/animation-html/`에 복사하면 됩니다.
-
-### 5. 저장소를 로컬에서 쓰기 (CLI · API · MCP)
+### 4. 저장소를 로컬에서 쓰기 (CLI · API · MCP)
 ```bash
 git clone -b motion-atlas https://github.com/wlswntjd205-byte/juseong
 cd juseong/tools/motion-atlas-tools
@@ -50,70 +60,39 @@ node src/cli.js prompt fade --target 카드
 
 ## 스킬 사용법
 
-`animation-html` 스킬은 이 도감처럼 **단일 HTML 파일로 된 반응형 애니메이션 도감**을 만드는 규칙과 시작 파일을 Claude에게 알려줍니다. 요청할 때 스킬 이름(`animation-html`)을 언급하면 됩니다.
+`motion-atlas` 스킬은 도감의 384개 애니메이션을 검색해서 코드와 AI 프롬프트를 바로 가져다 쓰게 해 줍니다. 인터넷 없이 로컬 데이터로 동작합니다.
 
-> **도감에서 애니메이션 가져오기:** `motion-atlas` 스킬을 쓰면 384개 항목을 검색하고 코드·프롬프트를 바로 받을 수 있습니다. 설치는 `npx motion-atlas-skill`입니다.
-
-### 스킬이 따르는 작업 순서
-1. **참고 자료 분석** — 참고 사이트나 GIF에서 움직임과 조절할 값을 정리합니다.
-2. **시작 파일** — `templates/atlas-starter.html`을 복사해 새 도감을 시작합니다.
-3. **항목 작성** — 항목마다 한글·영문 이름, 설명, 원리, 조절값, 재생 코드, AI 프롬프트를 채웁니다.
-4. **출처 추가** — 참고한 사이트를 `SOURCES`에 넣으면 ? 도움말에 링크로 표시됩니다.
-5. **검증** — 아래 `check.js`로 오류와 가로 넘침이 0인지 확인하고 스크린샷을 봅니다.
-6. **배포** — 아티팩트로 게시하거나 GitHub에 올린 뒤 jsDelivr 또는 Vercel로 공개합니다.
-
-### 항목 하나의 구조
-```js
-{ id:'fx-glow', cat:'fx', ko:'한글 이름', en:'English Name',
-  target:'기본 적용 대상', desc:'무엇이 보이는지', how:'원리 설명',
-  params:[R('dur','지속시간',700,100,2000,10,'ms')],
-  build(st,p,c){ /* 무대 st, 조절값 p, 수명 c 로 DOM과 루프를 만든다 */ },
-  code:p=>`조절값이 들어간 핵심 코드`,
-  prompt:(p,t)=>`${t}에 ...를 만들어줘.\n- 지속시간: ${p.dur}ms` }
-```
-
-### 검증 (선택)
-스킬 폴더에서 Playwright가 설치된 상태로 실행합니다.
+### 명령어
+스킬 폴더의 `scripts/cli.js`를 실행합니다. Node.js만 있으면 됩니다.
 ```bash
-cd skills/animation-html
-NODE_PATH=$(npm root -g) node scripts/check.js 파일.html 출력폴더
+S=~/.claude/skills/motion-atlas/scripts/cli.js
+node $S cats                          # 카테고리와 항목 수
+node $S search 버튼 호버              # 이름·설명으로 검색
+node $S list --cat ld                 # 카테고리별 목록
+node $S show <id>                     # 항목 설명·원리·조절값
+node $S code <id>                     # 핵심 코드
+node $S prompt <id> --target 버튼     # 적용 대상을 바꾼 AI 프롬프트
 ```
-출력 폴더의 스크린샷에서 어색한 항목을 확인하세요.
 
 ### 사용 예시
-**예시 1 · 새 도감 만들기 (Claude Code)**
+**예시 1 · Claude Code에서 찾아 쓰기**
 ```text
-animation-html 스킬로 반응형 애니메이션 도감을 새로 만들어줘.
-주제는 "버튼 마이크로 인터랙션"이고 항목은 8개 정도.
-각 항목에 한글·영문 이름, 설명, 원리, 조절값 2~3개, AI 프롬프트를 채워줘.
+motion-atlas 스킬로 버튼 클릭 물결 애니메이션을 찾아서 코드를 가져와줘.
+내 프로젝트는 순수 CSS야.
 ```
 
-**예시 2 · 참고 사이트의 효과 하나 추가 (Claude Code · Claude.ai)**
+**예시 2 · Claude.ai에서 추천받기**
 ```text
-animation-html 스킬 규칙대로 https://example.com 의 카드 호버 효과를 분석해서
-도감에 항목 1개(id: card-glow)로 추가해줘.
-원본 코드는 복사하지 말고 원리를 다시 구현해줘.
+motion-atlas 스킬로 로딩 스피너 애니메이션 추천 3개와 각각의 설명을 알려줘.
 ```
 
-**예시 3 · 기존 항목을 본떠서 만들기**
-```text
-reference/motion-atlas.html 에서 id:'fade' 항목을 찾아,
-같은 구조로 '슬라이드 인' 항목을 하나 더 만들어줘.
-```
-
-**예시 4 · 조절값 바꾸고 검증하기**
-```text
-도감 파일의 'fx-glow' 항목에서 지속시간 범위를 100~3000ms로 바꾸고,
-check.js로 검증한 뒤 어색한 항목이 있으면 알려줘.
-```
-
-**예시 5 · ChatGPT에서 motion-atlas 스킬로 찾기 (zip 첨부)**
+**예시 3 · ChatGPT에서 zip으로 찾기**
 ```text
 첨부한 motion-atlas 스킬로 로딩 스피너 애니메이션 3개를 찾아서,
 각각 설명과 핵심 코드를 보여줘.
 ```
 
-**예시 6 · 도감의 AI 프롬프트 바로 쓰기 (스킬 없이)**
+**예시 4 · 도감의 AI 프롬프트 바로 쓰기 (스킬 없이)**
 도감에서 항목을 열고 **AI 명령 프롬프트**를 복사해 Claude·ChatGPT에 붙여넣으면, 조절값이 반영된 구현 요청이 됩니다. CLI로도 가능합니다.
 ```bash
 node tools/motion-atlas-tools/src/cli.js prompt fade --target 카드
@@ -139,8 +118,7 @@ node tools/motion-atlas-tools/src/cli.js prompt fade --target 카드
 | 경로 | 내용 |
 |---|---|
 | `index.html` | 도감 전체 (단일 파일) |
-| `skills/animation-html/` | 도감 같은 페이지를 만드는 Claude 스킬 (SKILL.md, 템플릿, 검증 스크립트) |
-| `skills/motion-atlas/` | 도감 스킬 (SKILL.md, 검색 CLI, 데이터). `npx motion-atlas-skill`로 설치 |
+| `skills/motion-atlas/` | 도감 스킬 (SKILL.md, 검색 CLI, 데이터, npx 설치기) |
 | `skills/motion-atlas.zip` | 도감 스킬 zip (Claude.ai·ChatGPT 업로드용) |
 | `tools/motion-atlas-tools/` | 항목을 꺼내 쓰는 CLI · HTTP API · MCP 서버 |
 
@@ -168,11 +146,24 @@ Every item comes with a live preview, a control bar, an explanation of how it wo
 ### 1. View the page
 Open https://motion-atlas-one.vercel.app in a browser. There is nothing to install.
 
-### 2. Install the skill in Claude Code (npx, one line)
-With Node.js installed, run this one line. It installs to `~/.claude/skills/motion-atlas`, where Claude Code picks it up.
+### 2. Install the skill in Claude Code
+Pick one of the methods below. Each installs to `~/.claude/skills/motion-atlas`, where Claude Code picks it up.
+
+**A. npx (needs Node.js, one line)**
 ```bash
 npx motion-atlas-skill
 ```
+
+**B. curl (no npm needed, macOS · Linux)**
+```bash
+mkdir -p ~/.claude/skills/motion-atlas && curl -sSL https://github.com/wlswntjd205-byte/juseong/archive/refs/heads/motion-atlas.tar.gz | tar -xz --wildcards --strip-components=3 -C ~/.claude/skills/motion-atlas 'juseong-motion-atlas/skills/motion-atlas/*'
+```
+
+**C. git (only the skill folder)**
+```bash
+git clone -q --depth 1 --filter=blob:none --sparse -b motion-atlas https://github.com/wlswntjd205-byte/juseong.git atlas-tmp && git -C atlas-tmp sparse-checkout set skills/motion-atlas && mkdir -p ~/.claude/skills && cp -r atlas-tmp/skills/motion-atlas ~/.claude/skills/ && rm -rf atlas-tmp
+```
+
 Then ask Claude Code something like:
 ```text
 Use the motion-atlas skill to get a button click ripple animation
@@ -189,10 +180,7 @@ and build a "motion-atlas" skill based on them.
 When it is ready, let me press Install so it is added to my workspace.
 ```
 
-### 4. Build your own atlas-style page with the animation-html skill (optional)
-To build a new atlas-style HTML page, use the `animation-html` skill. Copy `skills/animation-html/` to `~/.claude/skills/animation-html/`.
-
-### 5. Use the repository locally (CLI · API · MCP)
+### 4. Use the repository locally (CLI · API · MCP)
 ```bash
 git clone -b motion-atlas https://github.com/wlswntjd205-byte/juseong
 cd juseong/tools/motion-atlas-tools
@@ -204,70 +192,39 @@ See [`tools/motion-atlas-tools/README.md`](tools/motion-atlas-tools/README.md) f
 
 ## Skill usage
 
-The `animation-html` skill tells Claude the rules and the starter file for building a **single-file responsive animation atlas** like this one. Mention the skill name (`animation-html`) in your request.
+The `motion-atlas` skill searches the atlas's 384 animations and gives you the code and AI prompts directly. It runs on local data, without the internet.
 
-> **Fetch animations from the atlas:** the `motion-atlas` skill searches all 384 items and returns the code and prompts directly. Install with `npx motion-atlas-skill`.
-
-### Steps the skill follows
-1. **Study the reference** — note the motion and the values to control, from a reference site or GIF.
-2. **Start from the template** — copy `templates/atlas-starter.html` for a new atlas.
-3. **Write each item** — English and Korean names, description, how it works, parameters, play code, and an AI prompt.
-4. **Add sources** — list the referenced sites in `SOURCES`; they appear as links in the ? help panel.
-5. **Verify** — run `check.js` below and confirm zero errors and zero horizontal overflow, then look at the screenshots.
-6. **Publish** — publish as an artifact, or push to GitHub and serve via jsDelivr or Vercel.
-
-### Structure of one item
-```js
-{ id:'fx-glow', cat:'fx', ko:'한글 이름', en:'English Name',
-  target:'default target', desc:'what you see', how:'how it works',
-  params:[R('dur','Duration',700,100,2000,10,'ms')],
-  build(st,p,c){ /* builds DOM and loops on stage st, params p, lifetime c */ },
-  code:p=>`core code with parameter values`,
-  prompt:(p,t)=>`Make ${t} ...\n- Duration: ${p.dur}ms` }
-```
-
-### Verify (optional)
-Run from the skill folder with Playwright installed.
+### Commands
+Run `scripts/cli.js` in the skill folder. Only Node.js is needed.
 ```bash
-cd skills/animation-html
-NODE_PATH=$(npm root -g) node scripts/check.js file.html output-folder
+S=~/.claude/skills/motion-atlas/scripts/cli.js
+node $S cats                          # categories and item counts
+node $S search 버튼 호버              # search by name or description
+node $S list --cat ld                 # list one category
+node $S show <id>                     # description, how it works, parameters
+node $S code <id>                     # core code
+node $S prompt <id> --target 버튼     # AI prompt with a different target
 ```
-Check the screenshots in the output folder for anything that looks wrong.
 
 ### Usage examples
-**Example 1 · New atlas (Claude Code)**
+**Example 1 · Find and use an item in Claude Code**
 ```text
-Using the animation-html skill, build a new responsive animation atlas.
-Topic: "button micro-interactions", about 8 items.
-Each item needs English and Korean names, a description, how it works, 2–3 parameters, and an AI prompt.
+Use the motion-atlas skill to find a button click ripple animation and get its code.
+My project uses plain CSS.
 ```
 
-**Example 2 · Add one effect from a reference site (Claude Code · Claude.ai)**
+**Example 2 · Ask for recommendations in Claude.ai**
 ```text
-Following the animation-html skill rules, analyze the card hover effect at https://example.com
-and add it to the atlas as one item (id: card-glow).
-Do not copy the original code; re-implement the principle.
+Use the motion-atlas skill to recommend 3 loading-spinner animations and explain each one.
 ```
 
-**Example 3 · Model a new item on an existing one**
-```text
-In reference/motion-atlas.html, find the item with id:'fade',
-and make one more item with the same structure called "slide in".
-```
-
-**Example 4 · Change parameters and verify**
-```text
-In the atlas file, change the duration range of the 'fx-glow' item to 100–3000ms,
-verify with check.js, and tell me about any item that looks wrong.
-```
-
-**Example 5 · Find items with the motion-atlas skill in ChatGPT (zip attached)**
+**Example 3 · Find items in ChatGPT with the zip**
 ```text
 Using the attached motion-atlas skill, find 3 loading-spinner animations
 and show the description and core code for each.
 ```
 
-**Example 6 · Use an atlas prompt directly (no skill needed)**
+**Example 4 · Use an atlas prompt directly (no skill needed)**
 Open an item in the atlas and copy its **AI prompt**, then paste it into Claude or ChatGPT. The prompt already includes your parameter values. From the CLI:
 ```bash
 node tools/motion-atlas-tools/src/cli.js prompt fade --target card
@@ -293,8 +250,7 @@ node tools/motion-atlas-tools/src/cli.js prompt fade --target card
 | Path | Contents |
 |---|---|
 | `index.html` | The whole atlas (single file) |
-| `skills/animation-html/` | The Claude skill that builds atlas-style pages (SKILL.md, templates, checker) |
-| `skills/motion-atlas/` | The atlas skill (SKILL.md, search CLI, data). Install with `npx motion-atlas-skill` |
+| `skills/motion-atlas/` | The atlas skill (SKILL.md, search CLI, data, npx installer) |
 | `skills/motion-atlas.zip` | Atlas skill zip for uploading to Claude.ai or ChatGPT |
 | `tools/motion-atlas-tools/` | CLI, HTTP API and MCP server for reading the items |
 
