@@ -350,8 +350,9 @@ pre.code{margin:10px 0 0;padding:12px 14px;background:var(--bg);border:1px solid
 /* ── i18n · 정렬 · 복사 횟수 · 챗봇 · 제작 정보 ── */
 html[lang="en"] .ko-only{display:none!important}
 html:not([lang="en"]) .en-only{display:none!important}
-.langbtn{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));right:calc(62px + env(safe-area-inset-right,0px));z-index:15;height:40px;min-width:46px;padding:0 12px;border-radius:999px;border:1px solid var(--line-2);background:rgba(20,18,20,.78);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#f6dad7;font:600 13px var(--f-mono);letter-spacing:.08em;display:grid;place-items:center;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.4);transition:border-color .2s,transform .2s}
-@media (hover:hover){.langbtn:hover{border-color:var(--rose);transform:scale(1.04)}}
+.langbtn,.skillbtn{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));right:calc(142px + env(safe-area-inset-right,0px));z-index:15;height:40px;min-width:46px;padding:0 12px;border-radius:999px;border:1px solid var(--line-2);background:rgba(20,18,20,.78);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#f6dad7;font:600 13px var(--f-mono);letter-spacing:.08em;display:grid;place-items:center;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.4);transition:border-color .2s,transform .2s}
+@media (hover:hover){.langbtn:hover,.skillbtn:hover{border-color:var(--rose);transform:scale(1.04)}}
+.skillbtn{right:calc(62px + env(safe-area-inset-right,0px))!important;min-width:0;width:auto}
 .sortbar{flex:1 1 100%;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
 .sortbar .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px;background:var(--surface)}
 .sortbar .seg button{border:0;background:transparent;border-radius:999px;padding:5px 12px;font-size:12.5px;color:var(--muted);cursor:pointer}
@@ -453,6 +454,9 @@ html:not([lang="en"]) .en-only{display:none!important}
   .hsheet{border-radius:20px 20px 0 0;max-height:92%;border-bottom:0}
   .hbody{padding:4px 16px calc(28px + env(safe-area-inset-bottom,0px))}
   .helpbtn{width:36px;height:36px;font-size:16px}
+  .langbtn,.skillbtn{height:36px;font-size:10px;min-width:0;padding:0 7px}
+  .skillbtn{right:calc(56px + env(safe-area-inset-right,0px))!important}
+  .langbtn{right:calc(116px + env(safe-area-inset-right,0px))}
 }
 </style>
 
@@ -466,6 +470,7 @@ html:not([lang="en"]) .en-only{display:none!important}
 </svg>
 
 <button class="langbtn" id="langBtn" type="button" aria-label="Switch to English">EN</button>
+<button class="skillbtn" id="skillBtn" type="button" aria-label="Download as skill · 스킬로 다운로드">SKILL</button>
 <button class="helpbtn" id="helpBtn" type="button" aria-label="도움말과 출처" aria-haspopup="dialog">?</button>
 <div class="scrim hscrim" id="helpScrim" hidden>
   <div class="hsheet" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
@@ -12233,6 +12238,72 @@ document.addEventListener('copy',()=>{if(cur&&!scrim.hidden){const sel=String(ge
 
 function setLang(l){LANG=l;store.set('atlas-lang',l);applyLangStatic();renderChips();renderList();if(!scrim.hidden&&cur){const keep=vals;openItem(cur.id);vals=keep;renderCtrls();rebuild();}botLangChanged();}
 $('#langBtn').onclick=()=>setLang(EN()?'ko':'en');
+/* ── SKILL 다운로드: 지금 도감의 항목으로 motion-atlas 스킬 zip을 만든다 ── */
+const SKILL_CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+function skillCrc(u8){let c=0xFFFFFFFF;for(let i=0;i<u8.length;i++)c=SKILL_CRC[(c^u8[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0;}
+function skillZip(files){
+  const enc=new TextEncoder(),u16=v=>[v&255,(v>>>8)&255],u32=v=>[v&255,(v>>>8)&255,(v>>>16)&255,(v>>>24)&255];
+  const d=new Date(),dt=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1),dd=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate();
+  const parts=[],cen=[];let off=0;
+  for(const f of files){
+    const nm=enc.encode(f.name),crc=skillCrc(f.data),sz=f.data.length;
+    const loc=new Uint8Array([...u32(0x04034b50),...u16(20),...u16(0x0800),...u16(0),...u16(dt),...u16(dd),...u32(crc),...u32(sz),...u32(sz),...u16(nm.length),...u16(0)]);
+    parts.push(loc,nm,f.data);
+    cen.push(new Uint8Array([...u32(0x02014b50),...u16(20),...u16(20),...u16(0x0800),...u16(0),...u16(dt),...u16(dd),...u32(crc),...u32(sz),...u32(sz),...u16(nm.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(off)]),nm);
+    off+=loc.length+nm.length+sz;
+  }
+  const cenLen=cen.reduce((a,b)=>a+b.length,0);
+  const end=new Uint8Array([...u32(0x06054b50),...u16(0),...u16(0),...u16(files.length),...u16(files.length),...u32(cenLen),...u32(off),...u16(0)]);
+  const all=[...parts,...cen,end],out=new Uint8Array(all.reduce((a,b)=>a+b.length,0));
+  let p=0;for(const b of all){out.set(b,p);p+=b.length;}
+  return out;
+}
+function skillData(){
+  const dflt=it=>Object.fromEntries((it.params||[]).map(r=>[r.k,r.v]));
+  const safe=f=>{try{return f();}catch(e){return null;}};
+  return {source:'motion-atlas',count:ITEMS.length,cats:CATS.map(c=>({id:c[0],ko:c[1],en:c[2]||null})),
+    items:ITEMS.map(it=>{const p=dflt(it);return {id:it.id,cat:it.cat,ko:it.ko,en:it.en,target:it.target||null,desc:it.desc||null,how:it.how||null,
+      params:(it.params||[]).map(({k,l,v,min,max,step,u})=>({k,l,v,min,max,step,u:u||''})),
+      code:safe(()=>it.code(p)),prompt:safe(()=>it.prompt(p,it.target))};})};
+}
+function skillMd(n,cats){
+  const list=cats.filter(c=>c.id!=='all').map(c=>'- '+c.id+': '+c.ko+(c.en?' · '+c.en:'')).join('\n');
+  return [
+'---',
+'name: motion-atlas',
+'description: 반응형 애니메이션 도감('+n+'개)에서 원하는 애니메이션을 찾아 코드와 AI 프롬프트를 가져올 때 사용. 버튼 호버, 로딩, 텍스트, 3D 캐릭터, 픽셀 이펙트, 차트, 영상 자막 등 "~ 애니메이션 가져와", "~ 효과 찾아줘" 요청에 쓴다.',
+'---',
+'',
+'# 반응형 애니메이션 도감 스킬',
+'',
+'이 폴더의 data/atlas.json에 도감 '+n+'개 항목이 들어 있다. 각 항목은 id, 한글·영문 이름(ko, en), 설명(desc), 원리(how), 조절값(params), 핵심 코드(code), AI 프롬프트(prompt)를 가진다. 원본 도감: https://motion-atlas-one.vercel.app',
+'',
+'## 사용 방법',
+'1. 요청을 한국어·영어 키워드로 items에서 찾는다 (ko, en, desc, how, id 필드를 검색).',
+'2. 관련 항목 2~3개를 골라 desc와 how로 설명한다.',
+'3. 사용자 프로젝트에 맞게 code를 적용한다. prompt의 적용 대상(target)을 바꿔야 하면 "target" 문구를 교체한다.',
+'4. 답변 마지막에 항목 id와 도감 주소를 적는다.',
+'',
+'## 주의',
+'- code와 prompt는 기본 조절값(params의 v) 기준이다. 다른 값이 필요하면 params를 보고 직접 바꾼다.',
+'- 도감 코드는 바닐라 JS와 CSS 기준이다. React, Vue 등에서 쓸 때는 구조를 맞춘다.',
+'- 원본 코드를 그대로 복사했다고 말하지 말고, 원리를 이해해서 사용자 맥락에 맞게 적용한다.',
+'- 접근성을 위해 prefers-reduced-motion 처리를 함께 제안한다.',
+'',
+'## 카테고리 id',
+list,
+''].join('\n');
+}
+function downloadSkill(){
+  const data=skillData(),enc=new TextEncoder();
+  const files=[{name:'motion-atlas/SKILL.md',data:enc.encode(skillMd(data.count,data.cats))},
+               {name:'motion-atlas/data/atlas.json',data:enc.encode(JSON.stringify(data))}];
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([skillZip(files)],{type:'application/zip'}));
+  a.download='motion-atlas-skill.zip';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+$('#skillBtn').onclick=downloadSkill;
 applyLangStatic();renderChips();renderList();loadCounts();
 
 /* ───────── 도움말 ───────── */
